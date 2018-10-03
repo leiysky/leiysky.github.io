@@ -340,7 +340,7 @@
 <p>从Redis3.0开始，该算法进行了一些改进，变得会为驱逐的对象建立一个pool。这样使得算法的性能更加接近原版LRU。</p>
 <p>Redis的LRU算法有个好处就是用户可以调整<strong>选择对象的数量</strong>来平衡算法的精度。该参数可以通过配置<code>maxmemory-samples 5</code>来修改。</p>
 <p>Redis之所以不选用原版LRU是因为原版LRU会消耗更多的内存。而且对于用户来说，Redis的LRU算法和原版LRU算法几乎是一样的，以下是一张测试结果对比图：</p>
-<p><img src="lru_comparison.png" alt="lru_comparison"></p>
+<p><img src="./redis/lru_comparison.png" alt="lru_comparison"></p>
 <p>这个测试是通过使用一定数量的key来填充一个Redis服务器，之后按照插入顺序对所有key进行访问。这样一来按照LRU的规则，第一个被插入的数据将被选中。在此之后，插入原本插入key数量一半的key，根据LRU算法，原先插入数据的一半将被驱逐。</p>
 <p>图中的点分别代表三种不同的数据，从左上到右下的顺序插入：</p>
 <ul>

@@ -86,12 +86,12 @@
 <meta property="og:site_name" content="Blog">
 <meta property="og:description" content="Redis作为一个内存键值对存储的产品，以其高性能、多种数据类型、可选持久化且支持网络等特性成为了许多项目中的宠儿。 一般来说，缓存在获得超快的读写速度的同时，作为代替会牺牲其存储空间。Redis使用内存作为存储介质，比起传统的使用硬盘作为载体的数据库，读写速度快了许多，但是可存储的数据量也受到了内存大小的限制。在频繁的读写操作下，必然会发生对于旧数据的驱逐(eviction)，可能是删除数据，或">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://leiysky.com/2018/10/03/Redis的LRU缓存/lru_comparison.png">
-<meta property="og:updated_time" content="2018-10-03T10:03:14.484Z">
+<meta property="og:image" content="http://leiysky.com/2018/10/03/Redis的LRU缓存/redis/lru_comparison.png">
+<meta property="og:updated_time" content="2018-10-03T10:05:53.590Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Redis的LRU缓存">
 <meta name="twitter:description" content="Redis作为一个内存键值对存储的产品，以其高性能、多种数据类型、可选持久化且支持网络等特性成为了许多项目中的宠儿。 一般来说，缓存在获得超快的读写速度的同时，作为代替会牺牲其存储空间。Redis使用内存作为存储介质，比起传统的使用硬盘作为载体的数据库，读写速度快了许多，但是可存储的数据量也受到了内存大小的限制。在频繁的读写操作下，必然会发生对于旧数据的驱逐(eviction)，可能是删除数据，或">
-<meta name="twitter:image" content="http://leiysky.com/2018/10/03/Redis的LRU缓存/lru_comparison.png">
+<meta name="twitter:image" content="http://leiysky.com/2018/10/03/Redis的LRU缓存/redis/lru_comparison.png">
 
 
 
@@ -338,7 +338,7 @@
 <p>从Redis3.0开始，该算法进行了一些改进，变得会为驱逐的对象建立一个pool。这样使得算法的性能更加接近原版LRU。</p>
 <p>Redis的LRU算法有个好处就是用户可以调整<strong>选择对象的数量</strong>来平衡算法的精度。该参数可以通过配置<code>maxmemory-samples 5</code>来修改。</p>
 <p>Redis之所以不选用原版LRU是因为原版LRU会消耗更多的内存。而且对于用户来说，Redis的LRU算法和原版LRU算法几乎是一样的，以下是一张测试结果对比图：</p>
-<p><img src="lru_comparison.png" alt="lru_comparison"></p>
+<p><img src="./redis/lru_comparison.png" alt="lru_comparison"></p>
 <p>这个测试是通过使用一定数量的key来填充一个Redis服务器，之后按照插入顺序对所有key进行访问。这样一来按照LRU的规则，第一个被插入的数据将被选中。在此之后，插入原本插入key数量一半的key，根据LRU算法，原先插入数据的一半将被驱逐。</p>
 <p>图中的点分别代表三种不同的数据，从左上到右下的顺序插入：</p>
 <ul>
