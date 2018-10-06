@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="前言使用Go语言已有一段时间了，我也渐渐爱上了这门某种意义上相当便利的语言。于是我决定用Go来写一些实用的小程序，一方面是加深自己对于Go的标准库的了解，另一方面则是回顾一些UNIX系统相关的知识。 所以这次我就将用Go实现一个分页打印的CLI程序selpg。 该程序相关的一些说明参考自这里，有兴趣的可以看看。 那么废话不多说，直接进入正题。 UNIX与GNU风格的flag-style对于一个命令">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Go编写CLI程序">
+<meta property="og:url" content="http://leiysky.com/2018/10/06/使用Go编写CLI程序/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="前言使用Go语言已有一段时间了，我也渐渐爱上了这门某种意义上相当便利的语言。于是我决定用Go来写一些实用的小程序，一方面是加深自己对于Go的标准库的了解，另一方面则是回顾一些UNIX系统相关的知识。 所以这次我就将用Go实现一个分页打印的CLI程序selpg。 该程序相关的一些说明参考自这里，有兴趣的可以看看。 那么废话不多说，直接进入正题。 UNIX与GNU风格的flag-style对于一个命令">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://leiysky.com/images/image-20181006191041720.png">
+<meta property="og:image" content="http://leiysky.com/images/image-20181006191356729.png">
+<meta property="og:image" content="http://leiysky.com/images/image-20181006191757182.png">
+<meta property="og:image" content="http://leiysky.com/images/image-20181006191857866.png">
+<meta property="og:image" content="http://leiysky.com/images/image-20181006192013254.png">
+<meta property="og:image" content="http://leiysky.com/images/image-20181006192104624.png">
+<meta property="og:updated_time" content="2018-10-06T11:25:03.942Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用Go编写CLI程序">
+<meta name="twitter:description" content="前言使用Go语言已有一段时间了，我也渐渐爱上了这门某种意义上相当便利的语言。于是我决定用Go来写一些实用的小程序，一方面是加深自己对于Go的标准库的了解，另一方面则是回顾一些UNIX系统相关的知识。 所以这次我就将用Go实现一个分页打印的CLI程序selpg。 该程序相关的一些说明参考自这里，有兴趣的可以看看。 那么废话不多说，直接进入正题。 UNIX与GNU风格的flag-style对于一个命令">
+<meta name="twitter:image" content="http://leiysky.com/images/image-20181006191041720.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://leiysky.com/2018/10/06/使用Go编写CLI程序/"/>
+
+
+
+
+
+  <title>使用Go编写CLI程序 | Blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Welcome to leiysky's blog</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/10/06/使用Go编写CLI程序/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">使用Go编写CLI程序</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-10-06T19:22:50+08:00">
+                2018-10-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>使用Go语言已有一段时间了，我也渐渐爱上了这门某种意义上相当便利的语言。于是我决定用Go来写一些实用的小程序，一方面是加深自己对于Go的标准库的了解，另一方面则是回顾一些UNIX系统相关的知识。</p>
+<p>所以这次我就将用Go实现一个分页打印的CLI程序<strong>selpg</strong>。</p>
+<p>该程序相关的一些说明参考自<a href="https://www.ibm.com/developerworks/cn/linux/shell/clutil/index.html" target="_blank" rel="noopener">这里</a>，有兴趣的可以看看。</p>
+<p>那么废话不多说，直接进入正题。</p>
+<h2 id="UNIX与GNU风格的flag-style"><a href="#UNIX与GNU风格的flag-style" class="headerlink" title="UNIX与GNU风格的flag-style"></a>UNIX与GNU风格的flag-style</h2><p>对于一个命令行程序来说，flag是十分重要的，这直接决定了用户的使用体验。</p>
+<p>实际上对于命令行程序的参数设计没有明确的要求，但大致可以分为<strong>UNIX</strong>, <strong>GNU</strong>和<strong>BSD</strong>三种流派。</p>
+<p><strong>UNIX</strong>的命令行规范在<strong>POSIX</strong>标准和<strong>SUS(Single UNIX Specification)</strong>中均有提及，在此就不做深入的研究，仅提一些众所周知约定俗成的部分。</p>
+<p>在<strong>UNIX</strong>流派下，每个flag为一个<code>-</code>和一个字母组成(或者是多个，可以将多个短选项合并在一个<code>-</code>中，比如<code>ps -aux</code>)，一般是单词的缩写，可以是大写或者小写，如一般用于获取版本信息的<code>-v</code>或者<code>-V</code>；抑或是<code>--</code>后面跟上一个单词，比如获取版本信息的<code>--version</code>。一般我们称其为短选项和长选项，仅仅是写法不同。</p>
+<p>在此之上，flag又分为可赋值和不可赋值两种，在实现上一般将不可赋值的flag设计为Boolean类型。可赋值的flag一般用于设置一些参数的具体数值，比如<code>tail -n 10</code>，也可以写作<code>tail -n=10</code>，这里的10就是<code>n</code>这个flag的值。不可赋值的一般用于设置一些配置选项，比如<code>rm -rf</code>中的<code>r</code>和<code>f</code>就分别代表<strong>递归(recursive)</strong>和<strong>强制(force)</strong>。</p>
+<p><strong>GNU</strong>风格的flag与<strong>UNIX</strong>的差别主要在于<strong>GNU</strong>风格的flag大多使用<code>--</code>加上单词或者词组(如<code>npm --no-optional</code>)，其他方面差别并不是很大。</p>
+<p>虽然说了这么多，设计CLI程序的参数实际上只需要遵守一个原则：<strong>易用</strong>。</p>
+<p>这个<strong>易</strong>在我看来主要有几点：</p>
+<ol>
+<li>参数名易懂，常用的参数如<code>-h --help</code>这类的尽可能遵从传统，尽量让用户在看到参数名的时候就能知道参数的作用</li>
+<li>简单明了的的参数说明，写清参数的用法，用途</li>
+<li>尽可能压缩常用参数的数量</li>
+</ol>
+<h2 id="写程序前的准备"><a href="#写程序前的准备" class="headerlink" title="写程序前的准备"></a>写程序前的准备</h2><p>在开始写程序前，我们还需要做几件事：</p>
+<ul>
+<li>调研需要用到的utils，比如解析flag的package，找到合适的工具能大大节约我们的精力</li>
+<li>设计程序的工作流程，这可以帮助我们理清程序的逻辑，写出流畅的代码</li>
+<li>填饱肚子，这可以让我们精力更加充沛(刚吃过饭的同学可以跳过这一步)</li>
+</ul>
+<h3 id="调研阶段"><a href="#调研阶段" class="headerlink" title="调研阶段"></a>调研阶段</h3><p>要手动解析程序的flags可不是一件轻松的事情，其中涉及到大量的字符串处理和逻辑判断，一不小心写错了可能就要花上很久的时间来排查错误。</p>
+<p>好在Go语言的标准库已经为我们提供了一个很棒的flag库。这个库能帮我们做的事大致如下：</p>
+<ul>
+<li>解析flag并与变量绑定</li>
+<li>自动生成帮助文档</li>
+<li>为参数提供默认值</li>
+</ul>
+<p>以下是一个使用flag包的示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"flag"</span></span><br><span class="line">  <span class="string">"fmt"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  a := flag.Int(<span class="string">"a"</span>, <span class="number">1</span>, <span class="string">"parameter a"</span>) <span class="comment">// 定义一个参数名为a的参数，默认值为1，后面为帮助说明</span></span><br><span class="line">  b := flag.String(<span class="string">"b"</span>, <span class="string">""</span>, <span class="string">"parameter b"</span>)</span><br><span class="line">  c := flag.Bool(<span class="string">"c"</span>, <span class="literal">false</span>, <span class="string">"parameter c"</span>)</span><br><span class="line">  <span class="keyword">var</span> A <span class="keyword">int</span></span><br><span class="line">  <span class="keyword">var</span> B <span class="keyword">string</span></span><br><span class="line">  <span class="keyword">var</span> C <span class="keyword">bool</span></span><br><span class="line">  flag.IntVar(&amp;A, <span class="string">"A"</span>, <span class="number">1</span>, <span class="string">"parameter A"</span>) <span class="comment">// 将参数A绑定到变量A，默认值为1，后面为帮助说明</span></span><br><span class="line">  flag.StringVar(&amp;B, <span class="string">"B"</span>, <span class="string">""</span>, <span class="string">"parameter B"</span>)</span><br><span class="line">  flag.BoolVar(&amp;C, <span class="string">"C"</span>, <span class="literal">false</span>, <span class="string">"parameter C"</span>)</span><br><span class="line">  flag.Parse() <span class="comment">// 解析参数，注意该函数必须在参数定义之后调用</span></span><br><span class="line">  args := flag.Args() <span class="comment">// args为flag以外的参数列表</span></span><br><span class="line">  fmt.Printf(<span class="string">"parameter a is: %d\n"</span>, a)</span><br><span class="line">  fmt.Printf(<span class="string">"parameter b is: %s\n"</span>, b)</span><br><span class="line">  fmt.Printf(<span class="string">"parameter A is: %d\n"</span>, A)</span><br><span class="line">  fmt.Printf(<span class="string">"parameter B is: %s\n"</span>, B)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>flag包的<code>Int</code>可返回对应参数值的指针，<code>IntVar</code>则可以将参数值直接与变量绑定，非常的方便。</p>
+<p>在传入命令行参数时，形如<code>program -a 10 -b=hello</code>，均可将值解析。</p>
+<p>另外，考虑到该程序涉及到输入输出的重定向，需要往buffer或是stream中读写数据。fmt的实现都是基于Stdio的(除了fmt.Fprint系列)，自然不适用。</p>
+<p>好在Go语言的标准库还有另一个用于bufferio的包<strong>bufio</strong>。</p>
+<p>在Go的io包中定义了一组<strong>Reader</strong>和<strong>Writer</strong>的interfaces，用于输入输出的读写。bufio则是提供了一组<strong>Reader</strong>和<strong>Writer</strong>的实现。</p>
+<p>以下是一个样例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"bufio"</span></span><br><span class="line">  <span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  input := os.Stdin</span><br><span class="line">  output := os.Stdout</span><br><span class="line">  <span class="comment">// input, _ := os.Open("some_in_file")</span></span><br><span class="line">  <span class="comment">// output, _ := os.Open("some_out_file)</span></span><br><span class="line">  reader := bufio.NewReader(input) <span class="comment">// 这里的参数类型实际上是io.Reader,input是File*类型，因为File实现了io.Reader，所以可以进行转换</span></span><br><span class="line">  writer := bufio.NewWriter(output)</span><br><span class="line">  buffer := reader.Read()</span><br><span class="line">  writer.Write(buffer)</span><br><span class="line">  writer.Flush() <span class="comment">// 这里需要手动Flush才能显示到stdout</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>非常的简单易用，只要输入流实现了<code>io.Reader</code>的相关接口(输出流同理)，既可以用来创建Reader。bufio也提供了一套丰富的读写方式，比如<code>ReadBytes()</code>,<code>ReadString()</code>,<code>ReadLine()</code>等等，按照需求使用即可，一些细节可以阅读官方文档或者自己试验一下。</p>
+<h3 id="设计阶段"><a href="#设计阶段" class="headerlink" title="设计阶段"></a>设计阶段</h3><p>该程序的逻辑比较简单，没有循环，没有太多跳转之类的，就是一个线性流程。</p>
+<p>根据需求，我们可以将整个流程归纳为：</p>
+<ol>
+<li>解析参数</li>
+<li>设置输入输出</li>
+<li>读取输入内容，分页，打印</li>
+</ol>
+<p>接下来便可以开始进行代码的编写了。</p>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><p>先贴一下实现后的代码：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"bufio"</span></span><br><span class="line">	<span class="string">"flag"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"io"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">	<span class="string">"os/exec"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> selpgArgs <span class="keyword">struct</span> &#123;</span><br><span class="line">	startPage <span class="keyword">int</span></span><br><span class="line">	endPage   <span class="keyword">int</span></span><br><span class="line">	lNumber   <span class="keyword">int</span></span><br><span class="line">	pageType  <span class="keyword">byte</span></span><br><span class="line">	dest      <span class="keyword">string</span></span><br><span class="line">	args      []<span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> args selpgArgs</span><br><span class="line">	initArgs(&amp;args)</span><br><span class="line">	handleInput(args)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">initArgs</span><span class="params">(args *selpgArgs)</span></span> &#123;</span><br><span class="line">	flag.IntVar(&amp;args.startPage, <span class="string">"s"</span>, <span class="number">1</span>, <span class="string">"Start page number"</span>)</span><br><span class="line">	flag.IntVar(&amp;args.endPage, <span class="string">"e"</span>, <span class="number">1</span>, <span class="string">"End page number"</span>)</span><br><span class="line">	flag.StringVar(&amp;args.dest, <span class="string">"d"</span>, <span class="string">""</span>, <span class="string">"Set the output to destination pipe"</span>)</span><br><span class="line">	fword := flag.Bool(<span class="string">"f"</span>, <span class="literal">false</span>, <span class="string">"Page with form feeds"</span>)</span><br><span class="line">	flag.IntVar(&amp;args.lNumber, <span class="string">"l"</span>, <span class="number">72</span>, <span class="string">"Page with lines number"</span>)</span><br><span class="line">	flag.Parse()</span><br><span class="line">	args.pageType = <span class="string">'l'</span></span><br><span class="line">	<span class="keyword">if</span> *fword &#123;</span><br><span class="line">		args.pageType = <span class="string">'f'</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> args.startPage &gt; args.endPage &#123;</span><br><span class="line">		fmt.Fprintln(os.Stderr, <span class="string">"Start page is greater than end page"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	args.args = flag.Args()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handleInput</span><span class="params">(args selpgArgs)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> in *os.File</span><br><span class="line">	<span class="keyword">var</span> out *os.File</span><br><span class="line">	<span class="keyword">var</span> cmd *exec.Cmd</span><br><span class="line">	<span class="keyword">var</span> pageNum, lineNum <span class="keyword">int</span></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(args.args) == <span class="number">0</span> &#123;</span><br><span class="line">		in = os.Stdin</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">var</span> err error</span><br><span class="line">		in, err = os.Open(args.args[<span class="number">0</span>])</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Fprintf(os.Stderr, <span class="string">"Couldn't open input file: %s\n"</span>, <span class="keyword">string</span>(args.args[<span class="number">0</span>]))</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> args.dest != <span class="string">""</span> &#123;</span><br><span class="line">		cmd = exec.Command(fmt.Sprintf(<span class="string">"lp -d%s"</span>, args.dest))</span><br><span class="line">		reader, writer, err := os.Pipe()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Fprintf(os.Stderr, <span class="string">"Couldn't open pipe to %s\n"</span>, args.dest)</span><br><span class="line">		&#125;</span><br><span class="line">		cmd.Stdin = reader</span><br><span class="line">		out = writer</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		out = os.Stdout</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> args.pageType == <span class="string">'l'</span> &#123;</span><br><span class="line">		<span class="keyword">var</span> line []<span class="keyword">byte</span></span><br><span class="line">		reader := bufio.NewReader(in)</span><br><span class="line">		writer := bufio.NewWriter(out)</span><br><span class="line">		lineNum = <span class="number">0</span></span><br><span class="line">		pageNum = <span class="number">1</span></span><br><span class="line">		<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">			<span class="keyword">var</span> err error</span><br><span class="line">			line, _, err = reader.ReadLine()</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">if</span> err == io.EOF &#123;</span><br><span class="line">					<span class="keyword">break</span></span><br><span class="line">				&#125;</span><br><span class="line">				fmt.Println(err)</span><br><span class="line">				<span class="keyword">break</span></span><br><span class="line">			&#125;</span><br><span class="line">			lineNum++</span><br><span class="line">			<span class="keyword">if</span> lineNum &gt; args.lNumber &#123;</span><br><span class="line">				pageNum++</span><br><span class="line">				lineNum = <span class="number">1</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> pageNum &gt;= args.startPage &amp;&amp; pageNum &lt;= args.endPage &#123;</span><br><span class="line">				writer.Write(line)</span><br><span class="line">				writer.Flush()</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		pageNum = <span class="number">1</span></span><br><span class="line">		reader := bufio.NewReader(in)</span><br><span class="line">		writer := bufio.NewWriter(out)</span><br><span class="line">		<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">			buffer, err := reader.ReadByte()</span><br><span class="line">			<span class="keyword">if</span> err == io.EOF &#123;</span><br><span class="line">				<span class="keyword">break</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> buffer == <span class="string">'\f'</span> &#123;</span><br><span class="line">				pageNum++</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> pageNum &gt;= args.startPage &amp;&amp; pageNum &lt;= args.endPage &#123;</span><br><span class="line">				writer.WriteByte(buffer)</span><br><span class="line">				writer.Flush()</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> pageNum &lt; args.startPage &#123;</span><br><span class="line">		fmt.Fprintf(os.Stderr, <span class="string">"Start page (%d) is greater than total pages (%d), no output written\n"</span>, args.startPage, pageNum)</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> pageNum &lt; args.endPage &#123;</span><br><span class="line">		fmt.Fprintf(os.Stderr, <span class="string">"End page (%d) is greater than total pages (%d), less output than expected\n"</span>, args.endPage, pageNum)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> cmd != <span class="literal">nil</span> &#123;</span><br><span class="line">		cmd.Run()</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码不长，只有一百多行。这还是多亏了flag包为我省了不少的力气。</p>
+<p>首先，为了方便记录，我设计了一个类型<code>type selpgArgs struct</code>用于存储该程序的相关参数：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> selpgArgs <span class="keyword">struct</span> &#123;</span><br><span class="line">	startPage <span class="keyword">int</span> <span class="comment">// 开始页码</span></span><br><span class="line">	endPage   <span class="keyword">int</span> <span class="comment">// 结束页码</span></span><br><span class="line">	lNumber   <span class="keyword">int</span> <span class="comment">// 每页行数</span></span><br><span class="line">	pageType  <span class="keyword">byte</span> <span class="comment">// 分页类型，按照每页行数或是分页符\f</span></span><br><span class="line">	dest      <span class="keyword">string</span> <span class="comment">// 输出到打印程序的管道</span></span><br><span class="line">	args      []<span class="keyword">string</span> <span class="comment">// arguments，即文件名</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我将主要的工作分为两个函数<code>initArgs</code>和<code>handleInput</code>，分别用于初始化参数和进行主要的打印工作。</p>
+<p>在flag的帮助下，我的<code>initArgs</code>仅仅用了几行代码就搞定了，非常方便：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">initArgs</span><span class="params">(args *selpgArgs)</span></span> &#123;</span><br><span class="line">	flag.IntVar(&amp;args.startPage, <span class="string">"s"</span>, <span class="number">1</span>, <span class="string">"Start page number"</span>)</span><br><span class="line">	flag.IntVar(&amp;args.endPage, <span class="string">"e"</span>, <span class="number">1</span>, <span class="string">"End page number"</span>)</span><br><span class="line">	flag.StringVar(&amp;args.dest, <span class="string">"d"</span>, <span class="string">""</span>, <span class="string">"Set the output to destination pipe"</span>)</span><br><span class="line">	fword := flag.Bool(<span class="string">"f"</span>, <span class="literal">false</span>, <span class="string">"Page with form feeds"</span>)</span><br><span class="line">	flag.IntVar(&amp;args.lNumber, <span class="string">"l"</span>, <span class="number">72</span>, <span class="string">"Page with lines number"</span>)</span><br><span class="line">	flag.Parse()</span><br><span class="line">	args.pageType = <span class="string">'l'</span></span><br><span class="line">	<span class="keyword">if</span> *fword &#123;</span><br><span class="line">		args.pageType = <span class="string">'f'</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> args.startPage &gt; args.endPage &#123;</span><br><span class="line">		fmt.Fprintln(os.Stderr, <span class="string">"Start page is greater than end page"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	args.args = flag.Args()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>之后就是根据参数进行读写工作：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handleInput</span><span class="params">(args selpgArgs)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> in *os.File</span><br><span class="line">	<span class="keyword">var</span> out *os.File <span class="comment">// 因为UNIX环境下万物皆为File，所以这里直接将input和output的类型定为了File*</span></span><br><span class="line">	<span class="keyword">var</span> cmd *exec.Cmd</span><br><span class="line">	<span class="keyword">var</span> pageNum, lineNum <span class="keyword">int</span></span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(args.args) == <span class="number">0</span> &#123;</span><br><span class="line">		in = os.Stdin <span class="comment">// 没有输入文件名的情况下将标准输入作为输入来源</span></span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">var</span> err error</span><br><span class="line">		in, err = os.Open(args.args[<span class="number">0</span>]) <span class="comment">// 输入了文件名的情况下将目标文件作为标准输入</span></span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Fprintf(os.Stderr, <span class="string">"Couldn't open input file: %s\n"</span>, <span class="keyword">string</span>(args.args[<span class="number">0</span>]))</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> args.dest != <span class="string">""</span> &#123;</span><br><span class="line">		cmd = exec.Command(fmt.Sprintf(<span class="string">"lp -d%s"</span>, args.dest)) <span class="comment">// 指定了打印机的管道后用exec打印</span></span><br><span class="line">		reader, writer, err := os.Pipe()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Fprintf(os.Stderr, <span class="string">"Couldn't open pipe to %s\n"</span>, args.dest)</span><br><span class="line">		&#125;</span><br><span class="line">		cmd.Stdin = reader</span><br><span class="line">		out = writer</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		out = os.Stdout</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> args.pageType == <span class="string">'l'</span> &#123; <span class="comment">// 按行数分页</span></span><br><span class="line">		<span class="keyword">var</span> line []<span class="keyword">byte</span></span><br><span class="line">		reader := bufio.NewReader(in)</span><br><span class="line">		writer := bufio.NewWriter(out)</span><br><span class="line">		lineNum = <span class="number">0</span></span><br><span class="line">		pageNum = <span class="number">1</span></span><br><span class="line">		<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">			<span class="keyword">var</span> err error</span><br><span class="line">			line, _, err = reader.ReadLine()</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">if</span> err == io.EOF &#123; <span class="comment">// 读取EOF后结束</span></span><br><span class="line">					<span class="keyword">break</span></span><br><span class="line">				&#125;</span><br><span class="line">				fmt.Println(err)</span><br><span class="line">				<span class="keyword">break</span></span><br><span class="line">			&#125;</span><br><span class="line">			lineNum++</span><br><span class="line">			<span class="keyword">if</span> lineNum &gt; args.lNumber &#123;</span><br><span class="line">				pageNum++</span><br><span class="line">				lineNum = <span class="number">1</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> pageNum &gt;= args.startPage &amp;&amp; pageNum &lt;= args.endPage &#123;</span><br><span class="line">				writer.Write(line)</span><br><span class="line">				writer.Flush() <span class="comment">// 这里需要手动Flush</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123; <span class="comment">// 按分页符分页</span></span><br><span class="line">		pageNum = <span class="number">1</span></span><br><span class="line">		reader := bufio.NewReader(in)</span><br><span class="line">		writer := bufio.NewWriter(out)</span><br><span class="line">		<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">			buffer, err := reader.ReadByte()</span><br><span class="line">			<span class="keyword">if</span> err == io.EOF &#123;</span><br><span class="line">				<span class="keyword">break</span></span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> buffer == <span class="string">'\f'</span> &#123;</span><br><span class="line">				pageNum++</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> pageNum &gt;= args.startPage &amp;&amp; pageNum &lt;= args.endPage &#123;</span><br><span class="line">				writer.WriteByte(buffer)</span><br><span class="line">				writer.Flush()</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> pageNum &lt; args.startPage &#123;</span><br><span class="line">		fmt.Fprintf(os.Stderr, <span class="string">"Start page (%d) is greater than total pages (%d), no output written\n"</span>, args.startPage, pageNum)</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> pageNum &lt; args.endPage &#123;</span><br><span class="line">		fmt.Fprintf(os.Stderr, <span class="string">"End page (%d) is greater than total pages (%d), less output than expected\n"</span>, args.endPage, pageNum)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> cmd != <span class="literal">nil</span> &#123;</span><br><span class="line">		cmd.Run()</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>就这样一个简单的selpg文件就搞定了。</p>
+<h2 id="测试一下"><a href="#测试一下" class="headerlink" title="测试一下"></a>测试一下</h2><p>做好之后我们简单的测试一下。</p>
+<p><img src="/images/image-20181006191041720.png" alt="image-20181006191041720"></p>
+<p>帮助信息可以正常显示。</p>
+<p><img src="/images/image-20181006191356729.png" alt="image-20181006191356729"></p>
+<p>使用命令行输入时可以正常分页(可以看到只有前两行被输出)。</p>
+<p>这里有一个40行的样例文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">hello world 1</span><br><span class="line">hello world 12</span><br><span class="line">hello world 123</span><br><span class="line">hello world 1234</span><br><span class="line">hello world 12345</span><br><span class="line">hello world 123456</span><br><span class="line">hello world 1234567</span><br><span class="line">hello world 12345678</span><br><span class="line">hello world 123456789</span><br><span class="line">hello world 1234567890</span><br><span class="line">hello world 123456789</span><br><span class="line">hello world 12345678</span><br><span class="line">hello world 1234567</span><br><span class="line">hello world 123456</span><br><span class="line">hello world 12345</span><br><span class="line">hello world 1234</span><br><span class="line">hello world 123</span><br><span class="line">hello world 12</span><br><span class="line">hello world 1</span><br><span class="line">hello world </span><br><span class="line">hello world 1</span><br><span class="line">hello world 12</span><br><span class="line">hello world 123</span><br><span class="line">hello world 1234</span><br><span class="line">hello world 12345</span><br><span class="line">hello world 123456</span><br><span class="line">hello world 1234567</span><br><span class="line">hello world 12345678</span><br><span class="line">hello world 123456789</span><br><span class="line">hello world 1234567890</span><br><span class="line">hello world 123456789</span><br><span class="line">hello world 12345678</span><br><span class="line">hello world 1234567</span><br><span class="line">hello world 123456</span><br><span class="line">hello world 12345</span><br><span class="line">hello world 1234</span><br><span class="line">hello world 123</span><br><span class="line">hello world 12</span><br><span class="line">hello world 1</span><br><span class="line">hello world</span><br></pre></td></tr></table></figure>
+<p><img src="/images/image-20181006191757182.png" alt="image-20181006191757182"></p>
+<p>可以看到能够正常输出。</p>
+<p><img src="/images/image-20181006191857866.png" alt="image-20181006191857866"></p>
+<p>标准错误也可正常输出。</p>
+<p><img src="/images/image-20181006192013254.png" alt="image-20181006192013254"></p>
+<p>管道操作也可正常使用。</p>
+<p><img src="/images/image-20181006192104624.png" alt="image-20181006192104624"></p>
+<p>重定向输出也可以正常使用。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/10/03/Redis的LRU缓存/" rel="next" title="Redis的LRU缓存">
+                <i class="fa fa-chevron-left"></i> Redis的LRU缓存
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">leiysky</p>
+              <p class="site-description motion-element" itemprop="description">A simple blog(temp)</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UNIX与GNU风格的flag-style"><span class="nav-number">2.</span> <span class="nav-text">UNIX与GNU风格的flag-style</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#写程序前的准备"><span class="nav-number">3.</span> <span class="nav-text">写程序前的准备</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#调研阶段"><span class="nav-number">3.1.</span> <span class="nav-text">调研阶段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#设计阶段"><span class="nav-number">3.2.</span> <span class="nav-text">设计阶段</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#代码实现"><span class="nav-number">4.</span> <span class="nav-text">代码实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#测试一下"><span class="nav-number">5.</span> <span class="nav-text">测试一下</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">leiysky</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
