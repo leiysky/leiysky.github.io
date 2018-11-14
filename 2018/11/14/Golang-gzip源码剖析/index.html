@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="golang," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="gzip是RFC1952中定义的一种压缩格式，Golang官方的gzip包对其进行了实现。 类型定义gzip包中实现了对gzip文件的Writer： 1234567891011121314// A Writer is an io.WriteCloser.// Writes to a Writer are compressed and written to w.type Writer struct">
+<meta name="keywords" content="golang">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Golang gzip源码剖析">
+<meta property="og:url" content="http://leiysky.com/2018/11/14/Golang-gzip源码剖析/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="gzip是RFC1952中定义的一种压缩格式，Golang官方的gzip包对其进行了实现。 类型定义gzip包中实现了对gzip文件的Writer： 1234567891011121314// A Writer is an io.WriteCloser.// Writes to a Writer are compressed and written to w.type Writer struct">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-11-14T10:09:44.840Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Golang gzip源码剖析">
+<meta name="twitter:description" content="gzip是RFC1952中定义的一种压缩格式，Golang官方的gzip包对其进行了实现。 类型定义gzip包中实现了对gzip文件的Writer： 1234567891011121314// A Writer is an io.WriteCloser.// Writes to a Writer are compressed and written to w.type Writer struct">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://leiysky.com/2018/11/14/Golang-gzip源码剖析/"/>
+
+
+
+
+
+  <title>Golang gzip源码剖析 | Blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Welcome to leiysky's blog</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/11/14/Golang-gzip源码剖析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Golang gzip源码剖析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-11-14T18:09:09+08:00">
+                2018-11-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>gzip是<a href="https://tools.ietf.org/html/rfc1952" target="_blank" rel="noopener">RFC1952</a>中定义的一种压缩格式，Golang官方的gzip包对其进行了实现。</p>
+<h2 id="类型定义"><a href="#类型定义" class="headerlink" title="类型定义"></a>类型定义</h2><p>gzip包中实现了对gzip文件的Writer：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// A Writer is an io.WriteCloser.</span></span><br><span class="line"><span class="comment">// Writes to a Writer are compressed and written to w.</span></span><br><span class="line"><span class="keyword">type</span> Writer <span class="keyword">struct</span> &#123;</span><br><span class="line">	Header      <span class="comment">// written at first call to Write, Flush, or Close</span></span><br><span class="line">	w           io.Writer</span><br><span class="line">	level       <span class="keyword">int</span></span><br><span class="line">	wroteHeader <span class="keyword">bool</span></span><br><span class="line">	compressor  *flate.Writer</span><br><span class="line">	digest      <span class="keyword">uint32</span> <span class="comment">// CRC-32, IEEE polynomial (section 8)</span></span><br><span class="line">	size        <span class="keyword">uint32</span> <span class="comment">// Uncompressed size (section 2.3.1)</span></span><br><span class="line">	closed      <span class="keyword">bool</span></span><br><span class="line">	buf         [<span class="number">10</span>]<span class="keyword">byte</span></span><br><span class="line">	err         error</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中的<code>w</code>是对于目标文件的Writer，对其进行<code>Write</code>写入的数据都是经过压缩的。</p>
+<p>并且定义了一组配置常量：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// These constants are copied from the flate package, so that code that imports</span></span><br><span class="line"><span class="comment">// "compress/gzip" does not also have to import "compress/flate".</span></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	NoCompression      = flate.NoCompression</span><br><span class="line">	BestSpeed          = flate.BestSpeed</span><br><span class="line">	BestCompression    = flate.BestCompression</span><br><span class="line">	DefaultCompression = flate.DefaultCompression</span><br><span class="line">	HuffmanOnly        = flate.HuffmanOnly</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<h2 id="函数实现"><a href="#函数实现" class="headerlink" title="函数实现"></a>函数实现</h2><p>创建Writer的函数：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// NewWriter returns a new Writer.</span></span><br><span class="line"><span class="comment">// Writes to the returned writer are compressed and written to w.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// It is the caller's responsibility to call Close on the Writer when done.</span></span><br><span class="line"><span class="comment">// Writes may be buffered and not flushed until Close.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// Callers that wish to set the fields in Writer.Header must do so before</span></span><br><span class="line"><span class="comment">// the first call to Write, Flush, or Close.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewWriter</span><span class="params">(w io.Writer)</span> *<span class="title">Writer</span></span> &#123;</span><br><span class="line">	z, _ := NewWriterLevel(w, DefaultCompression)</span><br><span class="line">	<span class="keyword">return</span> z</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewWriterLevel is like NewWriter but specifies the compression level instead</span></span><br><span class="line"><span class="comment">// of assuming DefaultCompression.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// The compression level can be DefaultCompression, NoCompression, HuffmanOnly</span></span><br><span class="line"><span class="comment">// or any integer value between BestSpeed and BestCompression inclusive.</span></span><br><span class="line"><span class="comment">// The error returned will be nil if the level is valid.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewWriterLevel</span><span class="params">(w io.Writer, level <span class="keyword">int</span>)</span> <span class="params">(*Writer, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> level &lt; HuffmanOnly || level &gt; BestCompression &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">"gzip: invalid compression level: %d"</span>, level)</span><br><span class="line">	&#125;</span><br><span class="line">	z := <span class="built_in">new</span>(Writer)</span><br><span class="line">	z.init(w, level)</span><br><span class="line">	<span class="keyword">return</span> z, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">init</span><span class="params">(w io.Writer, level <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	compressor := z.compressor</span><br><span class="line">	<span class="keyword">if</span> compressor != <span class="literal">nil</span> &#123;</span><br><span class="line">		compressor.Reset(w)</span><br><span class="line">	&#125;</span><br><span class="line">	*z = Writer&#123;</span><br><span class="line">		Header: Header&#123;</span><br><span class="line">			OS: <span class="number">255</span>, <span class="comment">// unknown</span></span><br><span class="line">		&#125;,</span><br><span class="line">		w:          w,</span><br><span class="line">		level:      level,</span><br><span class="line">		compressor: compressor,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>NewWriter</code>本质上也是通过调用<code>NewWriterLevel</code>创建的Writer，使用的是默认的压缩等级。</p>
+<p><code>init</code>实现了<code>Writer</code>类型中的<code>init</code>方法，主要做的是Writer的初始化。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Reset discards the Writer z's state and makes it equivalent to the</span></span><br><span class="line"><span class="comment">// result of its original state from NewWriter or NewWriterLevel, but</span></span><br><span class="line"><span class="comment">// writing to w instead. This permits reusing a Writer rather than</span></span><br><span class="line"><span class="comment">// allocating a new one.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">Reset</span><span class="params">(w io.Writer)</span></span> &#123;</span><br><span class="line">	z.init(w, z.level)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Reset</code>函数的实现为了节约内存，选择重用一个Writer而不是新建一个。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// writeBytes writes a length-prefixed byte slice to z.w.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">writeBytes</span><span class="params">(b []<span class="keyword">byte</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(b) &gt; <span class="number">0xffff</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"gzip.Write: Extra data is too large"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	le.PutUint16(z.buf[:<span class="number">2</span>], <span class="keyword">uint16</span>(<span class="built_in">len</span>(b)))</span><br><span class="line">	_, err := z.w.Write(z.buf[:<span class="number">2</span>])</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	_, err = z.w.Write(b)</span><br><span class="line">	<span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// writeString writes a UTF-8 string s in GZIP's format to z.w.</span></span><br><span class="line"><span class="comment">// GZIP (RFC 1952) specifies that strings are NUL-terminated ISO 8859-1 (Latin-1).</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">writeString</span><span class="params">(s <span class="keyword">string</span>)</span> <span class="params">(err error)</span></span> &#123;</span><br><span class="line">	<span class="comment">// GZIP stores Latin-1 strings; error if non-Latin-1; convert if non-ASCII.</span></span><br><span class="line">	needconv := <span class="literal">false</span></span><br><span class="line">	<span class="keyword">for</span> _, v := <span class="keyword">range</span> s &#123;</span><br><span class="line">		<span class="keyword">if</span> v == <span class="number">0</span> || v &gt; <span class="number">0xff</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> errors.New(<span class="string">"gzip.Write: non-Latin-1 header string"</span>)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> v &gt; <span class="number">0x7f</span> &#123;</span><br><span class="line">			needconv = <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> needconv &#123;</span><br><span class="line">		b := <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">0</span>, <span class="built_in">len</span>(s))</span><br><span class="line">		<span class="keyword">for</span> _, v := <span class="keyword">range</span> s &#123;</span><br><span class="line">			b = <span class="built_in">append</span>(b, <span class="keyword">byte</span>(v))</span><br><span class="line">		&#125;</span><br><span class="line">		_, err = z.w.Write(b)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		_, err = io.WriteString(z.w, s)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// GZIP strings are NUL-terminated.</span></span><br><span class="line">	z.buf[<span class="number">0</span>] = <span class="number">0</span></span><br><span class="line">	_, err = z.w.Write(z.buf[:<span class="number">1</span>])</span><br><span class="line">	<span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>writeBytes</code>和<code>writeString</code>是两个私有函数。<code>writeBytes</code>主要用于向writer写入一个带有前缀的byte切片。<code>writeString</code>则是向Writer写入一个UTF-8的字符串。在<code>writeString</code>中对于字符的范围进行了判断，对于ASCII可表示的字符直接进行存储，而如果字符超出了这个范围，则会进行转换。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Write writes a compressed form of p to the underlying io.Writer. The</span></span><br><span class="line"><span class="comment">// compressed bytes are not necessarily flushed until the Writer is closed.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">Write</span><span class="params">(p []<span class="keyword">byte</span>)</span> <span class="params">(<span class="keyword">int</span>, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">var</span> n <span class="keyword">int</span></span><br><span class="line">	<span class="comment">// Write the GZIP header lazily.</span></span><br><span class="line">	<span class="keyword">if</span> !z.wroteHeader &#123;</span><br><span class="line">		z.wroteHeader = <span class="literal">true</span></span><br><span class="line">		z.buf = [<span class="number">10</span>]<span class="keyword">byte</span>&#123;<span class="number">0</span>: gzipID1, <span class="number">1</span>: gzipID2, <span class="number">2</span>: gzipDeflate&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Extra != <span class="literal">nil</span> &#123;</span><br><span class="line">			z.buf[<span class="number">3</span>] |= <span class="number">0x04</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Name != <span class="string">""</span> &#123;</span><br><span class="line">			z.buf[<span class="number">3</span>] |= <span class="number">0x08</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Comment != <span class="string">""</span> &#123;</span><br><span class="line">			z.buf[<span class="number">3</span>] |= <span class="number">0x10</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.ModTime.After(time.Unix(<span class="number">0</span>, <span class="number">0</span>)) &#123;</span><br><span class="line">			<span class="comment">// Section 2.3.1, the zero value for MTIME means that the</span></span><br><span class="line">			<span class="comment">// modified time is not set.</span></span><br><span class="line">			le.PutUint32(z.buf[<span class="number">4</span>:<span class="number">8</span>], <span class="keyword">uint32</span>(z.ModTime.Unix()))</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.level == BestCompression &#123;</span><br><span class="line">			z.buf[<span class="number">8</span>] = <span class="number">2</span></span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> z.level == BestSpeed &#123;</span><br><span class="line">			z.buf[<span class="number">8</span>] = <span class="number">4</span></span><br><span class="line">		&#125;</span><br><span class="line">		z.buf[<span class="number">9</span>] = z.OS</span><br><span class="line">		_, z.err = z.w.Write(z.buf[:<span class="number">10</span>])</span><br><span class="line">		<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Extra != <span class="literal">nil</span> &#123;</span><br><span class="line">			z.err = z.writeBytes(z.Extra)</span><br><span class="line">			<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Name != <span class="string">""</span> &#123;</span><br><span class="line">			z.err = z.writeString(z.Name)</span><br><span class="line">			<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Comment != <span class="string">""</span> &#123;</span><br><span class="line">			z.err = z.writeString(z.Comment)</span><br><span class="line">			<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.compressor == <span class="literal">nil</span> &#123;</span><br><span class="line">			z.compressor, _ = flate.NewWriter(z.w, z.level)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	z.size += <span class="keyword">uint32</span>(<span class="built_in">len</span>(p))</span><br><span class="line">	z.digest = crc32.Update(z.digest, crc32.IEEETable, p)</span><br><span class="line">	n, z.err = z.compressor.Write(p)</span><br><span class="line">	<span class="keyword">return</span> n, z.err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Write</code>函数中主要的写入工作还是通过<code>writeString</code>和<code>writeBytes</code>来实现的，它对于gzip的文件格式做了规范，使得输出的内容符合gzip的定义。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Flush flushes any pending compressed data to the underlying writer.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// It is useful mainly in compressed network protocols, to ensure that</span></span><br><span class="line"><span class="comment">// a remote reader has enough data to reconstruct a packet. Flush does</span></span><br><span class="line"><span class="comment">// not return until the data has been written. If the underlying</span></span><br><span class="line"><span class="comment">// writer returns an error, Flush returns that error.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// In the terminology of the zlib library, Flush is equivalent to Z_SYNC_FLUSH.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">Flush</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> z.err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> z.closed &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> !z.wroteHeader &#123;</span><br><span class="line">		z.Write(<span class="literal">nil</span>)</span><br><span class="line">		<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> z.err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	z.err = z.compressor.Flush()</span><br><span class="line">	<span class="keyword">return</span> z.err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Flush</code>的作用是在进行http等网络通信时，判断服务端socket的reader是否能接收整个压缩过的包。如果遇到无法写入的情况，<code>Flush</code>会挂起，直到数据被成功写入才返回。在此期间如果有异常出现，<code>Flush</code>会返回对应的<code>error</code>。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Close closes the Writer by flushing any unwritten data to the underlying</span></span><br><span class="line"><span class="comment">// io.Writer and writing the GZIP footer.</span></span><br><span class="line"><span class="comment">// It does not close the underlying io.Writer.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">Close</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> z.err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> z.closed &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	z.closed = <span class="literal">true</span></span><br><span class="line">	<span class="keyword">if</span> !z.wroteHeader &#123;</span><br><span class="line">		z.Write(<span class="literal">nil</span>)</span><br><span class="line">		<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> z.err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	z.err = z.compressor.Close()</span><br><span class="line">	<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> z.err</span><br><span class="line">	&#125;</span><br><span class="line">	le.PutUint32(z.buf[:<span class="number">4</span>], z.digest)</span><br><span class="line">	le.PutUint32(z.buf[<span class="number">4</span>:<span class="number">8</span>], z.size)</span><br><span class="line">	_, z.err = z.w.Write(z.buf[:<span class="number">8</span>])</span><br><span class="line">	<span class="keyword">return</span> z.err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/golang/" rel="tag"># golang</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/11/03/详解程序链接的过程/" rel="next" title="详解程序链接的过程">
+                <i class="fa fa-chevron-left"></i> 详解程序链接的过程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">leiysky</p>
+              <p class="site-description motion-element" itemprop="description">A simple blog(temp)</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">tags</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#类型定义"><span class="nav-number">1.</span> <span class="nav-text">类型定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#函数实现"><span class="nav-number">2.</span> <span class="nav-text">函数实现</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">leiysky</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
