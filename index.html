@@ -262,6 +262,166 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/07/使用Go搭建RESTful-API服务器/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/07/使用Go搭建RESTful-API服务器/" itemprop="url">使用Go搭建RESTful API服务器</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-12-07T13:21:16+08:00">
+                2018-12-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="什么是RESTful？"><a href="#什么是RESTful？" class="headerlink" title="什么是RESTful？"></a>什么是RESTful？</h2><p><strong>RESTful</strong>全名是<strong>可表述性状态转移(Representational State Transfer)</strong>，是一套HTTP API的设计风格。</p>
+<p>看名字很抽象，所以这里我就结合理论大致的讲一下自己的理解。</p>
+<p><strong>REST</strong>的核心是<strong>资源</strong>的访问，以及客户端/服务端的<strong>C/S</strong>模式。</p>
+<p>在<strong>REST</strong>中，API通过URI的形式来访问。与此同时，<strong>REST</strong>也为<strong>HTTP动词</strong>赋予了更加完善的语义。</p>
+<p>最常用的动词有<code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>:</p>
+<ul>
+<li><code>GET</code>用于访问已有的资源</li>
+<li><code>POST</code>用于创建资源，并且该资源的标识由服务端维护</li>
+<li><code>PUT</code>用于更新资源，标识由客户端维护</li>
+<li><code>DELETE</code>用于删除一个资源</li>
+</ul>
+<p>通过<strong>HTTP动词</strong>，可以实现<strong>REST</strong>的可表述性部分，而状态转移则是通过API的分层来完成的。</p>
+<p><strong>REST</strong>中状态是由客户端维护的，服务端本身无状态。客户端如果要获取资源的情况，需要逐层访问API来实现。</p>
+<p>比如说对于某个网站的某个用户的某个信息，可以设计这样的一个<strong>REST API</strong>：</p>
+<ul>
+<li><code>/users/:user_id/profiles/:profile_id</code>（<code>:xx_id</code>表示占位符）</li>
+</ul>
+<p>这样一来<strong>REST</strong>的概念就清晰了许多。</p>
+<p><strong>REST</strong>的优点是对于资源的访问可视化，更加清晰。但是他也有缺点，就是不太适合一些命令式的<strong>API</strong>，对于这类<strong>API</strong>我们可能要引入<strong>CQRS(命令查询职责分离，Command Query Responsibility Segregation)</strong>的架构，使用一些RPC协议来完成命令式API的调用。</p>
+<h2 id="开工前的调研"><a href="#开工前的调研" class="headerlink" title="开工前的调研"></a>开工前的调研</h2><p>在开始编写服务端之前，需要先进行调研确定技术栈，方便之后的架构设计。</p>
+<p>Golang的优势在于有一套较为完善的标准库，非常适合微框架的发展。在参考了几套常用Golang HTTP Server的框架之后，我决定自己写一个中间件的包装组件。</p>
+<p>数据库方面，根据要求需要使用BoltDB，在语言库的方面没有更多选择。</p>
+<p>确定了这些之后就可以开始编写。</p>
+<h2 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h2><p>设计初期，我没有多想便选择了Web领域最成熟，也十分经典的架构<code>MVC</code>。</p>
+<p>对于中间件的设计，则是使用<code>AOP</code>的理念。</p>
+<p>在<code>MVC</code>架构中，有三个重要的成分：</p>
+<ul>
+<li><code>Model</code>，模型层，主要负责处理数据的序列化和反序列化，这层一般不会涉及业务逻辑。由于设计的是<strong>REST</strong>服务器，因此可以抽象出一套类似<code>DAO</code>的<code>Model API</code>，<code>GetByID</code>, <code>GetAll</code>, <code>Update</code>, <code>Create</code>, <code>Delete</code>。</li>
+<li><code>View</code>，视觉层。对于<strong>REST</strong>服务器来说，所谓<code>View</code>其实就是呈现的<code>JSON</code>数据。</li>
+<li><code>Controller</code>，控制器层。主要处理路由的逻辑，比如参数的解析，数据的组装等。</li>
+</ul>
+<p>一般开发时不会完全按照这个范式，我选择在<code>Model</code>和<code>Controller</code>中间加入一个<code>Service</code>层。这一层主要做的事情是访问<code>Model</code>取出数据，对其进行一定的包装，包含一些业务逻辑。这样的好处在于可以简化<code>Controller</code>，也可以更方便的复用一些逻辑。</p>
+<p>这样一来整个项目的文件结构就清晰了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">src/</span><br><span class="line">  controllers/   用于放controller文件</span><br><span class="line">    user.go</span><br><span class="line">    ...</span><br><span class="line">  models/        用于放model文件</span><br><span class="line">    user.go</span><br><span class="line">    ...</span><br><span class="line">  services/      用于放service</span><br><span class="line">    user.go</span><br><span class="line">    ...</span><br><span class="line">  utils/         用于放一些常用工具</span><br><span class="line">    utils.go</span><br><span class="line">    ...</span><br><span class="line">  main.go        项目入口</span><br><span class="line">  README         项目说明</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure></p>
+<h2 id="项目编写"><a href="#项目编写" class="headerlink" title="项目编写"></a>项目编写</h2><p>有了一个好的架构之后项目的编写就容易多了，只需要照着框架填鸭即可。</p>
+<p>主要讲一下我自己实现的<code>MiddlewareComposer</code>。该工具可以将一系列的中间件包装成一个<code>http.HandleFunc</code>，调用时是一个洋葱的结构（参考<code>Koa</code>中间件的模式）</p>
+<p><img src="images/onion.png" alt="onion"></p>
+<p>这样的好处在于可以形成一个整齐的调用栈，处理log，异常等常见服务时非常方便。写起来逻辑也很清晰。</p>
+<p>实现起来也很简单，利用函数式编程的闭包特性，我们可以构造出一个自执行的函数。具体请看<a href="https://github.com/go-cloud-service/go-cloud-service/blob/master/utils/middleware.go" target="_blank" rel="noopener">这里</a></p>
+<p>原本还想实现一个路由的中间件，这样嵌套挂载写起来会很方便，但是因为时间关系，最后还是搭配了<code>Gorilla</code>的<code>mux</code>。</p>
+<p>对于<code>BoltDB</code>，我为其包装了一组<code>k-v DB</code>常用的API，包括<code>GET</code>，<code>SET</code>，<code>SCAN</code>等操作。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Golang在工程开发上真的非常省心省力。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/11/30/头条后台开发面经/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2037,289 +2197,13 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/05/13/Matrix服务端面试总结/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/13/Matrix服务端面试总结/" itemprop="url">Matrix服务端面试总结</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-13T14:45:05+08:00">
-                2018-05-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>今天下午完成了matrix服务端的面试，特于此将面试的题目总结一下，以备今后使用。</p>
-<h2 id="HTTP相关"><a href="#HTTP相关" class="headerlink" title="HTTP相关"></a>HTTP相关</h2><p>这方面主要考点在于对于HTTP请求头的一些认识。首先先讨论一下HTTP请求的组成。</p>
-<p>HTTP请求由<strong>请求行(request line)</strong>，<strong>请求头(request head)</strong>，<strong>空行(empty line)</strong>和<strong>请求体(request body)</strong>。</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GET /HTTP/1.1</span><br><span class="line">Host: www.google.com</span><br></pre></td></tr></table></figure>
-<p>以上是一个标准的HTTP请求行，他做的事情主要是表明一下使用的HTTP协议版本（这里第二行是HTTP1.1要求的一个作用Host指定主机）。</p>
-<h3 id="请求头"><a href="#请求头" class="headerlink" title="请求头"></a>请求头</h3><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">GET / HTTP/1.1</span><br><span class="line">Host: seer.61.com</span><br><span class="line">Connection: keep-alive</span><br><span class="line">Cache-Control: max-age=0</span><br><span class="line">Upgrade-Insecure-Requests: 1</span><br><span class="line">User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,* / *;q=0.8</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.9,en;q=0.8</span><br><span class="line">Cookie: tm-uuid=6ffe3e26-96d5-0baf-6db2-70c3042acf75; Hm_lvt_a18e04bf933ff220533099052f47a6ff=1526125381; Hm_lpvt_a18e04bf933ff220533099052f47a6ff=1526125381</span><br></pre></td></tr></table></figure>
-<p>这就是一个请求行和请求头搭配的例子（因为现在还在使用HTTP协议的网站实在太难找了，所以就先拿了赛尔号的主页）。可以看到这其中有很多条key-value，有一些比较常见的比如说：</p>
-<blockquote>
-<ol>
-<li>User-Agent 首部包含了一个特征字符串，用来让网络协议的对端来识别发起请求的用户代理软件的应用类型、操作系统、软件开发商以及版本号。</li>
-<li>Accept-Charset 请求头用来告知（服务器）客户端可以处理的字符集类型。 借助内容协商机制，服务器可以从诸多备选项中选择一项进行应用， 并使用Content-Type 应答头通知客户端它的选择。 </li>
-<li>Content-Type 实体头部用于指示资源的MIME类型 media type 。 </li>
-<li>Cookie 是一个请求首部，其中含有先前由服务器通过 Set-Cookie  首部投放并存储到客户端的 HTTP cookies。</li>
-<li>Host 请求头指明了服务器的域名（对于虚拟主机来说），以及（可选的）服务器监听的TCP端口号。 </li>
-<li>Referer 首部包含了当前请求页面的来源页面的地址，即表示当前页面是通过此来源页面里的链接进入的。服务端一般使用Referer首部识别访问来源，可能会以此进行统计分析、日志记录以及缓存优化等。 </li>
-<li>请求首部字段 Origin 指示了请求来自于哪个站点。该字段仅指示服务器名称，并不包含任何路径信息。该首部用于 CORS 请求或者 POST 请求。除了不包含路径信息，该字段与 Referer首部字段相似。 </li>
-<li>Connection 头（header） 决定当前的事务完成后，是否会关闭网络连接。如果该值是“keep-alive”，网络连接就是持久的，不会关闭，使得对同一个服务器的请求可以继续在该连接上完成。</li>
-</ol>
-</blockquote>
-<p>（参考自MDN<a href="">https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers</a>)</p>
-<p>请求头中还有一个很重要的概念，就是<strong>请求方法(Request method)</strong>。</p>
-<p><strong>HTTP/1.1</strong>中定义了八种请求方法，分别是:</p>
-<blockquote>
-<p>GET </p>
-<p>向指定的资源发出“显示”请求。使用GET方法应该只用在读取数据，而不应当被用于产生“副作用”的操作中，例如在Web Application中。其中一个原因是GET可能会被网络蜘蛛等随意访问。 </p>
-<p>HEAD </p>
-<p>与GET方法一样，都是向服务器发出指定资源的请求。只不过服务器将不传回资源的本文部分。它的好处在于，使用这个方法可以在不必传输全部内容的情况下，就可以获取其中“关于该资源的信息”（元信息或称元数据）。 </p>
-<p>POST </p>
-<p>向指定资源提交数据，请求服务器进行处理（例如提交表单或者上传文件）。数据被包含在请求本文中。这个请求可能会创建新的资源或修改现有资源，或二者皆有。 </p>
-<p>PUT</p>
-<p>向指定资源位置上传其最新内容。 DELETE 请求服务器删除Request-URI所标识的资源。 TRACE 回显服务器收到的请求，主要用于测试或诊断。 OPTIONS 这个方法可使服务器传回该资源所支持的所有HTTP请求方法。用’*’来代替资源名称，向Web服务器发送OPTIONS请求，可以测试服务器功能是否正常运作。 </p>
-<p>CONNECT </p>
-<p>HTTP/1.1协议中预留给能够将连接改为管道方式的代理服务器。通常用于SSL加密服务器的链接（经由非加密的HTTP代理服务器）。</p>
-</blockquote>
-<p>比较常用的有四种，分别是<strong>GET,POST,DELETE,PUT</strong>。这也是我们实现<strong>RESTful API</strong>的一个很重要的概念。</p>
-<h3 id="请求体"><a href="#请求体" class="headerlink" title="请求体"></a>请求体</h3><p>请求体主要是为PUT和POST方法提供的，用于传输一些信息。</p>
-<h3 id="响应"><a href="#响应" class="headerlink" title="响应"></a>响应</h3><p>响应(<strong>response</strong>)也包括状态行(<strong>status line</strong>)响应头(<strong>response head</strong>)和响应体(<strong>response body</strong>)。</p>
-<p>响应头和请求头的字段种类相同，它一般被用于向客户端传递一些配置，比如Set-Cookie等。而响应体中的内容就是用户请求的结果。</p>
-<p>状态行表示响应的状态，如下：</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 200 OK</span><br></pre></td></tr></table></figure>
-<p>以上是一个HTTP请求的状态行。状态行包含一个状态码(<strong>status code</strong>)。常见的状态码如下：</p>
-<blockquote>
-<p>HTTP <strong>100 Continue</strong> 信息型状态响应码表示目前为止一切正常, 客户端应该继续请求, 如果已完成请求则忽略</p>
-<p>HTTP  <strong>101 Switching Protocol</strong>（协议切换）状态码表示服务器应客户端升级协议的请求（<a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Upgrade" target="_blank" rel="noopener"><code>Upgrade</code></a>请求头）正在进行协议切换。</p>
-<p>HTTP <strong>200 OK</strong> 表明请求已经成功. 默认情况下状态码为200的响应可以被缓存。</p>
-<p>不同请求方式对于请求成功的意义如下:</p>
-<ul>
-<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/GET" target="_blank" rel="noopener"><code>GET</code></a>: 已经取得资源，并将资源添加到响应的消息体中。</li>
-<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/HEAD" target="_blank" rel="noopener"><code>HEAD</code></a>: 响应的消息体为头部信息。</li>
-<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/POST" target="_blank" rel="noopener"><code>POST</code></a>: 响应的消息体中包含此次请求的结果。</li>
-<li><a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/TRACE" target="_blank" rel="noopener"><code>TRACE</code></a>: 响应的消息体中包含服务器接收到的请求信息。</li>
-</ul>
-<p>HTTP <strong>300 Multiple Choices</strong> 是一个用来表示重定向的响应状态码，表示该请求拥有多种可能的响应。用户代理或者用户自身应该从中选择一个。由于没有如何进行选择的标准方法，这个状态码极少使用。</p>
-<p>HTTP <strong>304 Not Modified</strong>说明无需再次传输请求的内容，也就是说可以使用缓存的内容。这通常是在一些安全的方法（<a href="https://developer.mozilla.org/en-US/docs/Glossary/safe" target="_blank" rel="noopener">safe</a>），例如<a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/GET" target="_blank" rel="noopener"><code>GET</code></a> 或<a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/HEAD" target="_blank" rel="noopener"><code>HEAD</code></a> 或在请求中附带了头部信息： <a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/If-None-Match" target="_blank" rel="noopener"><code>If-None-Match</code></a>或<a href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/If-Modified-Since" target="_blank" rel="noopener"><code>If-Modified-Since</code></a>。</p>
-<p>HTTP <strong>400 Bad Request</strong> 响应状态码表示由于语法无效，服务器无法理解该请求。 客户端不应该在未经修改的情况下重复此请求。</p>
-<p>HTTP <strong>403 Forbidden</strong> 代表客户端错误，指的是服务器端有能力处理该请求，但是拒绝授权访问。</p>
-<p>HTTP <strong>404</strong> <strong>Not Found</strong> 代表客户端错误，指的是服务器端无法找到所请求的资源。返回该响应的链接通常称为坏链（broken link）或死链（dead link），它们会导向链接出错处理(<a href="https://en.wikipedia.org/wiki/Link_rot" target="_blank" rel="noopener">link rot</a>)页面。</p>
-<p>HTTP <strong>500 Internal Server Error</strong> 是表示服务器端错误的响应状态码，意味着所请求的服务器遇到意外的情况并阻止其执行请求。</p>
-<p>HTTP <strong>502</strong> <strong>Bad Gateway</strong> 是一种HTTP协议的服务器端错误状态代码，它表示扮演网关或代理角色的服务器，从上游服务器中接收到的响应是无效的。</p>
-</blockquote>
-<h3 id="Cookie和Session"><a href="#Cookie和Session" class="headerlink" title="Cookie和Session"></a>Cookie和Session</h3><p>Cookie在web开发中是一个很重要的概念，其能为无状态的HTTP协议保存用户的会话状态，以及一些用户定制的配置。</p>
-<p>服务器在第一次接收到一个用户的HTTP请求时，服务器可以在响应头中添加一个<strong>Set-Cookie</strong>字段，浏览器接收到之后就会存下Cookie（在浏览器中设置禁用Cookie后不会保存）。其中字段如下：</p>
-<blockquote>
-<p>Secure: 指定Cookie只能由HTTPS协议传输。</p>
-<p>HttpOnly: 指定Cookie不能被<code>document.cookie</code>访问。</p>
-<p>Domain: 指定Cookie的作用域，如<code>Domain=www.google.com</code>，指定了能接受Cookie的主机。</p>
-<p>Path: 指定主机下哪些路径可以接收Cookie。</p>
-<p>Expires: 指定一个过期时间<code>Expires=Date()</code>。</p>
-</blockquote>
-<h2 id="Javascript相关"><a href="#Javascript相关" class="headerlink" title="Javascript相关"></a>Javascript相关</h2><h3 id="闭包"><a href="#闭包" class="headerlink" title="闭包"></a>闭包</h3><p>js的闭包是一个很神奇但是又极其蛋疼的机制，它从某种意义上解决了js没有块级作用域的问题，但是同时又造成了内存泄漏。</p>
-<p>具体的做法是利用js的函数作用域，从一个函数中返回一个子函数，将该函数的作用域暴露给外部，如：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> b = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">        <span class="keyword">var</span> c=<span class="string">"hahaha"</span>;</span><br><span class="line">        <span class="keyword">return</span> c;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(a()()); <span class="comment">// 控制台中会打印出c的值</span></span><br></pre></td></tr></table></figure>
-<p>而比较实用的作用是一个重用函数使用不同参数时产生的不同后果，比如：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">makeSizer</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">document</span>.body.style.fontSize = size + <span class="string">'px'</span>;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> size12 = makeSizer(<span class="number">12</span>);</span><br><span class="line"><span class="keyword">var</span> size14 = makeSizer(<span class="number">14</span>);</span><br><span class="line"><span class="keyword">var</span> size16 = makeSizer(<span class="number">16</span>);</span><br><span class="line"></span><br><span class="line"><span class="built_in">document</span>.getElementById(<span class="string">'size-12'</span>).onclick = size12;</span><br><span class="line"><span class="built_in">document</span>.getElementById(<span class="string">'size-14'</span>).onclick = size14;</span><br><span class="line"><span class="built_in">document</span>.getElementById(<span class="string">'size-16'</span>).onclick = size16;</span><br></pre></td></tr></table></figure>
-<p>HTML和CSS代码如下：</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#"</span> <span class="attr">id</span>=<span class="string">"size-12"</span>&gt;</span>12<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#"</span> <span class="attr">id</span>=<span class="string">"size-14"</span>&gt;</span>14<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#"</span> <span class="attr">id</span>=<span class="string">"size-16"</span>&gt;</span>16<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">body</span> &#123;</span><br><span class="line">  <span class="attribute">font-family</span>: Helvetica, Arial, sans-serif;</span><br><span class="line">  <span class="attribute">font-size</span>: <span class="number">12px</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-tag">h1</span> &#123;</span><br><span class="line">  <span class="attribute">font-size</span>: <span class="number">1.5em</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-tag">h2</span> &#123;</span><br><span class="line">  <span class="attribute">font-size</span>: <span class="number">1.2em</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>运行以上的js代码之后点击不同的会产生不同的结果。</p>
-<p>再比如循环输出一个局部变量：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">5</span>;++i)&#123;</span><br><span class="line">        setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">            <span class="built_in">console</span>.log(i);</span><br><span class="line">        &#125;, <span class="number">2000</span>);</span><br><span class="line">    &#125;    </span><br><span class="line">&#125;</span><br><span class="line">a(); <span class="comment">// 此处会输出五个5</span></span><br><span class="line"><span class="keyword">var</span> b = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">var</span> i = <span class="number">0</span>;i &lt; <span class="number">5</span>;++i)&#123;</span><br><span class="line">        (<span class="function"><span class="keyword">function</span>(<span class="params">i</span>)</span>&#123;setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">            <span class="built_in">console</span>.log(i);</span><br><span class="line">        &#125;, <span class="number">2000</span>);&#125;)(i);</span><br><span class="line">    &#125;    </span><br><span class="line">&#125;</span><br><span class="line">b(); <span class="comment">// 此处会输出0 1 2 3 4</span></span><br></pre></td></tr></table></figure>
-<p>这里使用闭包传入的五个i是独立的五个Number，五个不同的引用。</p>
-<p>但是使用闭包也有一个很需要注意的问题，就是内存的使用。因为闭包的实现是基于js的垃圾回收机制的。</p>
-<p>js有自己的自动回收机制，利用的是<strong>引用计数(Reference counting)</strong>的方式。所谓<strong>引用计数</strong>，指的是当创建一个对象的实例并在堆上申请内存时，对象的引用计数就为1，在其他对象中需要持有这个对象时，就需要把该对象的引用计数加1，需要释放一个对象时，就将该对象的引用计数减1，直至对象的引用计数为0，对象的内存会被立刻释放。</p>
-<p>以上面的函数b为例，i作为参数传入闭包中。我们都知道js的函数参数是值传递的，从原理上讲就是在堆上创建一个新的变量，复制了参数原引用的值，这样一来函数内部就拥有了一个新的变量环境。而在<code>setTimeout()</code>的回调函数中，<code>console.log(i)</code>保留了对参数i的引用，因此在函数执行结束后不会被回收（一般的<strong>自调用匿名函数</strong>在运行完后就会被回收），而是在<code>setTimeout()</code>的回调函数运行之后才会回收。</p>
-<p>闭包的常见应用主要为<strong>创建私有空间</strong>。比如我们需要在一个对象中创建私有变量，可以这么写：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> A = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> private = &#123;</span><br><span class="line">        name: <span class="string">"leiysky"</span>,</span><br><span class="line">        age: <span class="number">20</span>,</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="keyword">this</span>.getPrivate = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> private;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> b = <span class="keyword">new</span> A();</span><br><span class="line"><span class="built_in">console</span>.log(b.getPrivate().name); <span class="comment">// 控制台输出leiysky</span></span><br></pre></td></tr></table></figure>
-<p>这样以来private中的值不能直接被外部访问，但是可以通过一个成员函数获取。</p>
-<h3 id="原型链"><a href="#原型链" class="headerlink" title="原型链"></a>原型链</h3><p>js本身没有提供传统面向对象的机制，但是它提供了一种很神奇的机制，可以让我们实现继承，那就是<strong>原型(prototype)</strong>。</p>
-<p>js中每个函数都会有一个<code>prototype</code>属性，这个属性中的内容是按照一定的规则自动获取的，默认会有一个<code>constructor</code>的属性，其他属性则是继承自<strong>Obeject.constructor.prototype</strong>上的。而这个<code>constructor</code>是一个指向<code>prototype</code>属性所在函数的引用，通过<code>constructor</code>可以为原型对象添加别的属性。</p>
-<blockquote>
-<p>没有官方的方法用于直接访问一个对象的原型对象——原型链中的“连接”被定义在一个内部属性中，在 JavaScript 语言标准中用 <code>[[prototype]]</code> 表示（参见 <a href="https://developer.mozilla.org/en-US/docs/Glossary/ECMAScript" target="_blank" rel="noopener">ECMAScript</a>）。然而，大多数现代浏览器还是提供了一个名为 <code>__proto__</code> （前后各有2个下划线）的属性，其包含了对象的原型。ES5中新增了<code>Object.getPrototypeOf()</code>方法，可以返回<code>[[prototype]]</code>的值。</p>
-</blockquote>
-<p>通过对象实例可以访问原型中的属性（但是不能修改），原型又可以访问原型的原型的属性，这样一来就形成了一条原型链。</p>
-<p>使用原型创建对象很简单，比如:</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">a</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    a.prototype.name = <span class="string">"hello"</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> b = <span class="keyword">new</span> a();</span><br><span class="line"><span class="built_in">console</span>.log(b.name); <span class="comment">// 控制台输出hello</span></span><br></pre></td></tr></table></figure>
-<p>使用原型链来实现继承有一种很简单的模式：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">father</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.name = <span class="string">"father"</span>;</span><br><span class="line">&#125;</span><br><span class="line">father.prototype.getName = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.name;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">son</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.name = <span class="string">"son"</span>;</span><br><span class="line">&#125;</span><br><span class="line">son.prototype = <span class="keyword">new</span> father();</span><br><span class="line"><span class="keyword">var</span> jack = <span class="keyword">new</span> son();</span><br><span class="line">jack.name = <span class="string">"jack"</span>;</span><br><span class="line"><span class="built_in">console</span>.log(jack.getName()); <span class="comment">// 控制台输出jack</span></span><br></pre></td></tr></table></figure>
-<p>还有一种继承的思路就是在子类的构造函数中调用父类的构造函数，可以通过在子类的<code>constructor</code>中写<code>father.call(this)</code>来实现。</p>
-<p>不过prototype继承有一个很大的缺点就是链上的对象会共享引用类型属性的值，这点必须注意。</p>
-<h2 id="ES6相关"><a href="#ES6相关" class="headerlink" title="ES6相关"></a>ES6相关</h2><p>ES6中定义了许多种新的语法和机制，为开发带来的极大的便利。但是其中有一点蛋疼的就是许多的语法本质上只是个语法糖，利用原本的机制包装一下就变成了一个新东西。</p>
-<h3 id="class"><a href="#class" class="headerlink" title="class"></a>class</h3><p>ES6中提供了一般面向对象语言中很常见的一个概念，写法如下：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span> </span>&#123;</span><br><span class="line">    <span class="keyword">constructor</span>()&#123;</span><br><span class="line">        <span class="keyword">this</span>.name = <span class="string">"A"</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    getName()&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.name;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">static</span> addOne(a)&#123;</span><br><span class="line">        <span class="keyword">return</span> a + <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span> <span class="title">entends</span> <span class="title">A</span></span>&#123;</span><br><span class="line">    <span class="keyword">constructor</span>() &#123;</span><br><span class="line">        <span class="keyword">super</span>();</span><br><span class="line">        <span class="keyword">this</span>.name = <span class="string">"B"</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> a = <span class="keyword">new</span> A();</span><br><span class="line"><span class="keyword">var</span> b = <span class="keyword">new</span> B();</span><br><span class="line">a.getName(); <span class="comment">// 返回A</span></span><br><span class="line">b.getName(); <span class="comment">// 返回B</span></span><br><span class="line">a.addOne(<span class="number">1</span>); <span class="comment">// undefined</span></span><br><span class="line">A.addOne(<span class="number">1</span>); <span class="comment">// 返回2</span></span><br></pre></td></tr></table></figure>
-<p>其中可以分为几部分来讲：</p>
-<ol>
-<li><code>constructor</code>是class的构造函数，也就是A本身</li>
-<li><code>getName</code>等成员方法直接定义</li>
-<li><code>static</code>可以定义A本身的静态方法，实例不可调用，只能通过A调用</li>
-<li><code>extends</code>可以进行继承</li>
-</ol>
-<p>实际上class就是对于直接在prototype上写属性的一个语法糖，但是ES6定义了一系列规范来限制这些行为，总体来说还是比以前好用多了。</p>
-<p>不过在面试过程中遇到了一个很有意思的事情，一位同学在写class相关的代码时用了以下写法：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span></span>&#123;</span><br><span class="line">    getName = <span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.name;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span> <span class="keyword">extends</span> <span class="title">A</span></span>&#123;&#125;</span><br></pre></td></tr></table></figure>
-<p>这里的getName实际上会被定义成一个静态的属性，如果使用的是<code>function()</code>来定义匿名函数将会出现问题，因为this的环境会改变（我原本以为会报错，不过实际上并没有）。但是这里他使用了一个箭头函数，绑定的是上一层的this，巧妙的避免了这点，让我感到十分惊讶。</p>
-<h3 id="Promise-Generator-Cowrap-Async-Await"><a href="#Promise-Generator-Cowrap-Async-Await" class="headerlink" title="Promise + Generator +Cowrap = Async + Await"></a>Promise + Generator +Cowrap = Async + Await</h3><p>ES6中的Promise为异步的写法提供了一种相对较舒服的方案，不用像从前一样写成callback hell。再搭配上generator和cowrap可以很方便的写成一个链式调用。</p>
-<p>首先讲讲Promise：</p>
-<blockquote>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="keyword">new</span> <span class="built_in">Promise</span>( <span class="function"><span class="keyword">function</span>(<span class="params">resolve, reject</span>) </span>&#123;...&#125; <span class="comment">/* executor */</span>  );</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
-</blockquote>
-<blockquote>
-<p>Promise对象有一个参数，就是excutor。</p>
-<p>executor是带有 <code>resolve</code> 和 <code>reject</code> 两个参数的函数 。Promise构造函数执行时立即调用<code>executor</code> 函数， <code>resolve</code> 和 <code>reject</code> 两个函数作为参数传递给<code>executor</code>（executor 函数在Promise构造函数返回新建对象前被调用）。<code>resolve</code> 和 <code>reject</code> 函数被调用时，分别将promise的状态改为<em>fulfilled（</em>完成）或rejected（失败）。executor 内部通常会执行一些异步操作，一旦完成，可以调用resolve函数来将promise状态改成<em>fulfilled</em>，或者在发生错误时将它的状态改为rejected。</p>
-<p>如果在executor函数中抛出一个错误，那么该promise 状态为rejected。executor函数的返回值被忽略。</p>
-<p><code>Promise</code> 对象是一个代理对象（代理一个值），被代理的值在Promise对象创建时可能是未知的。它允许你为异步操作的成功和失败分别绑定相应的处理方法（handlers）。 这让异步方法可以像同步方法那样返回值，但并不是立即返回最终执行结果，而是一个能代表未来出现的结果的promise对象</p>
-<p>一个 <code>Promise</code>有以下几种状态:</p>
-<ul>
-<li><em>pending</em>: 初始状态，既不是成功，也不是失败状态。</li>
-<li><em>fulfilled</em>: 意味着操作成功完成。</li>
-<li><em>rejected</em>: 意味着操作失败。</li>
-</ul>
-<p>pending 状态的 Promise 对象可能触发fulfilled 状态并传递一个值给相应的状态处理方法，也可能触发失败状态（rejected）并传递失败信息。当其中任一种情况出现时，Promise 对象的 <code>then</code> 方法绑定的处理方法（handlers ）就会被调用（then方法包含两个参数：onfulfilled 和 onrejected，它们都是 Function 类型。当Promise状态为<em>fulfilled</em>时，调用 then 的 onfulfilled 方法，当Promise状态为<em>rejected</em>时，调用 then 的 onrejected 方法， 所以在异步操作的完成和绑定处理方法之间不存在竞争）。</p>
-<p>因为 <code>Promise.prototype.then</code> 和  <code>Promise.prototype.catch</code> 方法返回promise 对象， 所以它们可以被链式调用。</p>
-<p><img src="./image-20180513140606397.png" alt="image-20180513140606397"></p>
-</blockquote>
-<p>要用Promise实现一个简单的异步调用写法如下：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>)=&gt;</span>&#123;</span><br><span class="line">    	setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">        	<span class="built_in">console</span>.log(<span class="string">"haha"</span>);</span><br><span class="line">        	resolve();</span><br><span class="line">    	&#125;, <span class="number">2000</span>);</span><br><span class="line">	&#125;).then(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"hello"</span>);</span><br><span class="line">	&#125;);</span><br><span class="line">&#125;;</span><br><span class="line">a(); <span class="comment">// 两秒后输出haha，之后输出hello</span></span><br></pre></td></tr></table></figure>
-<p>可是这样的链式写法还是太长了，所以我们又使用了generator来进行简化。</p>
-<p>再介绍下genertor：</p>
-<blockquote>
-<p>Generator是一个可迭代的对象，由一个generator function返回。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&gt;<span class="function"><span class="keyword">function</span>* <span class="title">gen</span>(<span class="params"></span>) </span>&#123; </span><br><span class="line">&gt;  <span class="keyword">yield</span> <span class="number">1</span>;</span><br><span class="line">&gt;  <span class="keyword">yield</span> <span class="number">2</span>;</span><br><span class="line">&gt;  <span class="keyword">yield</span> <span class="number">3</span>;</span><br><span class="line">&gt;&#125;</span><br><span class="line">&gt;</span><br><span class="line">&gt;<span class="keyword">let</span> g = gen(); </span><br><span class="line">&gt;<span class="comment">// "Generator &#123; &#125;"</span></span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
-</blockquote>
-<blockquote>
-<p>Generator的方法：</p>
-<ul>
-<li><p><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Generator/next" target="_blank" rel="noopener"><code>Generator.prototype.next()</code></a></p>
-<p>返回一个由 <a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/yield" target="_blank" rel="noopener"><code>yield</code></a>表达式生成的值。</p>
-</li>
-<li><p><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Generator/return" target="_blank" rel="noopener"><code>Generator.prototype.return()</code></a></p>
-<p>返回给定的值并结束生成器。</p>
-</li>
-<li><p><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Generator/throw" target="_blank" rel="noopener"><code>Generator.prototype.throw()</code></a></p>
-<p>向生成器抛出一个错误。</p>
-</li>
-</ul>
-</blockquote>
-<p>可以想像在generator中执行异步，由promise的then()方法来调用next就可以实现以同步的方式自动执行代码。</p>
-<p>此处可以使用一些cowrap的模块来实现对generator的包装。</p>
-<p>在ES7中新出现的<strong>async/await</strong>是一个很好的解决方案，它能用同步的写法进行异步操作（虽然也是generator的语法糖）。尽管现在在浏览器中的表现不佳，但是nodejs的新版本已经完美支持，非常好用。</p>
-<p>具体的写法很简单：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">await</span> setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">"hahaha"</span>);</span><br><span class="line">    &#125;, <span class="number">2000</span>);</span><br><span class="line">&#125;</span><br><span class="line">foo(); <span class="comment">// 两秒后输出hahaha</span></span><br></pre></td></tr></table></figure>
-<p>这里的foo()会返回一个Promise对象，从而进行异步调用。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+  </nav>
+
 
 
           </div>
@@ -2363,7 +2247,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-count">11</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>

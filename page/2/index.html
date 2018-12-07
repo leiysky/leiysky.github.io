@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="面试," />
+  <meta name="keywords" content="Hexo, NexT" />
 
 
 
@@ -79,20 +79,16 @@
 
 
 
-<meta name="description" content="前言今天下午完成了matrix服务端的面试，特于此将面试的题目总结一下，以备今后使用。 HTTP相关这方面主要考点在于对于HTTP请求头的一些认识。首先先讨论一下HTTP请求的组成。 HTTP请求由请求行(request line)，请求头(request head)，空行(empty line)和请求体(request body)。 12GET /HTTP/1.1Host: www.google">
-<meta name="keywords" content="面试">
-<meta property="og:type" content="article">
-<meta property="og:title" content="Matrix服务端面试总结">
-<meta property="og:url" content="http://leiysky.com/2018/05/13/Matrix服务端面试总结/index.html">
+<meta name="description" content="A simple blog(temp)">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Blog">
+<meta property="og:url" content="http://leiysky.com/page/2/index.html">
 <meta property="og:site_name" content="Blog">
-<meta property="og:description" content="前言今天下午完成了matrix服务端的面试，特于此将面试的题目总结一下，以备今后使用。 HTTP相关这方面主要考点在于对于HTTP请求头的一些认识。首先先讨论一下HTTP请求的组成。 HTTP请求由请求行(request line)，请求头(request head)，空行(empty line)和请求体(request body)。 12GET /HTTP/1.1Host: www.google">
+<meta property="og:description" content="A simple blog(temp)">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://leiysky.com/2018/05/13/Matrix服务端面试总结/image-20180513140606397.png">
-<meta property="og:updated_time" content="2018-10-06T11:31:52.048Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Matrix服务端面试总结">
-<meta name="twitter:description" content="前言今天下午完成了matrix服务端的面试，特于此将面试的题目总结一下，以备今后使用。 HTTP相关这方面主要考点在于对于HTTP请求头的一些认识。首先先讨论一下HTTP请求的组成。 HTTP请求由请求行(request line)，请求头(request head)，空行(empty line)和请求体(request body)。 12GET /HTTP/1.1Host: www.google">
-<meta name="twitter:image" content="http://leiysky.com/2018/05/13/Matrix服务端面试总结/image-20180513140606397.png">
+<meta name="twitter:title" content="Blog">
+<meta name="twitter:description" content="A simple blog(temp)">
 
 
 
@@ -122,13 +118,13 @@
 
 
 
-  <link rel="canonical" href="http://leiysky.com/2018/05/13/Matrix服务端面试总结/"/>
+  <link rel="canonical" href="http://leiysky.com/page/2/"/>
 
 
 
 
 
-  <title>Matrix服务端面试总结 | Blog</title>
+  <title>Blog</title>
   
 
 
@@ -147,7 +143,8 @@
     
   
 
-  <div class="container sidebar-position-left page-post-detail">
+  <div class="container sidebar-position-left 
+  page-home">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -250,9 +247,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-
-  <div id="posts" class="posts-expand">
+  <section id="posts" class="posts-expand">
     
+      
 
   
 
@@ -282,7 +279,9 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">Matrix服务端面试总结</h1>
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/05/13/Matrix服务端面试总结/" itemprop="url">Matrix服务端面试总结</a></h1>
         
 
         <div class="post-meta">
@@ -332,7 +331,9 @@
       
 
       
-        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>今天下午完成了matrix服务端的面试，特于此将面试的题目总结一下，以备今后使用。</p>
+        
+          
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>今天下午完成了matrix服务端的面试，特于此将面试的题目总结一下，以备今后使用。</p>
 <h2 id="HTTP相关"><a href="#HTTP相关" class="headerlink" title="HTTP相关"></a>HTTP相关</h2><p>这方面主要考点在于对于HTTP请求头的一些认识。首先先讨论一下HTTP请求的组成。</p>
 <p>HTTP请求由<strong>请求行(request line)</strong>，<strong>请求头(request head)</strong>，<strong>空行(empty line)</strong>和<strong>请求体(request body)</strong>。</p>
 <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GET /HTTP/1.1</span><br><span class="line">Host: www.google.com</span><br></pre></td></tr></table></figure>
@@ -494,6 +495,8 @@
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">await</span> setTimeout(<span class="function"><span class="params">()</span>=&gt;</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">"hahaha"</span>);</span><br><span class="line">    &#125;, <span class="number">2000</span>);</span><br><span class="line">&#125;</span><br><span class="line">foo(); <span class="comment">// 两秒后输出hahaha</span></span><br></pre></td></tr></table></figure>
 <p>这里的foo()会返回一个Promise对象，从而进行异步调用。</p>
 
+          
+        
       
     </div>
     
@@ -508,36 +511,14 @@
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/tags/面试/" rel="tag"># 面试</a>
-          
-        </div>
+
+      
+
       
 
       
       
-      
-
-      
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-          </div>
-
-          <span class="post-nav-divider"></span>
-
-          <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/05/31/JavaScript从入门到入坟——闭包/" rel="prev" title="JavaScript从入门到入坟——闭包">
-                JavaScript从入门到入坟——闭包 <i class="fa fa-chevron-right"></i>
-              </a>
-            
-          </div>
-        </div>
-      
-
-      
+        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -547,11 +528,14 @@
   </article>
 
 
+    
+  </section>
 
-    <div class="post-spread">
-      
-    </div>
-  </div>
+  
+  <nav class="pagination">
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+  </nav>
+
 
 
           </div>
@@ -559,10 +543,6 @@
 
 
           
-
-  
-
-
 
         </div>
         
@@ -583,17 +563,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            Table of Contents
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            Overview
-          </li>
-        </ul>
-      
 
-      <section class="site-overview-wrap sidebar-panel">
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -644,22 +615,6 @@
         </div>
       </section>
 
-      
-      <!--noindex-->
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-              
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HTTP相关"><span class="nav-number">2.</span> <span class="nav-text">HTTP相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#请求头"><span class="nav-number">2.1.</span> <span class="nav-text">请求头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#请求体"><span class="nav-number">2.2.</span> <span class="nav-text">请求体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#响应"><span class="nav-number">2.3.</span> <span class="nav-text">响应</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cookie和Session"><span class="nav-number">2.4.</span> <span class="nav-text">Cookie和Session</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Javascript相关"><span class="nav-number">3.</span> <span class="nav-text">Javascript相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#闭包"><span class="nav-number">3.1.</span> <span class="nav-text">闭包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#原型链"><span class="nav-number">3.2.</span> <span class="nav-text">原型链</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ES6相关"><span class="nav-number">4.</span> <span class="nav-text">ES6相关</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#class"><span class="nav-number">4.1.</span> <span class="nav-text">class</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Promise-Generator-Cowrap-Async-Await"><span class="nav-number">4.2.</span> <span class="nav-text">Promise + Generator +Cowrap = Async + Await</span></a></li></ol></li></ol></div>
-            
-
-          </div>
-        </section>
-      <!--/noindex-->
       
 
       
@@ -793,10 +748,6 @@
   
 
   
-  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
-<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
-
-
 
   
 
