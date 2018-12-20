@@ -262,6 +262,239 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/20/Docker不完全指南/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/20/Docker不完全指南/" itemprop="url">Docker不完全指南</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-12-20T12:33:05+08:00">
+                2018-12-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="Docker-简介"><a href="#Docker-简介" class="headerlink" title="Docker 简介"></a>Docker 简介</h2><p>虚拟化一直以来都是云计算领域重要的概念。有了虚拟化，对于云提供商而言，机器的资源更便于管理和分配，于用户而言，则是消除了物理机的概念，在隔离环境下搭建属于自己的云服务变得十分容易。</p>
+<p>但是传统的虚拟化技术，多多少少都会有性能上的损失，一方面是浪费了计算资源，另一方面管理起来也十分不便。他们大多有一个共同的特点，就是提供了一个与物理机使用上较为相似的虚拟机环境。</p>
+<p>那么云服务一定需要一个虚拟机的环境吗？答案是否定的。</p>
+<p>这就有了<code>Docker</code>。</p>
+<p><code>Docker</code>是容器虚拟化技术的一个成功的实现。他抽象出的容器概念最大程度的简化了虚拟环境的概念。你可以将一个<code>Docker</code>容器作为一个虚拟机环境使用，也可以作为一个服务的运行环境。</p>
+<p><code>Docker</code>优点主要有：</p>
+<ul>
+<li>性能高，不会像传统的硬件虚拟化丢失那么多IO或者运算性能</li>
+<li>跨平台能力强</li>
+<li>打包部署流程方便</li>
+</ul>
+<h2 id="Docker-基本概念"><a href="#Docker-基本概念" class="headerlink" title="Docker 基本概念"></a>Docker 基本概念</h2><p>在开始讲<code>Docker</code>的使用之前，需要先介绍几个<code>Docker</code>中的核心概念，这样方便我们理解<code>Docker</code>在生产中的作用，也能很好地帮助我们找到最佳实践。</p>
+<h3 id="Docker-容器"><a href="#Docker-容器" class="headerlink" title="Docker 容器"></a>Docker 容器</h3><p>使用<code>Docker</code>作为部署环境的应用都是运行在<code>Docker</code>容器中的。每个容器都有一个<code>Container ID</code>，用于标识这个容器。此外还有<code>name</code>等属性，详情可以参考<a href="https://docs.docker.com" target="_blank" rel="noopener">官方文档</a>（可能需要科学上网）。</p>
+<p>每个容器都来源于<code>Docker Image</code>镜像，你可以将一个容器理解为一个镜像的实例。</p>
+<p>容器有几种状态：<code>created</code>, <code>running</code>, <code>restarting</code>, <code>removing</code>, <code>paused</code>, <code>exited</code>, <code>dead</code>。</p>
+<p>在这里就不展开来讲，但大家可以发现这些状态与一个服务的状态很相似。我们可以将容器的概念扩展为：<strong>基于一个镜像搭建的服务的实例</strong>。</p>
+<p>在使用容器时，有几个需要注意的地方：</p>
+<ul>
+<li>容器不会自己保存状态，你对其进行的一切修改都将在重启容器后消失</li>
+<li>最好将与docker相关的应用加入到docker用户组中</li>
+</ul>
+<h3 id="Docker-镜像"><a href="#Docker-镜像" class="headerlink" title="Docker 镜像"></a>Docker 镜像</h3><p>在<code>Docker</code>中镜像是一个很重要的概念，我们的容器都源自于此。</p>
+<p><code>Docker Image</code>是由<code>Docker</code>的提供商提供的镜像。</p>
+<p>比如说<code>Ubuntu</code>提供的<code>ubuntu:16.04</code>镜像，就是一个典型的<code>Docker Image</code>。</p>
+<p>这个镜像就是一个<code>Ubuntu 16.04</code>的系统实例，你可以使用<code>docker run</code>来运行它。运行成功后就可以创建出一个<code>ubuntu:16.04</code>的容器。在这个容器里，你可以像使用一个真正的<code>Ubuntu</code>系统那样来使用它（像是虚拟机）。</p>
+<p>不过一般来说<code>Docker</code>是不提倡用户将容器作为一个虚拟机来使用的，这与他的设计理念以及实现方式有关，这部分后面会展开来讲。</p>
+<p>一个<code>Docker Image</code>的<strong>标识</strong>由几部分组成，比如说<code>registry.vmatrix.org.cn/mysql:5.7</code>这个镜像：</p>
+<ul>
+<li><code>registry.vmatrix.org.cn/</code>这部分表示镜像的<code>Registry</code>（这也是个Docker的概念，后面会提到，注意和<code>Repository</code>区分）。默认是<code>docker.io/</code>，在没有指定这部分的情况下会使用默认值。</li>
+<li><code>mysql</code>这部分是镜像的<code>repository</code>，它并不会定位到一个具体的镜像，只是定向到了一个镜像仓库，里面包含了镜像的各个版本。</li>
+<li><code>:5.7</code>是镜像的<code>tag</code>，即对于具体镜像版本的标识，在没有指定具体值时一般会使用<code>latest</code>（某些<code>Registry</code>没有提供latest，最好还是指明）。</li>
+</ul>
+<h3 id="Docker-client-amp-dockerd"><a href="#Docker-client-amp-dockerd" class="headerlink" title="Docker client &amp; dockerd"></a>Docker client &amp; dockerd</h3><p>以上几个都是<code>Docker</code>设计上的一些概念，涉及到具体使用时，我们需要借助<code>Docker client</code>和<code>dockerd</code>来管理镜像和容器。</p>
+<p><code>Docker client</code>，顾名思义，就是一个<code>Docker</code>的客户端程序。我们可以使用它来<code>拉取(pull)</code>，<code>推送(push)</code>，<code>运行(run)</code>镜像。</p>
+<p>但是实际上客户端并不会真的做这些事情，他只是帮助用户去调用<code>Docker</code>的相关API。</p>
+<p>实际上干这些脏活累活的是<code>dockerd</code>。<code>dockerd</code>是<code>Docker Daemon</code>的缩写，比较常见的<code>UNIX</code>程序明明方式。顾名思义，它是一个守护进程，负责<code>docker</code>容器的调度，资源分配，生命周期维护等等。</p>
+<p>打个比方，如果<code>Docker</code>容器是码头上的各个集装箱，里面有各种各样的货物，甚至有人在办公，那么<code>Docker client</code>就是码头的<strong>客服中心</strong>，<code>dockerd</code>就是整个包含了码头工人，码头起重机等的码头系统。与事实有些出入的地方可能就是<code>dockerd</code>实际上负责的事情更多一些。</p>
+<h2 id="Docker-实践"><a href="#Docker-实践" class="headerlink" title="Docker 实践"></a>Docker 实践</h2><p>介绍完了Docker的一些基本概念，我们可以开始做一些实践了。</p>
+<p>现在有一个场景：</p>
+<ul>
+<li>有一个Web项目需要部署到云平台上，现在云平台提供商提供了一套上传docker镜像进行部署的方式</li>
+<li>该项目包括几部分：前端（需要静态文件代理），服务端（由Golang编写，仅一个二进制文件，但是只能在指定系统运行），数据库</li>
+</ul>
+<p>我们来一个渐进式的探索。</p>
+<h3 id="方案一"><a href="#方案一" class="headerlink" title="方案一"></a>方案一</h3><blockquote>
+<p>使用物理机进行部署。要什么云平台。</p>
+</blockquote>
+<p>步骤如下：</p>
+<ul>
+<li>安装一个<code>Ubuntu 18.04</code>系统</li>
+<li>配置一下用户名密码之类的</li>
+<li>安装<code>Golang 1.11</code>，<code>Nginx</code>，<code>MySQL 8.0</code></li>
+<li>服务端：把代码拉下来放到某个文件夹，编译后启动</li>
+<li>前端：把前端资源打包，放到某个文件夹，启动nginx，配置静态文件代理，配置文件放到<code>/etc/nginx/conf.d/default.conf</code></li>
+<li>数据库：启动mysqld，配置用户名，创建数据库，建表etc。</li>
+</ul>
+<p>好了，花了一天时间终于部署完了，可累死我了。</p>
+<p>这个时候老板突然打了个电话过来：“喂，PT呀，咱们那台机器是不是还没跑满？”（此处主人公名叫PT）</p>
+<p>“嗯，对啊。”</p>
+<p>“那再部署一个服务没问题吧？”</p>
+<p>“当然OK。”</p>
+<p>于是新的工单过来了，看了一眼需求：</p>
+<ul>
+<li>MySQL 5.6</li>
+<li>Golang &lt;= 1.4</li>
+</ul>
+<p>我擦，这个版本完全错开了，还得多开实例？</p>
+<p>麻烦死了，还是不直接用物理机了。</p>
+<h3 id="方案二"><a href="#方案二" class="headerlink" title="方案二"></a>方案二</h3><blockquote>
+<p>使用虚拟机部署环境，虚拟机使用某知名开源（免费）软件</p>
+</blockquote>
+<p>又搞了一天，总算是弄完了。在物理机上开了两个虚拟机实例，分别跑的不同的服务。</p>
+<p>这次我留了个心眼，把虚拟机镜像做了备份，到时候部署的时候，嘻嘻嘻。</p>
+<p>这时，老板又来电话了：“PT呀，有个客户买了我们的服务，你去给他们部署一套吧。”</p>
+<p>“那路费住宿费……”</p>
+<p>“统统报销。”</p>
+<p>“好嘞～”</p>
+<p>嘿嘿，部署给他一下子搞定，剩下的时间还可以拿来出去玩玩，权当多放一天假了。</p>
+<p>于是PT带着电脑，揣着备份的镜像，一路哼着歌到了对方公司。</p>
+<p>“您好，我是来给你们部署服务的。”</p>
+<p>“欢迎欢迎，这边请。”</p>
+<p>对方公司技术人员打开了一台PC机：“您就装在这台电脑上吧。”</p>
+<p>PT吓了一跳，定睛一看，什么？居然是Windows？</p>
+<p>“这年头还有用windows做部署的公司……”PT暗自想到，心里充满了不屑。</p>
+<p>但是到部署的时候他就感受到蛋疼了。</p>
+<p>自己使用的虚拟机软件没有Windows版本的，无法部署。</p>
+<p>“这年头还有不兼容Windows的软件？？？”</p>
+<p>PT实在没有办法了，只能以版本不兼容为理由，回公司重新准备一套服务部署方案。</p>
+<p>美好的出差时光就这样没了，自己还要多掏一趟路费，PT心中暗自下了决定，以后再也不在生产环境用这种开源软件。</p>
+<h3 id="方案三"><a href="#方案三" class="headerlink" title="方案三"></a>方案三</h3><p>PT决定使用Docker来做部署。</p>
+<p>他使用了最原始的方法（以下方式十分危险，请勿学习）：</p>
+<ul>
+<li>装了一个<code>Docker</code></li>
+<li><code>pull</code>了一个<code>ubuntu:16.04</code>镜像</li>
+<li>在镜像中运行<code>bash</code>，安装所需软件</li>
+<li>在镜像中编译，部署</li>
+<li><code>commit</code></li>
+</ul>
+<p>这样一来一个跨平台的服务镜像就完成了。虽然体积有点大，有足足50GB，但是好歹能部署了。</p>
+<p>什么，你问怎么发新版本？当然是写一个脚本，<code>docker cp</code>到容器里替换掉原来的文件，然后<code>commit</code>。</p>
+<p>几个月之后PT发现这个容器已经100GB了，再这样下去硬盘迟早要撑不住。</p>
+<p>于是他决定再换一个方式。</p>
+<h3 id="方案四"><a href="#方案四" class="headerlink" title="方案四"></a>方案四</h3><p>PT终于学会了写<code>Dockerfile</code>。</p>
+<p>他为每个部分写了Dockerfile。</p>
+<p>前端：<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> nginx:stable-alpine</span><br><span class="line"><span class="keyword">COPY</span> . /www</span><br><span class="line">RUN cd /www &amp;&amp;\</span><br><span class="line">    npm run lint &amp;&amp;\</span><br><span class="line">    npm run test &amp;&amp;\</span><br><span class="line">    npm run build</span><br><span class="line">ENTRYPOINT nginx start</span><br></pre></td></tr></table></figure></p>
+<p>服务端：<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> golang:<span class="number">1</span>-alpine</span><br><span class="line"><span class="keyword">COPY</span> . /www</span><br><span class="line">RUN cd /www &amp;&amp;\</span><br><span class="line">    go test &amp;&amp;\</span><br><span class="line">    go build &amp;&amp;\</span><br><span class="line">ENTRYPOINT ./www/main</span><br></pre></td></tr></table></figure></p>
+<p>数据库则是直接用的<code>MySQL:8.0</code>的镜像。</p>
+<p>除此之外，他还学会了使用<code>docker-compose</code>来管理项目，为了解决每次拉取镜像速度很慢的问题还搭建了公司的<code>registry</code>。他做得越来越有模有样了，也得到了老板的嘉奖，或许还有机会提薪。</p>
+<p>学会了<code>Docker</code>之后，PT终于走上了人生巅峰。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上的实践内容虽是戏说，但也是基于实际的业务场景的。使用<code>Docker</code>能大大降低部署的成本，但也需要掌握正确的使用方法。</p>
+<p>具体的<code>Dockerfile</code>写法还需参考官方文档。</p>
+<p>关于为什么不使用<code>commit</code>，有兴趣的同学可以自己思考一下，再结合<code>Docker</code>的<a href="https://www.github.com/docker/docker-ce" target="_blank" rel="noopener">源码</a>或是分析的博客，做更深一步的探索。笔者学识尚浅，也只能讲这么多。</p>
+<p>另外推荐大家使用Matrix的<code>registry</code>: <a href="https://registry.vmatrix.org.cn" target="_blank" rel="noopener">https://registry.vmatrix.org.cn</a></p>
+<p>需要账号的可以找博主要，目前收录了一些常用的镜像（比如<code>alpine</code>），也可以进一步引入更多镜像。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/07/使用Go搭建RESTful-API服务器/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1971,232 +2204,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/05/31/JavaScript从入门到入坟——闭包/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/31/JavaScript从入门到入坟——闭包/" itemprop="url">JavaScript从入门到入坟——闭包</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-31T14:55:12+08:00">
-                2018-05-31
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="导语"><a href="#导语" class="headerlink" title="导语"></a>导语</h2><p>闭包是函数式编程中非常重要的一个概念，以下引用维基百科的介绍：</p>
-<blockquote>
-<p>在<a href="https://zh.wikipedia.org/wiki/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6" target="_blank" rel="noopener">计算机科学</a>中，<strong>闭包</strong>（英语：Closure），又稱<strong>词法闭包</strong>（Lexical Closure）或<strong>函數閉包</strong>（function closures），是引用了自由变量的函数。这个被引用的自由变量将和这个函数一同存在，即使已经离开了创造它的环境也不例外。所以，有另一种说法认为闭包是由函数和与其相关的引用环境组合而成的实体。闭包在运行时可以有多个实例，不同的引用环境和相同的函数组合可以产生不同的实例。</p>
-</blockquote>
-<p>简单来说，闭包就是一个引用了外部变量的函数与该变量创建环境连结成的一个结构(<strong>struct, record</strong>)。该环境和函数不会在函数被调用完后就被销毁，可以长时间存在，因此常被用于创造一个私有的环境。</p>
-<p>目前最广为人知的拥有闭包特性的高级语言就是Javascript和Python。而熟悉这两种语言的大佬们都知道，闭包的应用在平时的开发工作中是非常重要的，特别是在写Javascript的时候。如果离开了闭包，Javascript的很多功能将无法实现。</p>
-<p>因此，了解闭包的机制是JavaScript学习之路上必不可少的一道坎。现在就让我们开始探索闭包的奥秘（x）</p>
-<h2 id="一道面试题"><a href="#一道面试题" class="headerlink" title="一道面试题"></a>一道面试题</h2><p>首先我们先来看一道面试题：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fun</span>(<span class="params">n,o</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(o);</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    fun:<span class="function"><span class="keyword">function</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">return</span> fun(m,n);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> a = fun(<span class="number">0</span>);  a.fun(<span class="number">1</span>);  a.fun(<span class="number">2</span>);  a.fun(<span class="number">3</span>);<span class="comment">//undefined,?,?,?</span></span><br><span class="line"><span class="keyword">var</span> b = fun(<span class="number">0</span>).fun(<span class="number">1</span>).fun(<span class="number">2</span>).fun(<span class="number">3</span>);<span class="comment">//undefined,?,?,?</span></span><br><span class="line"><span class="keyword">var</span> c = fun(<span class="number">0</span>).fun(<span class="number">1</span>);  c.fun(<span class="number">2</span>);  c.fun(<span class="number">3</span>);<span class="comment">//undefined,?,?,?</span></span><br><span class="line"><span class="comment">//问:三行a,b,c的输出分别是什么？</span></span><br></pre></td></tr></table></figure>
-<p>第一眼看到题目的时候一定觉得十分头疼，因为这一个fun函数中竟然有这么多种fun的调用。</p>
-<p>先留下几个问题：</p>
-<ol>
-<li>fun函数中return的object中的fun中return的<code>fun(m, n)</code> (即第五行的<code>fun(m, n)</code>)调用的是哪个函数？</li>
-<li>1中的调用的<code>fun(m, n)</code>的n是什么值？</li>
-</ol>
-<p>不用着急想答案，我们先来分析一下这份代码。</p>
-<p>在开始分析之前，先整理一下JavaScript函数相关的知识。</p>
-<h3 id="函数的种类"><a href="#函数的种类" class="headerlink" title="函数的种类"></a>函数的种类</h3><p>在JavaScript中函数分为以下几种：</p>
-<p><strong>匿名函数 (anonymous function)</strong></p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;&#125;;</span><br><span class="line"><span class="comment">// 或者使用ES6的箭头函数</span></span><br><span class="line">() =&gt; &#123;&#125;;</span><br></pre></td></tr></table></figure>
-<p><strong>普通函数 (named function)</strong></p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;&#125;;</span><br><span class="line"><span class="keyword">var</span> foo = <span class="function"><span class="params">()</span> =&gt;</span> &#123;&#125;;</span><br><span class="line"><span class="comment">// 或者使用ES6箭头函数</span></span><br><span class="line"><span class="keyword">const</span> foo = <span class="function"><span class="params">()</span> =&gt;</span> &#123;&#125;;</span><br></pre></td></tr></table></figure>
-<p><strong>内部函数 (inner function)</strong></p>
-<p>内部函数就是定义在函数内部的函数，也是闭包中十分重要的概念。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">addSquares</span>(<span class="params">a,b</span>) </span>&#123;</span><br><span class="line">   <span class="function"><span class="keyword">function</span> <span class="title">square</span>(<span class="params">x</span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> x * x;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">return</span> square(a) + square(b);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">// 使用ES6箭头函数</span></span><br><span class="line"><span class="keyword">const</span> addSquares = <span class="function">(<span class="params">a,b</span>) =&gt;</span> &#123;</span><br><span class="line">   <span class="keyword">const</span> square = <span class="function"><span class="params">x</span> =&gt;</span> x*x;</span><br><span class="line">   <span class="keyword">return</span> square(a) + square(b);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p><strong>自调用匿名函数 (Immediately Invoked Function Expressions)</strong></p>
-<p>这种不太常见，不过有时候也会有些用处。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">(<span class="function"><span class="keyword">function</span> <span class="title">foo</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"Hello Foo"</span>);</span><br><span class="line">&#125;());</span><br><span class="line"></span><br><span class="line">(<span class="function"><span class="keyword">function</span> <span class="title">food</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">"Hello Food"</span>);</span><br><span class="line">&#125;)();</span><br></pre></td></tr></table></figure>
-<p>那么很显然，这里的<code>fun</code>返回的是一个由内部函数组成的Object。</p>
-<h3 id="作用域"><a href="#作用域" class="headerlink" title="作用域"></a>作用域</h3><p>JavaScript中的作用域比较奇特，它不像C-family的语言，只要是个花括号就有单独的作用域。Javascript中只有全局作用域和函数作用域。</p>
-<p>比如说:</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">if</span>(<span class="literal">true</span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> a = <span class="number">2</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(a); <span class="comment">// 2</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> a = <span class="number">1</span>;</span><br><span class="line">(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;<span class="keyword">var</span> a = <span class="number">2</span>&#125;)();</span><br><span class="line"><span class="built_in">console</span>.log(a); <span class="comment">// 1</span></span><br></pre></td></tr></table></figure>
-<p>这里是个很典型的例子。在<code>if</code>的语句块中执行的<code>var a = 2;</code>实际上是重新定义了一个a，覆盖了全局作用域中a的值。而在函数中定义的a不会覆盖全局作用域的a，因为它有一个独立的作用域。</p>
-<p>这种作用域机制引发了一系列的问题，举个例子：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span> ;i++) &#123;</span><br><span class="line">    setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(i); <span class="comment">// 5 5 5 5 5</span></span><br><span class="line">    &#125;, <span class="number">2000</span>); <span class="comment">// 延时2秒</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>按照以往写其他语言的逻辑，这段代码输出的应该是<strong>0 1 2 3 4</strong>，但是由于没有独立的块级作用域，每个<code>console.log(i)</code>中的<code>i</code>实际上是同一个变量的引用，因为延时2秒后i的值固定为5，所以此时执行的输出全都会输出当前<code>i</code>的值。</p>
-<p>解决这个问题的方法就是人为创造块级作用域，使每次循环传入的参数不同。实现这个有两种思路，一种是使用闭包，另一种是ES6提供的块级作用域声明<code>let</code>和<code>const</code>（本质上也是使用了闭包的机制）。</p>
-<p>使用闭包的解决方案如下:</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span>; i++) &#123;</span><br><span class="line">    (<span class="function"><span class="keyword">function</span>(<span class="params">i</span>) </span>&#123;</span><br><span class="line">        setTimeout(<span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        	<span class="built_in">console</span>.log(i); <span class="comment">// 0 1 2 3 4</span></span><br><span class="line">    	&#125;, <span class="number">2000</span>);</span><br><span class="line">    &#125;)(i); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这里将<code>i</code>作为参数传入作用域中。因为JavaScript的参数传递采取的是值传递的方式，每次循环传入的<code>i</code>会单独创建一个作用域，因此最后输出的值会不同。</p>
-<p>JavaScript中有一个很形象的名称来形容这种作用域——作用域链。</p>
-<p>整个JavaScript程序的作用域链可以组成一棵作用域树，其根节点是全局作用域。当一个子节点中要使用一个变量时，它会先在当前作用域寻找，如果找不到该变量的定义，则从它的父节点中寻找，如此递归，直到寻找到该变量的定义或者到达根节点并且没有找到该变量的定义。</p>
-<p>举个例子：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="string">"hahaha"</span>;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">A</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(a);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">B</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> a = <span class="string">"ruaruarua"</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(a);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">C</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(b);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">A()(); <span class="comment">// hahaha</span></span><br><span class="line">B()(); <span class="comment">// ruaruarua</span></span><br><span class="line">C()(); <span class="comment">// undefined</span></span><br></pre></td></tr></table></figure>
-<p>在这个例子中，作用域树可以画成：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">global</span><br><span class="line">|</span><br><span class="line">|-- a = <span class="string">"hahaha"</span></span><br><span class="line">|</span><br><span class="line">|-- A</span><br><span class="line">|   |</span><br><span class="line">|   |-- <span class="function"><span class="keyword">function</span></span></span><br><span class="line"><span class="function">|</span></span><br><span class="line"><span class="function">|-- <span class="title">B</span></span></span><br><span class="line"><span class="function">|   |</span></span><br><span class="line"><span class="function">|   |-- <span class="title">function</span></span></span><br><span class="line"><span class="function">|   |-- <span class="title">a</span> = "<span class="title">ruaruarua</span>"</span></span><br><span class="line"><span class="function">|</span></span><br><span class="line"><span class="function">|-- <span class="title">C</span></span></span><br><span class="line"><span class="function">    |</span></span><br><span class="line"><span class="function">    |-- <span class="title">function</span></span></span><br></pre></td></tr></table></figure>
-<p>不难看出全局作用域上有变量a(值为”hahaha”)，A、B、C三个函数作用域，A、B、C中又各有一个子函数。当调用某个子函数时，子函数会先在自己的作用域中寻找a的定义，之后向上逐层寻找。A中输出的是全局作用域中的a，B中子函数输出的是B作用域中的a，C中因为在整条作用域链上都没有找到b的定义，因此会输出undefined。</p>
-<h3 id="垃圾回收机制"><a href="#垃圾回收机制" class="headerlink" title="垃圾回收机制"></a>垃圾回收机制</h3><p>JavaScript在定义变量的时候就会自动为变量分配内存空间，并且不需要手动进行释放（也没有提供手动释放内存的关键字），所以一般没有人会关心这些内存是否在使用，如何被使用。</p>
-<p>不过JavaScript的内存回收机制实际上为闭包机制的实现提供了便利。</p>
-<p>JavaScript的内存回收是通过对变量引用的追踪完成的，当指向内存中某片区域的变量数量为0时，这片区域就会被释放。这种机制一般被称作<strong>引用计数(Reference Counting)</strong>。</p>
-<p>实际上对于<strong>引用(Reference)</strong>的定义还要再复杂一些：</p>
-<blockquote>
-<p>在内存管理的环境中，一个对象如果有访问另一个对象的权限（隐式或者显式），叫做一个对象引用另一个对象。例如，一个Javascript对象具有对它<a href="https://developer.mozilla.org/en/JavaScript/Guide/Inheritance_and_the_prototype_chain" target="_blank" rel="noopener">原型</a>的引用（隐式引用）和对它属性的引用（显式引用）。</p>
-</blockquote>
-<p>而在javascript中，这里的<strong>对象</strong>指的不仅仅是各个类型的变量，还有函数的作用域，或者说是一个变量环境。</p>
-<p>这里来看一个简单的闭包的例子：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">A</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> a = <span class="string">"hahaha"</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> a;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> b = A();</span><br><span class="line"><span class="built_in">console</span>.log(b()); <span class="comment">// hahaha</span></span><br></pre></td></tr></table></figure>
-<p>这里的<code>A()</code>调用之后会返回一个函数对象，而这个函数对象又会返回它的外部的变量——定义在<code>A</code>中的<code>a</code>。按照写C-family的经验，一个函数执行完之后其中定义的栈变量会随着函数一起被回收掉。但是在这里，<code>A()</code>执行完之后<code>a</code>的值依旧可以被访问到（函数返回的a是a的引用）。</p>
-<p>这是因为内部函数是会和它的执行环境绑定在一起的。当<code>var b = A();</code>语句执行时，b引用了<code>A</code>内部的变量，即被返回的函数对象。根据垃圾回收的机制，该函数的引用没有变为0，因此不会被释放。而该对象的访问是建立在其执行环境也被保存的情况下。</p>
-<p>当一个函数中的某个变量被外部引用时，该函数作用域上的父节点执行的上下文会全部被存下，而不是被释放。</p>
-<p>因此在使用js的函数时应当尽量避免返回内部变量的引用，以免引起内存过高的占用。</p>
-<p>另外，引用计数还有一种很严重的缺陷，参照以下代码：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">f</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">  <span class="keyword">var</span> o = &#123;&#125;;</span><br><span class="line">  <span class="keyword">var</span> o2 = &#123;&#125;;</span><br><span class="line">  o.a = o2; <span class="comment">// o 引用 o2</span></span><br><span class="line">  o2.a = o; <span class="comment">// o2 引用 o</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="string">"azerty"</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">f();</span><br></pre></td></tr></table></figure>
-<p>这里的o和o2之间产生了循环引用，引用的计数永远不会归零，因此该作用域下的变量不会被自动回收，从而造成内存泄漏。</p>
-<h3 id="继续分析题目"><a href="#继续分析题目" class="headerlink" title="继续分析题目"></a>继续分析题目</h3><p>回顾完上面的知识，我们继续来看这道题。</p>
-<p>先公布下答案，方便之后分析：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fun</span>(<span class="params">n,o</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(o);</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    fun:<span class="function"><span class="keyword">function</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">return</span> fun(m,n);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> a = fun(<span class="number">0</span>);  a.fun(<span class="number">1</span>);  a.fun(<span class="number">2</span>);  a.fun(<span class="number">3</span>);<span class="comment">//undefined,?,?,?</span></span><br><span class="line"><span class="keyword">var</span> b = fun(<span class="number">0</span>).fun(<span class="number">1</span>).fun(<span class="number">2</span>).fun(<span class="number">3</span>);<span class="comment">//undefined,?,?,?</span></span><br><span class="line"><span class="keyword">var</span> c = fun(<span class="number">0</span>).fun(<span class="number">1</span>);  c.fun(<span class="number">2</span>);  c.fun(<span class="number">3</span>);<span class="comment">//undefined,?,?,?</span></span><br><span class="line"><span class="comment">//问:三行a,b,c的输出分别是什么？</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//答案：</span></span><br><span class="line"><span class="comment">//a: undefined,0,0,0</span></span><br><span class="line"><span class="comment">//b: undefined,0,1,2</span></span><br><span class="line"><span class="comment">//c: undefined,0,1,1</span></span><br></pre></td></tr></table></figure>
-<p>首先是第一部分的代码。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = fun(<span class="number">0</span>);</span><br><span class="line">a.fun(<span class="number">1</span>); </span><br><span class="line">a.fun(<span class="number">2</span>);  </span><br><span class="line">a.fun(<span class="number">3</span>);</span><br></pre></td></tr></table></figure>
-<p>在执行<code>var a = fun(0);</code>这行代码时，第一次调用了<code>fun</code>函数。首先做个小实验：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fun</span>(<span class="params">n,o</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(o);</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    fun:<span class="function"><span class="keyword">function</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">return</span> fun(m,n);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><img src="/var/folders/kt/wcrwryxs5mn8n609rnljhn3m0000gn/T/abnerworks.Typora/image-20180531140714064.png" alt="image-20180531140714064"></p>
-<p>这里可以看出fun对应的function中调用的<code>fun(m, n)</code>并不是它本身，而是顺着作用域链向上找到的在全局作用域定义的<code>fun(n, o)</code>。那么问题1就解决了。</p>
-<p>接下来就可以开始考虑问题2，这里调用的n自然而然就是<code>fun(n, o)</code>中传入的参数n。</p>
-<p>了解清楚这些，我们就可以开始整理整个流程。</p>
-<p>首先看<code>var a = fun(0);</code>，将参数代入是这样子的：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fun</span>(<span class="params"><span class="number">0</span>, undefined</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="literal">undefined</span>);</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    fun:<span class="function"><span class="keyword">function</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">return</span> fun(m, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>再执行下一句<code>a.fun(1)</code>：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fun</span>(<span class="params"><span class="number">1</span>, <span class="number">0</span></span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">0</span>);</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    fun:<span class="function"><span class="keyword">function</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">return</span> fun(m, <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>那么这里理所应当输出0。</p>
-<p>再看下一句，<code>a.fun(2)</code>。这里和上一句一样，都是建立在a的上下文中的，因此n的值还是0，所以也是输出0。以此类推，<code>a.fun(3)</code>也是一样，会输出0。</p>
-<p>接下来分析下一段：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> b = fun(<span class="number">0</span>).fun(<span class="number">1</span>).fun(<span class="number">2</span>).fun(<span class="number">3</span>);<span class="comment">//undefined,?,?,?</span></span><br></pre></td></tr></table></figure>
-<p>这里可以看出是一个递归调用的过程，每一次fun的调用都是以上一次调用的返回结果为基础，写成代码是这样的：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fun</span>(<span class="params"><span class="number">0</span>, undefined</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="literal">undefined</span>);</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    fun:<span class="function"><span class="keyword">function</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">return</span> fun(m, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125; <span class="comment">// fun(0)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fun</span>(<span class="params"><span class="number">1</span>, <span class="number">0</span></span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">0</span>);</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    fun:<span class="function"><span class="keyword">function</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">return</span> fun(m, <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125; <span class="comment">// fun(0).fun(1)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fun</span>(<span class="params"><span class="number">2</span>, <span class="number">1</span></span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">1</span>);</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    fun:<span class="function"><span class="keyword">function</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">return</span> fun(m, <span class="number">2</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125; <span class="comment">// fun(0).fun(1).fun(2)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">fun</span>(<span class="params"><span class="number">3</span>, <span class="number">2</span></span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="number">2</span>);</span><br><span class="line">  <span class="keyword">return</span> &#123;</span><br><span class="line">    fun:<span class="function"><span class="keyword">function</span>(<span class="params">m</span>)</span>&#123;</span><br><span class="line">      <span class="keyword">return</span> fun(m, <span class="number">3</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125; <span class="comment">// fun(0).fun(1).fun(2).fun(3)</span></span><br></pre></td></tr></table></figure>
-<p>很显然，输出是0 1 2。</p>
-<p>分析了前两个，第三个的结果也很容易可以推导出来，在此我就不再多做分析。</p>
-<h2 id="闭包的应用"><a href="#闭包的应用" class="headerlink" title="闭包的应用"></a>闭包的应用</h2><p>经过以上的学习，大家对于闭包机制已经十分了解了，接下来我们来讲一讲闭包在实际开发中的应用。</p>
-<h3 id="私有变量"><a href="#私有变量" class="headerlink" title="私有变量"></a>私有变量</h3><p>我们都知道，JavaScript中没有像C++那样类的定义，实现面向对象的方式依靠的是原型链(以后会详细讲到)。</p>
-<p>这样的方式有一个很大的缺点就是没有访问控制，对象所有的属性都是public级别的。为了营造一个private的class filed，我们可以使用闭包来实现。因为闭包可以实现对一个作用域的访问控制。</p>
-<p>接下来是一个面向对象的例子：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">A</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.a = <span class="string">"hahaha"</span>;</span><br><span class="line">    <span class="keyword">this</span>.b = <span class="string">"ruaruarua"</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> a = <span class="keyword">new</span> A();</span><br><span class="line"><span class="built_in">console</span>.log(a.a); <span class="comment">// hahaha</span></span><br><span class="line"><span class="built_in">console</span>.log(a.b); <span class="comment">// ruaruarua</span></span><br></pre></td></tr></table></figure>
-<p>这是一个典型的JavaScript式面向对象，所有属性都是对外公开的，可以随意访问，那么我们现在用闭包实现一个私有变量域。在此之前考虑一个问题，怎么做才能使用户无法从<strong>A的实例上</strong>直接访问私有变量呢？</p>
-<p>下面是代码：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">A</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.getPrivate = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            _a : <span class="string">"hahaha"</span>,</span><br><span class="line">            _b : <span class="string">"ruaruarua"</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.a = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.getPrivate()._a;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.b = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.getPrivate()._b;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这样就实现了私有变量。A的实例只能通过<code>getPrivate()</code>或者<code>a()</code>和<code>b()</code>的方式获得，并且不可直接更改。因为A的实例无法访问子函数的作用域，自然也就无法访问其中的变量。</p>
-<h3 id="实用闭包"><a href="#实用闭包" class="headerlink" title="实用闭包"></a>实用闭包</h3><p>在 Web 中，你想要这样做的情况特别常见。大部分我们所写的 JavaScript 代码都是基于事件的 — 定义某种行为，然后将其添加到用户触发的事件之上（比如点击或者按键）。我们的代码通常作为回调：为响应事件而执行的函数。</p>
-<p>假如，我们想在页面上添加一些可以调整字号的按钮。一种方法是以像素为单位指定 <code>body</code> 元素的 <code>font-size</code>，然后通过相对的 <code>em</code> 单位设置页面中其它元素（例如<code>header</code>）的字号：</p>
-<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">body</span> &#123;</span><br><span class="line">  <span class="attribute">font-family</span>: Helvetica, Arial, sans-serif;</span><br><span class="line">  <span class="attribute">font-size</span>: <span class="number">12px</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-tag">h1</span> &#123;</span><br><span class="line">  <span class="attribute">font-size</span>: <span class="number">1.5em</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="selector-tag">h2</span> &#123;</span><br><span class="line">  <span class="attribute">font-size</span>: <span class="number">1.2em</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们的文本尺寸调整按钮可以修改 <code>body</code> 元素的 <code>font-size</code> 属性，由于我们使用相对单位，页面中的其它元素也会相应地调整。</p>
-<p>以下是 JavaScript：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">makeSizer</span>(<span class="params">size</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="built_in">document</span>.body.style.fontSize = size + <span class="string">'px'</span>;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> size12 = makeSizer(<span class="number">12</span>);</span><br><span class="line"><span class="keyword">var</span> size14 = makeSizer(<span class="number">14</span>);</span><br><span class="line"><span class="keyword">var</span> size16 = makeSizer(<span class="number">16</span>);</span><br></pre></td></tr></table></figure>
-<p><code>size12</code>，<code>size14</code> 和 <code>size16</code> 三个函数将分别把 <code>body</code> 文本调整为 12，14，16 像素。我们可以将它们分别添加到按钮的点击事件上。如下所示：</p>
- <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">document</span>.getElementById(<span class="string">'size-12'</span>).onclick = size12;</span><br><span class="line"><span class="built_in">document</span>.getElementById(<span class="string">'size-14'</span>).onclick = size14;</span><br><span class="line"><span class="built_in">document</span>.getElementById(<span class="string">'size-16'</span>).onclick = size16;</span><br></pre></td></tr></table></figure>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#"</span> <span class="attr">id</span>=<span class="string">"size-12"</span>&gt;</span>12<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#"</span> <span class="attr">id</span>=<span class="string">"size-14"</span>&gt;</span>14<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#"</span> <span class="attr">id</span>=<span class="string">"size-16"</span>&gt;</span>16<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<p>这样就实现了这个按钮。</p>
-<h3 id="在循环中使用闭包"><a href="#在循环中使用闭包" class="headerlink" title="在循环中使用闭包"></a>在循环中使用闭包</h3><p>这部分请参照作用域部分的讲解。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2247,7 +2254,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-count">12</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -2260,7 +2267,7 @@
               
               <div class="site-state-item site-state-tags">
                 
-                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-count">7</span>
                   <span class="site-state-item-name">tags</span>
                 
               </div>
