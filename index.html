@@ -262,6 +262,362 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/29/浅谈gRPC/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/29/浅谈gRPC/" itemprop="url">浅谈gRPC</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-12-29T12:58:53+08:00">
+                2018-12-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="什么是gRPC？"><a href="#什么是gRPC？" class="headerlink" title="什么是gRPC？"></a>什么是gRPC？</h2><p><a href="https://grpc.io" target="_blank" rel="noopener">gRPC</a> 是谷歌推出的一款开源RPC框架，主要应用于微服务领域。</p>
+<p>它的特点是基于HTTP/2，支持跨语言（目前有C, Java和golang版本，其中C版本更是有C, C++, Node.js, Python, Ruby, Obj-C, PHP以及C#的上层实现），支持流式通信（节约性能）。</p>
+<p>在gRPC中，运行着服务的分布式节点需要开启一个gRPC服务器。客户端可以通过gRPC客户端来像调用本地的函数一样直接调用远程服务（如下图所示）。</p>
+<p><img src="/images/gRPC.png" alt="gRPC应用结构示意图"></p>
+<p>gRPC默认使用的通信数据结构是谷歌的<code>Protocol Buffers</code>，简称<code>protobuf</code>。<code>protobuf</code>的严格定义是一套 <strong>结构数据化机制</strong> 这套通信协议最大的特点就是跨语言，可自定义schema，以及体积小，在频繁RPC的场景下与<code>Thrift</code>一样十分受到青睐。（具体内容可以参考<a href="https://developers.google.com/protocol-buffers/" target="_blank" rel="noopener">protobuf官网</a>）</p>
+<h2 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h2><p>在这里将举一些在golang中使用gRPC的例子。</p>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>首先我们要安装<code>protobuf</code>。</p>
+<p>安装golang版本之前需要先安装c++版本的，源码包可以到<a href="https://github.com/protocolbuffers/protobuf/releases" target="_blank" rel="noopener">这里</a>下载。</p>
+<p>运行以下指令进行安装：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> cd path/to/protobuf</span><br><span class="line"><span class="meta">$</span> ./configure</span><br><span class="line"><span class="meta">$</span> sudo make</span><br><span class="line"><span class="meta">$</span> make install</span><br></pre></td></tr></table></figure></p>
+<p>等漫长的等待之后安装就完成了，可以运行<code>protoc</code>指令测试一下。</p>
+<p>之后我们安装golang版本的：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> go get -u github.com/golang/protobuf/protoc-gen-go</span><br></pre></td></tr></table></figure></p>
+<p>运行以上指令即可安装。</p>
+<h3 id="试用"><a href="#试用" class="headerlink" title="试用"></a>试用</h3><p>这里我们使用官方提供的例子，首先获取官方的相关源码：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> export PATH=$PATH:$GOPATH/bin # 确保GOBIN在PATH中</span><br><span class="line"><span class="meta">$</span> go get -u google.golang.org/grpc/examples/helloworld/greeter_client</span><br><span class="line"><span class="meta">$</span> go get -u google.golang.org/grpc/examples/helloworld/greeter_server</span><br></pre></td></tr></table></figure></p>
+<p>接下来就可以试试了：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> greeter_server &amp;</span><br><span class="line"><span class="meta">$</span> greeter_client</span><br></pre></td></tr></table></figure></p>
+<p>我们可以看到终端中打印出了一些信息。</p>
+<h3 id="简单分析example代码"><a href="#简单分析example代码" class="headerlink" title="简单分析example代码"></a>简单分析example代码</h3><p>样例目录的结构为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">├── greeter_client</span><br><span class="line">│   └── main.go</span><br><span class="line">├── greeter_server</span><br><span class="line">│   └── main.go</span><br><span class="line">├── helloworld</span><br><span class="line">│   ├── helloworld.pb.go</span><br><span class="line">│   └── helloworld.proto</span><br><span class="line">└── mock_helloworld</span><br><span class="line">    ├── hw_mock.go</span><br><span class="line">    └── hw_mock_test.go</span><br></pre></td></tr></table></figure></p>
+<p>首先看看<code>greeter_server/main.go</code><br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Copyright 2015 gRPC authors.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Licensed under the Apache License, Version 2.0 (the "License");</span></span><br><span class="line"><span class="comment"> * you may not use this file except in compliance with the License.</span></span><br><span class="line"><span class="comment"> * You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *     http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Unless required by applicable law or agreed to in writing, software</span></span><br><span class="line"><span class="comment"> * distributed under the License is distributed on an "AS IS" BASIS,</span></span><br><span class="line"><span class="comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></span><br><span class="line"><span class="comment"> * See the License for the specific language governing permissions and</span></span><br><span class="line"><span class="comment"> * limitations under the License.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//go:generate protoc -I ../helloworld --go_out=plugins=grpc:../helloworld ../helloworld/helloworld.proto</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"net"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"google.golang.org/grpc"</span></span><br><span class="line">	pb <span class="string">"google.golang.org/grpc/examples/helloworld/helloworld"</span></span><br><span class="line">	<span class="string">"google.golang.org/grpc/reflection"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	port = <span class="string">":50051"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// server is used to implement helloworld.GreeterServer.</span></span><br><span class="line"><span class="keyword">type</span> server <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// SayHello implements helloworld.GreeterServer</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *server)</span> <span class="title">SayHello</span><span class="params">(ctx context.Context, in *pb.HelloRequest)</span> <span class="params">(*pb.HelloReply, error)</span></span> &#123;</span><br><span class="line">	log.Printf(<span class="string">"Received: %v"</span>, in.Name)</span><br><span class="line">	<span class="keyword">return</span> &amp;pb.HelloReply&#123;Message: <span class="string">"Hello "</span> + in.Name&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	lis, err := net.Listen(<span class="string">"tcp"</span>, port)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"failed to listen: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	s := grpc.NewServer()</span><br><span class="line">	pb.RegisterGreeterServer(s, &amp;server&#123;&#125;)</span><br><span class="line">	<span class="comment">// Register reflection service on gRPC server.</span></span><br><span class="line">	reflection.Register(s)</span><br><span class="line">	<span class="keyword">if</span> err := s.Serve(lis); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"failed to serve: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在这个文件里主要做了几件事：</p>
+<ul>
+<li>声明并实现了<code>gRPC</code>的服务<code>SayHello</code></li>
+<li>监听端口的<code>TCP socket</code></li>
+<li>使用<code>grpc.NewServer()</code>开启一个<code>gRPC</code> server</li>
+<li>使用<code>pb.RegisterGreeterServer()</code>注册一个<code>protobuf</code>服务</li>
+<li>使用<code>gRPC</code>的<code>reflection.Register</code>注册一个<code>gRPC</code>服务</li>
+</ul>
+<p>我们再来看看客户端：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Copyright 2015 gRPC authors.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Licensed under the Apache License, Version 2.0 (the "License");</span></span><br><span class="line"><span class="comment"> * you may not use this file except in compliance with the License.</span></span><br><span class="line"><span class="comment"> * You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *     http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Unless required by applicable law or agreed to in writing, software</span></span><br><span class="line"><span class="comment"> * distributed under the License is distributed on an "AS IS" BASIS,</span></span><br><span class="line"><span class="comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></span><br><span class="line"><span class="comment"> * See the License for the specific language governing permissions and</span></span><br><span class="line"><span class="comment"> * limitations under the License.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"google.golang.org/grpc"</span></span><br><span class="line">	pb <span class="string">"google.golang.org/grpc/examples/helloworld/helloworld"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	address     = <span class="string">"localhost:50051"</span></span><br><span class="line">	defaultName = <span class="string">"world"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// Set up a connection to the server.</span></span><br><span class="line">	conn, err := grpc.Dial(address, grpc.WithInsecure())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"did not connect: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> conn.Close()</span><br><span class="line">	c := pb.NewGreeterClient(conn)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Contact the server and print out its response.</span></span><br><span class="line">	name := defaultName</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(os.Args) &gt; <span class="number">1</span> &#123;</span><br><span class="line">		name = os.Args[<span class="number">1</span>]</span><br><span class="line">	&#125;</span><br><span class="line">	ctx, cancel := context.WithTimeout(context.Background(), time.Second)</span><br><span class="line">	<span class="keyword">defer</span> cancel()</span><br><span class="line">	r, err := c.SayHello(ctx, &amp;pb.HelloRequest&#123;Name: name&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"could not greet: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Printf(<span class="string">"Greeting: %s"</span>, r.Message)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>Greeter_client</code>主要做了几件事：</p>
+<ul>
+<li>使用<code>grpc.Dial()</code>连接一个<code>gRPC</code>服务（这里使用的是<code>Insecure</code>非安全模式）</li>
+<li>使用<code>pb.NewGreeterClient()</code>创建一个<code>protobuf</code>客户端</li>
+<li>调用<code>protobuf</code>客户端的<code>SayHello</code>服务</li>
+</ul>
+<p>一个简单的gRPC应用就是这样的结构。</p>
+<h2 id="gRPC的一些特性"><a href="#gRPC的一些特性" class="headerlink" title="gRPC的一些特性"></a>gRPC的一些特性</h2><p>在RPC领域有许多成熟的框架，比如大名鼎鼎的<code>Thrift</code>，各大互联网公司均有使用。</p>
+<p>而近两年新出来的gRPC却能在这片领域中开拓出一片自己的天地，可见其必然有制胜法宝，接下来就让我们谈谈gRPC的几大特性。</p>
+<h3 id="跨语言能力"><a href="#跨语言能力" class="headerlink" title="跨语言能力"></a>跨语言能力</h3><p>大部分的RPC框架都是基于同一语言的，因为这样可以保证通信时数据结构不会混乱，不会出现不同语言之间数据结构不兼容的情况。</p>
+<p>但是现在早已不是那个<code>Java C++ Python</code>一把梭的时代了。某些公司因为业务需求和历史遗留问题仍在沿用单一技术栈（没错，我说的就是某鹅厂），但是新兴的公司基本都是多技术栈混合。在这个百花齐放的年代，各语言都有各自的优点，都有业务上的需求。</p>
+<p>拿字节跳动为例，该公司是目前国内的<code>Golang</code>大厂。从2015年开始，公司的许多业务都使用<code>Golang</code>来编写，因为<code>Golang</code>有着运行速度快，编写速度快，维护成本低，跨平台能力强，标准库发达的优点，非常适合在大型工程项目中使用。但同时，公司也有许多<code>C++</code>，<code>Python</code>的项目，再加上高度微服务化的架构，对于RPC的需求可见一斑。</p>
+<p><code>gRPC</code>就有非常强大的跨语言能力。得益于<code>protobuf</code>的跨语言序列化，<code>gRPC</code>能够在不同的语言间尽可能多的提供数据结构，而不是单一的字符串类型。这大大的提升了开发效率，以及服务的可用性。</p>
+<h3 id="流通信"><a href="#流通信" class="headerlink" title="流通信"></a>流通信</h3><p><code>gRPC</code>是通过<code>HTTP/2</code>实现的，他借助于底层的<code>HTTP/2</code>特性，实现了流通信。可以支持单向流，以及服务端、客户端双向流通信。</p>
+<p>流通信的好处有很多，最直观的就是能节约性能。</p>
+<p><code>gRPC</code>使用<code>http frame</code>的方式，对<code>http</code>请求进行切分，从而达到和<code>TCP</code>类似的效果。</p>
+<p><code>gRPC</code>的请求和响应结构为：</p>
+<ul>
+<li>Request → Request-Headers *Length-Prefixed-Message EOS</li>
+<li>Response → (Response-Headers *Length-Prefixed-Message Trailers) / Trailers-Only</li>
+</ul>
+<p>以下是<code>gRPC</code>HTTP frame的样例：</p>
+<p>Request:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">HEADERS (flags = END_HEADERS)</span><br><span class="line">:method = POST</span><br><span class="line">:scheme = http</span><br><span class="line">:path = /google.pubsub.v2.PublisherService/CreateTopic</span><br><span class="line">:authority = pubsub.googleapis.com</span><br><span class="line">grpc-timeout = 1S</span><br><span class="line">content-type = application/grpc+proto</span><br><span class="line">grpc-encoding = gzip</span><br><span class="line">authorization = Bearer y235.wef315yfh138vh31hv93hv8h3v</span><br><span class="line"></span><br><span class="line">DATA (flags = END_STREAM)</span><br><span class="line">&lt;Length-Prefixed Message&gt;</span><br></pre></td></tr></table></figure></p>
+<p>Response:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">HEADERS (flags = END_HEADERS)</span><br><span class="line">:status = 200</span><br><span class="line">grpc-encoding = gzip</span><br><span class="line">content-type = application/grpc+proto</span><br><span class="line"></span><br><span class="line">DATA</span><br><span class="line">&lt;Length-Prefixed Message&gt;</span><br><span class="line"></span><br><span class="line">HEADERS (flags = END_STREAM, END_HEADERS)</span><br><span class="line">grpc-status = 0 # OK</span><br><span class="line">trace-proto-bin = jher831yy13JHy3hc</span><br></pre></td></tr></table></figure></p>
+<h3 id="安全通信"><a href="#安全通信" class="headerlink" title="安全通信"></a>安全通信</h3><p>因为<code>gRPC</code>是基于<code>HTTP/2</code>实现的，因此可以支持多种授权机制，比如<code>SSL/TLS</code>, <code>OAuth 2.0</code>, 或者谷歌校验等方式。</p>
+<p>使用<code>SSL/TLS</code>时，客户端和服务端之间交换的所有数据均会被加密，并且为客户端提供了可选的凭证服务，比如证书之类的。</p>
+<h2 id="gRPC未来发展"><a href="#gRPC未来发展" class="headerlink" title="gRPC未来发展"></a>gRPC未来发展</h2><p><code>gRPC</code>提供了服务提供和服务调用的方式，但是没有提供服务发现机制，对于分布式部署的服务并不那么友好。因此在使用<code>gRPC</code>时，我们还需定制一些服务发现的服务，比如<code>Consul</code>。</p>
+<p>目前服务发现主要分为两种，一种是<strong>客户端发现</strong>，一种是<strong>服务端发现</strong>。</p>
+<p><img src="/images/client_discover.png" alt="client_discover"></p>
+<p><strong>客户端发现</strong>就是由调用方来从某个服务注册中心中寻找一个可用的服务，并进行接入。这样的好处在于直观，但是缺点是对于客户端来说耦合度较高，可能需要依赖大量SDK。</p>
+<p><img src="/images/server_discover.png" alt="server_discover"></p>
+<p><strong>服务端发现</strong>是现在比较推崇的一种方式。他在服务注册中心之前加了一层负载均衡器（反向代理）。客户端无需知道服务注册的查找细节，只需直接请求，由负载均衡器为其路由到最优的节点上。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>gRPC</code>的前景非常好，希望能看到其大展身手。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/28/浅谈gRPC的副本/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/12/28/浅谈gRPC的副本/" itemprop="url">Untitled</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-12-28T12:56:20+08:00">
+                2018-12-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="浅谈gRPC"><a href="#浅谈gRPC" class="headerlink" title="浅谈gRPC"></a>浅谈gRPC</h1><h2 id="什么是gRPC？"><a href="#什么是gRPC？" class="headerlink" title="什么是gRPC？"></a>什么是gRPC？</h2><p><a href="https://grpc.io" target="_blank" rel="noopener">gRPC</a> 是谷歌推出的一款开源RPC框架，主要应用于微服务领域。</p>
+<p>它的特点是基于HTTP/2，支持跨语言（目前有C, Java和golang版本，其中C版本更是有C, C++, Node.js, Python, Ruby, Obj-C, PHP以及C#的上层实现），支持流式通信（节约性能）。</p>
+<p>在gRPC中，运行着服务的分布式节点需要开启一个gRPC服务器。客户端可以通过gRPC客户端来像调用本地的函数一样直接调用远程服务（如下图所示）。</p>
+<p><img src="gRPC.png" alt="gRPC应用结构示意图"></p>
+<p>gRPC默认使用的通信数据结构是谷歌的<code>Protocol Buffers</code>，简称<code>protobuf</code>。<code>protobuf</code>的严格定义是一套 <strong>结构数据化机制</strong> 这套通信协议最大的特点就是跨语言，可自定义schema，以及体积小，在频繁RPC的场景下与<code>Thrift</code>一样十分受到青睐。（具体内容可以参考<a href="https://developers.google.com/protocol-buffers/" target="_blank" rel="noopener">protobuf官网</a>）</p>
+<h2 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h2><p>在这里将举一些在golang中使用gRPC的例子。</p>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>首先我们要安装<code>protobuf</code>。</p>
+<p>安装golang版本之前需要先安装c++版本的，源码包可以到<a href="https://github.com/protocolbuffers/protobuf/releases" target="_blank" rel="noopener">这里</a>下载。</p>
+<p>运行以下指令进行安装：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> cd path/to/protobuf</span><br><span class="line"><span class="meta">$</span> ./configure</span><br><span class="line"><span class="meta">$</span> sudo make</span><br><span class="line"><span class="meta">$</span> make install</span><br></pre></td></tr></table></figure></p>
+<p>等漫长的等待之后安装就完成了，可以运行<code>protoc</code>指令测试一下。</p>
+<p>之后我们安装golang版本的：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> go get -u github.com/golang/protobuf/protoc-gen-go</span><br></pre></td></tr></table></figure></p>
+<p>运行以上指令即可安装。</p>
+<h3 id="试用"><a href="#试用" class="headerlink" title="试用"></a>试用</h3><p>这里我们使用官方提供的例子，首先获取官方的相关源码：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> export PATH=$PATH:$GOPATH/bin # 确保GOBIN在PATH中</span><br><span class="line"><span class="meta">$</span> go get -u google.golang.org/grpc/examples/helloworld/greeter_client</span><br><span class="line"><span class="meta">$</span> go get -u google.golang.org/grpc/examples/helloworld/greeter_server</span><br></pre></td></tr></table></figure></p>
+<p>接下来就可以试试了：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> greeter_server &amp;</span><br><span class="line"><span class="meta">$</span> greeter_client</span><br></pre></td></tr></table></figure></p>
+<p>我们可以看到终端中打印出了一些信息。</p>
+<h3 id="简单分析example代码"><a href="#简单分析example代码" class="headerlink" title="简单分析example代码"></a>简单分析example代码</h3><p>样例目录的结构为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">├── greeter_client</span><br><span class="line">│   └── main.go</span><br><span class="line">├── greeter_server</span><br><span class="line">│   └── main.go</span><br><span class="line">├── helloworld</span><br><span class="line">│   ├── helloworld.pb.go</span><br><span class="line">│   └── helloworld.proto</span><br><span class="line">└── mock_helloworld</span><br><span class="line">    ├── hw_mock.go</span><br><span class="line">    └── hw_mock_test.go</span><br></pre></td></tr></table></figure></p>
+<p>首先看看<code>greeter_server/main.go</code><br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Copyright 2015 gRPC authors.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Licensed under the Apache License, Version 2.0 (the "License");</span></span><br><span class="line"><span class="comment"> * you may not use this file except in compliance with the License.</span></span><br><span class="line"><span class="comment"> * You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *     http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Unless required by applicable law or agreed to in writing, software</span></span><br><span class="line"><span class="comment"> * distributed under the License is distributed on an "AS IS" BASIS,</span></span><br><span class="line"><span class="comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></span><br><span class="line"><span class="comment"> * See the License for the specific language governing permissions and</span></span><br><span class="line"><span class="comment"> * limitations under the License.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//go:generate protoc -I ../helloworld --go_out=plugins=grpc:../helloworld ../helloworld/helloworld.proto</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"net"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"google.golang.org/grpc"</span></span><br><span class="line">	pb <span class="string">"google.golang.org/grpc/examples/helloworld/helloworld"</span></span><br><span class="line">	<span class="string">"google.golang.org/grpc/reflection"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	port = <span class="string">":50051"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// server is used to implement helloworld.GreeterServer.</span></span><br><span class="line"><span class="keyword">type</span> server <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// SayHello implements helloworld.GreeterServer</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *server)</span> <span class="title">SayHello</span><span class="params">(ctx context.Context, in *pb.HelloRequest)</span> <span class="params">(*pb.HelloReply, error)</span></span> &#123;</span><br><span class="line">	log.Printf(<span class="string">"Received: %v"</span>, in.Name)</span><br><span class="line">	<span class="keyword">return</span> &amp;pb.HelloReply&#123;Message: <span class="string">"Hello "</span> + in.Name&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	lis, err := net.Listen(<span class="string">"tcp"</span>, port)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"failed to listen: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	s := grpc.NewServer()</span><br><span class="line">	pb.RegisterGreeterServer(s, &amp;server&#123;&#125;)</span><br><span class="line">	<span class="comment">// Register reflection service on gRPC server.</span></span><br><span class="line">	reflection.Register(s)</span><br><span class="line">	<span class="keyword">if</span> err := s.Serve(lis); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"failed to serve: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在这个文件里主要做了几件事：</p>
+<ul>
+<li>声明并实现了<code>gRPC</code>的服务<code>SayHello</code></li>
+<li>监听端口的<code>TCP socket</code></li>
+<li>使用<code>grpc.NewServer()</code>开启一个<code>gRPC</code> server</li>
+<li>使用<code>pb.RegisterGreeterServer()</code>注册一个<code>protobuf</code>服务</li>
+<li>使用<code>gRPC</code>的<code>reflection.Register</code>注册一个<code>gRPC</code>服务</li>
+</ul>
+<p>我们再来看看客户端：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Copyright 2015 gRPC authors.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Licensed under the Apache License, Version 2.0 (the "License");</span></span><br><span class="line"><span class="comment"> * you may not use this file except in compliance with the License.</span></span><br><span class="line"><span class="comment"> * You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *     http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Unless required by applicable law or agreed to in writing, software</span></span><br><span class="line"><span class="comment"> * distributed under the License is distributed on an "AS IS" BASIS,</span></span><br><span class="line"><span class="comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></span><br><span class="line"><span class="comment"> * See the License for the specific language governing permissions and</span></span><br><span class="line"><span class="comment"> * limitations under the License.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"google.golang.org/grpc"</span></span><br><span class="line">	pb <span class="string">"google.golang.org/grpc/examples/helloworld/helloworld"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	address     = <span class="string">"localhost:50051"</span></span><br><span class="line">	defaultName = <span class="string">"world"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// Set up a connection to the server.</span></span><br><span class="line">	conn, err := grpc.Dial(address, grpc.WithInsecure())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"did not connect: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> conn.Close()</span><br><span class="line">	c := pb.NewGreeterClient(conn)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Contact the server and print out its response.</span></span><br><span class="line">	name := defaultName</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(os.Args) &gt; <span class="number">1</span> &#123;</span><br><span class="line">		name = os.Args[<span class="number">1</span>]</span><br><span class="line">	&#125;</span><br><span class="line">	ctx, cancel := context.WithTimeout(context.Background(), time.Second)</span><br><span class="line">	<span class="keyword">defer</span> cancel()</span><br><span class="line">	r, err := c.SayHello(ctx, &amp;pb.HelloRequest&#123;Name: name&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"could not greet: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Printf(<span class="string">"Greeting: %s"</span>, r.Message)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>Greeter_client</code>主要做了几件事：</p>
+<ul>
+<li>使用<code>grpc.Dial()</code>连接一个<code>gRPC</code>服务（这里使用的是<code>Insecure</code>非安全模式）</li>
+<li>使用<code>pb.NewGreeterClient()</code>创建一个<code>protobuf</code>客户端</li>
+<li>调用<code>protobuf</code>客户端的<code>SayHello</code>服务</li>
+</ul>
+<p>一个简单的gRPC应用就是这样的结构。</p>
+<h2 id="gRPC的一些特性"><a href="#gRPC的一些特性" class="headerlink" title="gRPC的一些特性"></a>gRPC的一些特性</h2><p>在RPC领域有许多成熟的框架，比如大名鼎鼎的<code>Thrift</code>，各大互联网公司均有使用。</p>
+<p>而近两年新出来的gRPC却能在这片领域中开拓出一片自己的天地，可见其必然有制胜法宝，接下来就让我们谈谈gRPC的几大特性。</p>
+<h3 id="跨语言能力"><a href="#跨语言能力" class="headerlink" title="跨语言能力"></a>跨语言能力</h3><p>大部分的RPC框架都是基于同一语言的，因为这样可以保证通信时数据结构不会混乱，不会出现不同语言之间数据结构不兼容的情况。</p>
+<p>但是现在早已不是那个<code>Java C++ Python</code>一把梭的时代了。某些公司因为业务需求和历史遗留问题仍在沿用单一技术栈（没错，我说的就是某鹅厂），但是新兴的公司基本都是多技术栈混合。在这个百花齐放的年代，各语言都有各自的优点，都有业务上的需求。</p>
+<p>拿字节跳动为例，该公司是目前国内的<code>Golang</code>大厂。从2015年开始，公司的许多业务都使用<code>Golang</code>来编写，因为<code>Golang</code>有着运行速度快，编写速度快，维护成本低，跨平台能力强，标准库发达的优点，非常适合在大型工程项目中使用。但同时，公司也有许多<code>C++</code>，<code>Python</code>的项目，再加上高度微服务化的架构，对于RPC的需求可见一斑。</p>
+<p><code>gRPC</code>就有非常强大的跨语言能力。得益于<code>protobuf</code>的跨语言序列化，<code>gRPC</code>能够在不同的语言间尽可能多的提供数据结构，而不是单一的字符串类型。这大大的提升了开发效率，以及服务的可用性。</p>
+<h3 id="流通信"><a href="#流通信" class="headerlink" title="流通信"></a>流通信</h3><p><code>gRPC</code>是通过<code>HTTP/2</code>实现的，他借助于底层的<code>HTTP/2</code>特性，实现了流通信。可以支持单向流，以及服务端、客户端双向流通信。</p>
+<p>流通信的好处有很多，最直观的就是能节约性能。</p>
+<p><code>gRPC</code>使用<code>http frame</code>的方式，对<code>http</code>请求进行切分，从而达到和<code>TCP</code>类似的效果。</p>
+<p><code>gRPC</code>的请求和响应结构为：</p>
+<ul>
+<li>Request → Request-Headers *Length-Prefixed-Message EOS</li>
+<li>Response → (Response-Headers *Length-Prefixed-Message Trailers) / Trailers-Only</li>
+</ul>
+<p>以下是<code>gRPC</code>HTTP frame的样例：</p>
+<p>Request:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">HEADERS (flags = END_HEADERS)</span><br><span class="line">:method = POST</span><br><span class="line">:scheme = http</span><br><span class="line">:path = /google.pubsub.v2.PublisherService/CreateTopic</span><br><span class="line">:authority = pubsub.googleapis.com</span><br><span class="line">grpc-timeout = 1S</span><br><span class="line">content-type = application/grpc+proto</span><br><span class="line">grpc-encoding = gzip</span><br><span class="line">authorization = Bearer y235.wef315yfh138vh31hv93hv8h3v</span><br><span class="line"></span><br><span class="line">DATA (flags = END_STREAM)</span><br><span class="line">&lt;Length-Prefixed Message&gt;</span><br></pre></td></tr></table></figure></p>
+<p>Response:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">HEADERS (flags = END_HEADERS)</span><br><span class="line">:status = 200</span><br><span class="line">grpc-encoding = gzip</span><br><span class="line">content-type = application/grpc+proto</span><br><span class="line"></span><br><span class="line">DATA</span><br><span class="line">&lt;Length-Prefixed Message&gt;</span><br><span class="line"></span><br><span class="line">HEADERS (flags = END_STREAM, END_HEADERS)</span><br><span class="line">grpc-status = 0 # OK</span><br><span class="line">trace-proto-bin = jher831yy13JHy3hc</span><br></pre></td></tr></table></figure></p>
+<h3 id="安全通信"><a href="#安全通信" class="headerlink" title="安全通信"></a>安全通信</h3><p>因为<code>gRPC</code>是基于<code>HTTP/2</code>实现的，因此可以支持多种授权机制，比如<code>SSL/TLS</code>, <code>OAuth 2.0</code>, 或者谷歌校验等方式。</p>
+<p>使用<code>SSL/TLS</code>时，客户端和服务端之间交换的所有数据均会被加密，并且为客户端提供了可选的凭证服务，比如证书之类的。</p>
+<h2 id="gRPC未来发展"><a href="#gRPC未来发展" class="headerlink" title="gRPC未来发展"></a>gRPC未来发展</h2><p><code>gRPC</code>提供了服务提供和服务调用的方式，但是没有提供服务发现机制，对于分布式部署的服务并不那么友好。因此在使用<code>gRPC</code>时，我们还需定制一些服务发现的服务，比如<code>Consul</code>。</p>
+<p>目前服务发现主要分为两种，一种是<strong>客户端发现</strong>，一种是<strong>服务端发现</strong>。</p>
+<p><img src="client_discover.png" alt="client_discover"></p>
+<p><strong>客户端发现</strong>就是由调用方来从某个服务注册中心中寻找一个可用的服务，并进行接入。这样的好处在于直观，但是缺点是对于客户端来说耦合度较高，可能需要依赖大量SDK。</p>
+<p><img src="server_discover.png" alt="server_discover"></p>
+<p><strong>服务端发现</strong>是现在比较推崇的一种方式。他在服务注册中心之前加了一层负载均衡器（反向代理）。客户端无需知道服务注册的查找细节，只需直接请求，由负载均衡器为其路由到最优的节点上。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>gRPC</code>的前景非常好，希望能看到其大展身手。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/20/Docker不完全指南/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1729,481 +2085,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/10/03/Redis的LRU缓存/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/03/Redis的LRU缓存/" itemprop="url">Redis的LRU缓存</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-10-03T18:01:52+08:00">
-                2018-10-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Redis作为一个内存键值对存储的产品，以其高性能、多种数据类型、可选持久化且支持网络等特性成为了许多项目中的宠儿。</p>
-<p>一般来说，缓存在获得超快的读写速度的同时，作为代替会牺牲其存储空间。Redis使用内存作为存储介质，比起传统的使用硬盘作为载体的数据库，读写速度快了许多，但是可存储的数据量也受到了内存大小的限制。在频繁的读写操作下，必然会发生对于旧数据的驱逐(<strong>eviction</strong>)，可能是删除数据，或者是置换到外存中。</p>
-<p>Redis使用LRU作为唯一的驱逐算法(Redis4.0推出了<strong>LFU</strong>, <strong>Least Frequently Used</strong>算法，在本文的后面会提到)。本文将主要围绕Redis的<strong>最大内存限制</strong>和<strong>驱逐算法</strong>谈谈Redis作为缓存的一些细节。</p>
-<h2 id="Redis最大内存限制的配置"><a href="#Redis最大内存限制的配置" class="headerlink" title="Redis最大内存限制的配置"></a>Redis最大内存限制的配置</h2><p>进行了Redis的最大内存配置后，Redis将按照配置使用一个确定大小的内存进行存储。</p>
-<p>Redis最大内存有两种配置的方式，一种是在Redis运行时使用Redis的指令<code>CONFIG SET maxmemory 100mb</code>，可以将最大内存配置为<strong>100mb</strong>。另一种方式就是在<code>redis.conf</code>文件中进行配置<code>maxmemory 100mb</code>，也可以将最大内存配置为<strong>100mb</strong>。</p>
-<p>将<code>maxmemory</code>参数置为<strong>0</strong>的时候，表示没有内存限制。在<strong>64位系统</strong>下，这是默认的配置，但是在<strong>32位系统</strong>下，最大内存限制将被设为<strong>3GB</strong>。</p>
-<p>当Redis使用的内存达到最大内存限制的大小时，将会触发Redis的驱逐策略(<strong>eviction policies</strong>)。此时Redis可能会采取不同的行动，比如给造成内存超出限制的操作返回一个error，或者驱逐旧数据保证内存不超出限制。</p>
-<h2 id="Redis的驱逐策略"><a href="#Redis的驱逐策略" class="headerlink" title="Redis的驱逐策略"></a>Redis的驱逐策略</h2><p>当Redis的内存使用达到上限时，会触发通过<code>maxmemory-policy</code>配置设置的驱逐策略。</p>
-<p>具体的驱逐策略如下：</p>
-<ul>
-<li><strong>noeviction:</strong> 如果发生了会使内存使用超出限制的操作(大部分是写操作)，则返回一个error。</li>
-<li><strong>allkeys-lru:</strong> 尝试将符合LRU条件的key驱逐用来为新数据腾出空间。</li>
-<li><strong>volatile-lru:</strong> 和<strong>allkeys-lru</strong>相似，不过只会驱逐设置了<strong>expire set</strong>(即有持续时间)的key。</li>
-<li><strong>allkeys-random:</strong> 在所有的key中随机驱逐(比较迷)。</li>
-<li><strong>volatile-random:</strong> 在设置了<strong>expire set</strong>的key中随机驱逐。</li>
-<li><strong>volatile-ttl:</strong> 在设置了<strong>expire set</strong>的key中挑选<strong>TTL(time to live)</strong>最小的删除以腾出空间。</li>
-</ul>
-<p>其中涉及到<strong>volatile</strong>的几个选项在没有设置<strong>expire set</strong>的key的情况下会像<strong>noeviction</strong>一样返回error。</p>
-<p>驱逐策略可以在运行时动态配置，并且可以使用INFO实时监控缓存的命中情况。</p>
-<p>以下是选择驱逐策略的几个推荐原则：</p>
-<ul>
-<li>在有热点数据，或者不确定该选择哪种方式的时候，选择<strong>allkeys-lru</strong>。大部分情况下它的表现是最好的。</li>
-<li>在数据被环形扫描访问，或者缓存中的数据访问几率呈均匀分布的时候，可以使用<strong>allkeys-random</strong>。</li>
-<li>如果能提供一套对于不同<strong>TTL</strong>的数据的权衡方案，可以选用<strong>volatile-ttl</strong>。</li>
-</ul>
-<p>另外值得一提的是，设置<strong>expire</strong>也会消耗内存，因此在内存压力较大，且数据并非硬性需要<strong>expire</strong>的情况下，使用<strong>allkeys-lru</strong>并且摒弃<strong>expire</strong>是一种比较好的做法。</p>
-<h2 id="Redis驱逐的过程"><a href="#Redis驱逐的过程" class="headerlink" title="Redis驱逐的过程"></a>Redis驱逐的过程</h2><p>在这里非常有必要介绍一下Redis驱逐的大致流程：</p>
-<ul>
-<li>客户端使用了Redis的指令并且造成了内存使用的增加</li>
-<li>Redis检查内存使用是否超出限制，如果是则按照驱逐策略进行操作</li>
-<li>客户端执行新的指令，如此循环</li>
-</ul>
-<p>整个流程简单来讲就是<strong>使用过量后</strong>，再通过驱逐key来使内存的用量降至限制之下。但是这样一来某个操作如果一次性增加了大量的内存使用量(比如插入一个超大的数据)，Redis的内存用量就有可能明显超出内存限制。</p>
-<h2 id="粗略LRU算法-Approximated-LRU-algorithm"><a href="#粗略LRU算法-Approximated-LRU-algorithm" class="headerlink" title="粗略LRU算法(Approximated LRU algorithm)"></a>粗略LRU算法(Approximated LRU algorithm)</h2><p>实际上Redis的LRU算法并非完全实现原版LRU算法，而是做了一些魔改。这就意味着Redis无法总是选出LRU算法的最佳的驱逐对象，即LRU中定义的最近最少访问的数据。作为代替，他会在一些基本符合要求的数据中选取<strong>最后一次访问时间最早的</strong>那个key进行驱逐。</p>
-<p>从Redis3.0开始，该算法进行了一些改进，变得会为驱逐的对象建立一个pool。这样使得算法的性能更加接近原版LRU。</p>
-<p>Redis的LRU算法有个好处就是用户可以调整<strong>选择对象的数量</strong>来平衡算法的精度。该参数可以通过配置<code>maxmemory-samples 5</code>来修改。</p>
-<p>Redis之所以不选用原版LRU是因为原版LRU会消耗更多的内存。而且对于用户来说，Redis的LRU算法和原版LRU算法几乎是一样的，以下是一张测试结果对比图：</p>
-<p><img src="/images/lru_comparison.png" alt="lru_comparison"></p>
-<p>这个测试是通过使用一定数量的key来填充一个Redis服务器，之后按照插入顺序对所有key进行访问。这样一来按照LRU的规则，第一个被插入的数据将被选中。在此之后，插入原本插入key数量一半的key，根据LRU算法，原先插入数据的一半将被驱逐。</p>
-<p>图中的点分别代表三种不同的数据，从左上到右下的顺序插入：</p>
-<ul>
-<li>亮灰色代表被驱逐的点</li>
-<li>深灰色代表第一批被插入并没被驱逐的数据</li>
-<li>绿色表示后来新插入的数据</li>
-</ul>
-<p>对比可以发现在选取样本数量均为5的情况下，Redis3.0要更接近原版LRU的结果，但是还是有较大的差别。而选取样本为10的话，则十分接近了。</p>
-<p>需要注意的是，LRU只是一个预测数据被访问几率的模型。如果你的数据访问模式近似于幂律分布，即大部分被访问的数据都在一个确定的范围内，LRU算法的表现将会比较好。</p>
-<h2 id="LFU模式"><a href="#LFU模式" class="headerlink" title="LFU模式"></a>LFU模式</h2><p>Redis4.0中新增了LFU模式。该模式是通过计算数据访问频率，来进行数据到驱逐。所以热点数据保持的几率就更高。</p>
-<p>对比起LRU算法，LFU更加可靠。试想一个很少用的数据恰好在最近刚被访问了一次，而另一个比它常用的数据最后一次访问的时间要早于它，这样就有可能将更常用的数据驱逐。LFU就避免了这一个问题。</p>
-<p>可以通过以下驱逐策略配置LFU模式：</p>
-<ul>
-<li><strong>volatile-lfu:</strong> 对设置了<strong>expire set</strong>的数据使用LFU进行驱逐。</li>
-<li><strong>volatile-lfu:</strong> 对所有数据使用LFU进行驱逐。</li>
-</ul>
-<p>LFU与LRU很相似，他维护了一个概率计数器，叫做<strong>Morris counter</strong>，仅用几个<strong>bits</strong>来估算数据的访问频率。这个值会绑定一个衰减周期，每过一段时间该值便会衰减。这样点好处在于可以在一个窗口内统计数据的访问频率。</p>
-<p>与LRU不同的是，LFU有直接可调的参数：衰减的周期和计数器的上限。</p>
-<p>可以通过<code>lfu-decay-time 1</code>和<code>lfu-log-factor 10</code> 进行配置(这里写的均为默认值)。衰减周期单位为<strong>分钟</strong>，计数器的上限就比较复杂。以下是一张对照表，表示不同<code>factor</code>下，访问次数和频率的关系：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| factor | 100 hits   | 1000 hits  | 100K hits  | 1M hits    | 10M hits   |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| 0      | 104        | 255        | 255        | 255        | 255        |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| 1      | 18         | 49         | 255        | 255        | 255        |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| 10     | 10         | 18         | 142        | 255        | 255        |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| 100    | 8          | 11         | 49         | 143        | 255        |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br></pre></td></tr></table></figure>
-<p>对于<code>factor</code>的定义在此就不做解释，大家可以自己感受下。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/10/02/网易游戏服务端开发面试总结/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/02/网易游戏服务端开发面试总结/" itemprop="url">网易游戏服务端开发面试总结</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-10-02T20:11:38+08:00">
-                2018-10-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>不知不觉已经大三了，对于毕业准备直接工作的我来说无疑是一个十分重要的时间点。一般来说，大家会选择大三暑假的暑期实习，抑或是大三下学期去做日常实习。但是我还是希望能更早的进入工作环境，培养自身能力。</p>
-<p>在这种情况下，一位网易的师兄给了我一条网易游戏服务端开发的内推渠道，直接刺激了我的欲望。</p>
-<p>于是，投简历约时间一气呵成，我最终怀着忐忑的心情完成了自己人生中的第一次职场面试。</p>
-<p>废话不多说，直接开始讲讲我的面试流程。</p>
-<h2 id="前提条件以及准备"><a href="#前提条件以及准备" class="headerlink" title="前提条件以及准备"></a>前提条件以及准备</h2><p>在开始讲之前，我要先阐述一下面试的职位，我的自身情况，以及我所做的准备。</p>
-<p>首先贴一下岗位要求：</p>
-<blockquote>
-<p>游戏平台研发工程师</p>
-<p>您可以：</p>
-<ul>
-<li>参与解决复杂的信息存储平台、数据统计平台、自动化系统设计问题，培养自身成为出色的系统设计师</li>
-<li>参与不同技术领域的工程开发工作，培养自身成为以解决工程问题为目标，不受技术手段限制的工程师</li>
-<li>在不太足够的时间内为打造产品 Rush Coding, 培养自身成为出色的 Coder</li>
-<li>通过 Review 和被 Review 代码来提升自身 Coding 的质量，并参与制定更优的规范和设计模式</li>
-<li>参与快速学习并掌握前沿技术，为战略决策提供专业的技术分析</li>
-</ul>
-<p>我们希望您具备以下条件：</p>
-<ul>
-<li>本科及以上学历</li>
-<li>自我驱动的工作、生活态度</li>
-<li>非常热爱 Coding 和解决问题</li>
-<li>非常擅长通过信息搜索和文档阅读来解决问题</li>
-<li>超强的解决问题执行力，能持续反思和探索更优解决方案</li>
-<li>精通至少一门编程语言，深入理解数据结构，算法，操作系统等知识</li>
-<li>习惯用数学分析、数据建模的思维处理任何问题（技术 or 非技术）</li>
-<li>良好的沟通能力，能够在团队中尊重他人并与之坦诚合作</li>
-</ul>
-</blockquote>
-<p>项目组的产品本身是一个游戏平台，类似腾讯的<strong>WeGame</strong>平台(前身<strong>TGP</strong>)，因此客户端的实现方式大致为<strong>.NET </strong>桌面应用内嵌浏览器，使用<strong>Angular</strong>作为前端框架。而服务端则是使用<strong>Golang</strong>进行开发。</p>
-<p>除掉岗位要求中的客套话，可以发现该岗位没有明确的技术栈要求。且一直在强调<strong>参与不同技术领域的工程开发工作</strong>，<strong>Rush Coding</strong>。因此必须做好岗位的要求是具有全栈开发能力，且具有丰富业务经验的准备。</p>
-<p>暂不考虑该组招聘对于求职者水平的具体要求如何，光是入职后可能面临的挑战就让我感受到了巨大的压力。不过不管怎么样，去试试总是没错的。</p>
-<p>于是拿到这份岗位要求的我开始了面试前的准备。</p>
-<h3 id="自我分析"><a href="#自我分析" class="headerlink" title="自我分析"></a>自我分析</h3><p>首先要做的第一件事自然是对自己的能力进行分析：</p>
-<ul>
-<li>编程语言方面，我用于进行过小型项目开发的有：C++, Python, Java, C#.NET。进行过大型项目开发的只有Node.js。这个技术栈真的十分尴尬，因为大部分公司的WEB服务端都是使用Python, Java, C#的其中之一来开发的，而网易游戏更是使用我刚刚开始接触的Golang。这几个语言我虽然能正常使用，但是完全称不上熟悉。而这些东西短时间内又很难有质的提升，比如一些语言机制的底层实现，不同版本下的表现，以及应用的场景，都是需要巨大的文档阅读量和生产环境开发才能融会贯通的。总的来说，我在语言方面完全没有优势（除了能用js参与一些前端开发的工作），因此必须另辟蹊径。</li>
-<li>项目经验方面，我在学院的课程系统Matrix的团队待了一年多的时间。除去摸鱼，实际工作时间也有大半年。期间主要工作还是Node.js的服务端开发，服务器的运维，和前端、产品一起讨(撕)论(逼)。开发经验算得上是丰富，但是美中不足的是没实际参加过重大灾害的现场补救工作(高并发导致系统崩溃)，因此对于服务端开发的一些理念的理解还不足。不过总体上还算得上有优势。</li>
-<li>计算机基础以及算法方面，服务端涉及的底层知识较少，我本身也具备一定的知识储量，因此不成问题。至于算法，虽然平时也没做算法题，数据结构啥的也没好好学，但是有中学时参加NOIP的底子在，简单的算法题还是能短时间内做出来的。只要面试官不要太过为难我，就没啥问题。</li>
-<li>面试经验。这方面就是我最大的短板了。之前虽然有进行过加入团队时的面试，后面也以面试官的身份面试过几位同学，但是毕竟没有那么正式，过程中涉及的信息交换较少。真正的职场面试中，会进行大量的信息交换，一方面，企业需要尽可能的保证自己招人时的全方位考察，另一方面，求职者也需要抓住一切机会展现自己的优势，要在短短的一两个小时内做到这点是很不容易的一件事。这方面就只能尽力而为了。</li>
-</ul>
-<h3 id="简历书写"><a href="#简历书写" class="headerlink" title="简历书写"></a>简历书写</h3><p>分析完之后就要开始写简历了。关于选简历的模板之类的，因为不是重点，秉承能看就行的原则足矣，在此就不多做赘述。</p>
-<p>在我看来，技术类岗位最重要的两个部分就是项目经验和个人技能(技术栈)。这两项能很直观地展现求职者自身的能力，并且让面试官决定以什么样的方式对你进行考察。如果能写出一份好的简历，很有可能可以引导面试走向有利于自己的方向，这无疑是最重要的前期准备。</p>
-<p>在这里我主要分享一下自己的个人技能方面的写法：</p>
-<blockquote>
-<p>熟悉 JavaScript 的闭包，原型链等基本机制，熟悉ES6</p>
-<p>熟悉 HTTP，熟悉 RESTful API 的设计与使用 </p>
-<p>使用 C++，python，C#进行过项目开发，未深入了解，但可快速上手 </p>
-<p>熟悉使用 git 进行协同开发 </p>
-<p>熟悉 Linux 运维的日常操作，了解 MySQL，Redis，RabbitMQ 的基本机制，可正常使用</p>
-<p>了解前端技术栈及开发流程，但未在前端岗位上进行过前端开发，可以快速上手</p>
-<p>目前正在学习 Golang </p>
-</blockquote>
-<p>客观来讲，我的技能介绍写的并不好，甚至可以算得上是糟糕。原因有几点：</p>
-<ol>
-<li>对于技术的掌握程度写的太过模棱两可，面试官看到后很难第一时间抓住重点。这会使得这份技能介绍失去本身的引导作用。</li>
-<li>列举的项过多，且主次不分明。这样很容易让面试官对你产生错误的判断。如果提高了面试官的预期，那么形势就会更加严峻。</li>
-</ol>
-<p>关于第2点，其实在写这份简历时我是有一定的考量的。由于对岗位的情况了解不够多，摆在我面前的是一个两难选择。我对该岗位招人的前提有两种判断，分别是“<strong><em>项目本身不缺人手，考虑到今后的发展招一些可培养的实习生</em></strong>”和“<strong><em>项目很缺人，尤其是核心开发人员，需要进来就能很好的工作并且十分稳定的求职者</em></strong>”。</p>
-<p>如果现实情况是前者，那么我的竞争对手应该多是在读的大学生。要与其竞争的话，我最好能尽可能多的展现自己的知识广度和学习能力，并且利用好项目经验的优势。因此简历上的个人技能可以尽可能写的多一些是有好处的，重点是掌握程度需要慎重。</p>
-<p>如果现实是后者，那么我的竞争对手应该是有一定工作经验的社招程序员。相比在读学生，其项目经验和业务水平要强的多，我很难与其竞争。这种情况下，技能介绍需要写的十分谨慎，尽量只写上自己十分有把握的技能，介绍也尽可能的详细。</p>
-<p>就我自身而言，我更偏向于选择前者。由于没有特别的生产环境需要，我平时的学习路线都是广度优先，因为学的太深的话可能会因为没有接触过应用场景而无法很好的理解技术本身。这样一来如果要选择第二种方式写技能介绍的话，我能写的东西就很少，而且翻车的几率也很高。</p>
-<p>但是我准备走的招聘渠道是内推，该组很有可能仅面向内部招人。这样的话参与竞争的人应当是鱼龙混杂，并且实力较强的人居多。</p>
-<p>如果按第一种方法来写，却遇到第二种情况的话，下场自然是会很惨。按第二种方法来写，遇到第一种情况的话，就很难展现出自己的优势。</p>
-<p>于是经过一番权衡，我决定赌一把，使用了第一种方法去写出了上面的个人技能。</p>
-<p>不过事实证明我的推测是错误的。我漏掉了一种情况，那就是我并没有竞争对手。我需要做的是击败面试官。（后面会提到）</p>
-<h3 id="简历的投递与等待期间的准备"><a href="#简历的投递与等待期间的准备" class="headerlink" title="简历的投递与等待期间的准备"></a>简历的投递与等待期间的准备</h3><p>简历的投递还是很简单的，直接发到指定邮箱解决。</p>
-<p>不得不说网易游戏的效率还是很高的，第二天HR就打电话过来约时间了。原本按照我的打算是约到国庆之后面试，这样我有足够的时间可以复习一下基础知识，再补一些面试所需的额外知识（因为真的是一时兴起就投了简历，完全没做准备）。然而HR的两通电话就打乱了我的节奏。</p>
-<p>我是9月25日投的简历，26日时接到了HR的第一通电话。这时HR只是问问我有空的时间，于是我按原想法说了10月8日。但是之后，HR又问了我29日时有没有时间。</p>
-<p>此时我心中一紧，陷入了一阵迷茫。由于之前没有过面试的经验，我有点不得其要点，心中不希望因为约的时间太晚而给对方带来麻烦。虽然事实上求职者与招聘者是对等的，面试的时间是可以由求职者选择的。</p>
-<p>结果就是，我一不小心就答应了29日的面试。虽然对于HR来说只是早一周安排上一次面试，但是对于我来说却是少了整整一周的宝贵的复习时间。</p>
-<p>不过既然已经定下来了，我也只能硬着头皮突击复习了。</p>
-<p>于是在这短短的几天内，我阅读了许多面经，刷了许多面试题。虽然称不上是系统的复习，但学到的东西也蛮多的，这时的我隐隐有种<strong>稳了</strong>的感觉。</p>
-<p>然而这里我犯了几个致命的错误：</p>
-<ol>
-<li>复习的重点没有放在简历列举的项目经验上</li>
-<li>复习了大量操作系统和计网的知识</li>
-<li>没有好好请教前辈相关的技巧</li>
-</ol>
-<p>这也是让我后悔莫及的几点，在这个阶段我犯下了最严重的错误。</p>
-<h2 id="面试过程"><a href="#面试过程" class="headerlink" title="面试过程"></a>面试过程</h2><blockquote>
-<p>为了更加形象地描述，我决定使用叙事的形式来记录面试的全过程</p>
-</blockquote>
-<hr>
-<p>2018年9月29日，中午一点半，我拖着略有疲惫的身躯，带着紧张的心情，提前一小时来到了网易游戏的侨鑫国际分部。</p>
-<p>这座大厦即使是在广州市中心的珠江新城也显得十分气派，网易在此租了十几层楼，想必也是笔不小的投入。</p>
-<p>我在大楼保安的指引下，搭乘气派的高级电梯上了楼。</p>
-<p>来到网易游戏的门户楼层，首先映入我眼帘的就是红色的四个大字——网易游戏，以及前台旁边的零食架。</p>
-<p>“卧槽，还有零食架。”看着从零食架上拿起两包薯片后匆匆离去的一名员工，我不禁暗叹道。不愧是<strong>猪场</strong>，虽然早有耳闻，但是真正见到还是感觉很震撼。</p>
-<p>前台的小姐姐注意到了我的存在，于是主动站起身来询问。</p>
-<p>“您好，请问有什么可以帮忙的吗？”可能是还在午休时间的缘故，她的手里还拿着一个麦当劳的纸袋。</p>
-<p>“我是来面试的。”我将手机切换到通知邮件的界面，递给了她。然后趁着她确认信息的这段时间，我细细打量了一下周围的环境。</p>
-<p>该层位于侨鑫国际大厦的5楼，是网易游戏在此的门户层，再往上的十几层楼就是网易游戏的办公室。</p>
-<p>这里的前台算不上气派，甚至连整洁也很难算得上——前台的桌面上随意摆放着各种表格和资料，还有一些零食。可能这就是IT公司的作风吧。</p>
-<p>前台旁边有三张小沙发，其中一张在进门的正左边，紧贴着零食架。我进来时那里已经坐了两个人，似乎也是来参与面试的。另外两张沙发则是在右边，互相对着摆放，中间是一张茶几。</p>
-<p>在前台背后的就是那面有着网易游戏LOGO的白墙，墙之后应该就是一片开放式的办公室。不过由于视野的原因，无法看到全貌。</p>
-<p>就在我津津有味的四处观望时，前台小姐姐已处理好我的来访请求，让我到沙发等待。我看了眼手表，距离面试还有整整四十分钟的时间，于是便坐下来静息凝神。</p>
-<p>等待的时间过得很快，大约还有二十分钟到约定的两点半的时候，HR打来了电话，示意我到7楼参加面试。</p>
-<p>我怀着有些忐忑的心情乘电梯来到了7楼。</p>
-<p>在电梯外等着我的就是HR小姐姐，大约一米五到一米六的身高，穿着一套日系风格的衣服和长裙。在她的引导下，我来到了一个毛玻璃隔间，等待面试官的到来。</p>
-<p>隔间没什么特别之处，中间一张小小的大约能容纳三至四人的圆桌，两张相对摆放的椅子，墙角摆着两把睡觉用的折叠椅，非常的IT公司。</p>
-<p>过了一会面试官进来了，是一位约莫三十岁的男子，头发有点凌乱，眼神略微涣散，穿着一件灰色的POLO衫和一条蓝色牛仔裤，手里拿着2017款的Macbook pro 15.6inch。</p>
-<p>“先做道题吧，半个小时内。”他坐下来第一件事就是将Macbook打开推到了我的面前，“把简历给我。”</p>
-<p>他说话非常简洁，没有其他多余的说明，给人一种微微的压迫感。</p>
-<p>我有点紧张了起来，将裱好的简历递给他后就开始打量题目。</p>
-<p>MacBook上打开了一个Sublime Text的窗口，上面写着题目的要求，大致如下：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">windows系统自带的画图软件中有一个油漆桶的功能，其功能是对某一个点使用，周围的一片最小封闭区域内会全变成指定颜色。在该题中，<span class="number">0</span>表示色块，<span class="number">1</span>表示边界，<span class="number">2</span>表示要变成的颜色。左上角坐标为(<span class="number">0</span>,<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span></span><br><span class="line"><span class="number">0</span> <span class="number">1</span> <span class="number">1</span> <span class="number">1</span> <span class="number">0</span> <span class="number">1</span> <span class="number">0</span></span><br><span class="line"><span class="number">0</span> <span class="number">1</span> <span class="number">0</span> <span class="number">0</span> <span class="number">1</span> <span class="number">0</span> <span class="number">1</span></span><br><span class="line"><span class="number">0</span> <span class="number">1</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">1</span></span><br><span class="line"><span class="number">0</span> <span class="number">0</span> <span class="number">1</span> <span class="number">1</span> <span class="number">0</span> <span class="number">1</span> <span class="number">0</span></span><br><span class="line"><span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">1</span> <span class="number">0</span> <span class="number">0</span></span><br><span class="line"><span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span></span><br><span class="line">样例</span><br><span class="line"><span class="number">4</span> <span class="number">4</span></span><br><span class="line">结果</span><br><span class="line"><span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span></span><br><span class="line"><span class="number">0</span> <span class="number">1</span> <span class="number">1</span> <span class="number">1</span> <span class="number">0</span> <span class="number">1</span> <span class="number">0</span></span><br><span class="line"><span class="number">0</span> <span class="number">1</span> <span class="number">2</span> <span class="number">2</span> <span class="number">1</span> <span class="number">2</span> <span class="number">1</span></span><br><span class="line"><span class="number">0</span> <span class="number">1</span> <span class="number">2</span> <span class="number">2</span> <span class="number">2</span> <span class="number">2</span> <span class="number">1</span></span><br><span class="line"><span class="number">0</span> <span class="number">0</span> <span class="number">1</span> <span class="number">1</span> <span class="number">2</span> <span class="number">1</span> <span class="number">0</span></span><br><span class="line"><span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">1</span> <span class="number">0</span> <span class="number">0</span></span><br><span class="line"><span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span> <span class="number">0</span></span><br></pre></td></tr></table></figure>
-<p>我看完题目后悬着的心终于放了下来。</p>
-<p>“还好出了道很简单的题目。”我暗道。</p>
-<p>这道题是一个典型的搜索问题。</p>
-<p>大致分析一下，我们可以整理出以下一个过程：倒下油漆到指定点，油漆会向四周的点扩散，而油漆到达某个点之后还会继续向周围扩散，直到碰到边界为止，这是一个递归的过程。</p>
-<p>抽象一下，可以整理为：<strong>从(x, y)开始，如果(x, y)为0则将其变为2，遍历(x-1, y), (x+1, y), (x, y-1), (x, y+1)，对其进行同样的操作，如果周围的四个点均为不能染色的，则返回</strong>。</p>
-<p>再加上一些边界情况的讨论，写成代码就是：</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// DFS</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">paint</span><span class="params">(<span class="keyword">int</span>** <span class="built_in">map</span>, <span class="keyword">int</span> x, <span class="keyword">int</span> y)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">map</span> == <span class="literal">nullptr</span>) <span class="keyword">return</span> <span class="number">-1</span>; <span class="comment">// null pointer exception</span></span><br><span class="line">  <span class="keyword">if</span> (x &lt; <span class="number">0</span> || y &lt; <span class="number">0</span> || x &gt; MAX_X || y &gt; MAX_Y) <span class="keyword">return</span> <span class="number">1</span>; <span class="comment">// leak</span></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">map</span>[x][y] != <span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>; <span class="comment">// success</span></span><br><span class="line">  <span class="built_in">map</span>[x][y] = <span class="number">2</span>;</span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">map</span>[x - <span class="number">1</span>][y] == <span class="number">0</span>) paint(<span class="built_in">map</span>, x - <span class="number">1</span>, y);</span><br><span class="line">  ... <span class="comment">// 这几行你们都懂得</span></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我将代码交给面试官查看。</p>
-<p>从开始看题到做出来为止，花了大约十五分钟时间，半个小时简直绰绰有余。</p>
-<p>看着面试官读我的代码，我心中的紧张已经渐渐消失，取而代之的是一种兴奋的心情。</p>
-<p>“嗯，没啥问题，再把非递归的也实现一下吧。”</p>
-<p>“嗯。”我再次接过电脑。</p>
-<p>非递归嘛，也很简单，用一个栈来存储每次探索的路径，到达尽头再回溯，直到栈为空，即把出发点pop出来。</p>
-<p>大约花了十分钟，我又实现了非递归版的DFS。整体还是十分顺利的。</p>
-<p>在将电脑递回给面试官的过程中，我发现面试官已经在他的本子上列下了之后面试的重点，应该是读了简历之后的一个小结论。</p>
-<p>我心中小小的慌了一下，不过因为到目前为止一直很顺利的缘故，很快就恢复了自信。</p>
-<p>“可以了，接下来看看你的简历吧。”他拿起了自己的笔记本和我的简历，“讲一下你对RESTful的理解？”</p>
-<p>我愣了一下，突然惊出了一身冷汗。我这才意识到自己犯下了没有复习简历上的技能的错误。倒不是说这些知识我不懂，只是在没有复习的情况下，我可能会遗漏一些平时没有用到但是又十分重要的点。</p>
-<p>我大致思索了一下，答道：</p>
-<blockquote>
-<p>RESTful就是表述性状态转移，是一种面向资源的设计原则。用户可以通过<strong>http动词</strong>对资源进行操作，通过GET获取资源的状态，通过POST更新由服务端维护id的资源，通过PUT更新由客户端维护id的资源，通过DELETE删除资源。</p>
-</blockquote>
-<p>面试官点了点头，看不出是满意还是什么。</p>
-<p>不过在我的感觉里，我答得应该没啥问题。虽然很久没有专门钻研概念上的东西了，但是重要的点都还记得。于是我决定趁胜追击，再展示下自己的额外知识。</p>
-<p>“不过我觉得RESTful不太适合做命令类的API。”</p>
-<p>“哦？详细说说看。”</p>
-<p>果不其然，我的一番加戏勾起了面试官的兴趣。</p>
-<p>“我一般的做法是使用一个<code>action</code>字段来操作command依赖的实体，<code>action</code>可以在<code>query</code>里也可以在<code>entityBody</code>里。”</p>
-<p>“那你来设计一个RESTful的API吧，这里有个场景。”他开始了他的描述：</p>
-<blockquote>
-<p>有一个客户端，是一个基于.NET的桌面应用，内嵌了一个浏览器，将js，html等资源注入进去。前端要访问一个.NET的API来让窗口最小化，设计这个API的URL，使用POST访问。</p>
-</blockquote>
-<p>我想了想，尝试着写了出来:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">POST /syscommand </span><br><span class="line">&#123;</span><br><span class="line">  &quot;action&quot;: &quot;最小化&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>面试官摇了摇头：“你这样写的话状态转移要怎么满足呢？”</p>
-<p>我恍然大悟，修改了一下，写成了：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">POST /window</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;state&quot;: &quot;最小化&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这样可以把window作为资源，更新其状态，抑或是直接将windowstate作为一种资源也可以。</p>
-<p>面试官没说什么，直接进入了下一个环节。</p>
-<p>“js的原型链，能描述一下吗？”</p>
-<p>“js的原型链就是通过prototype来访问原型上定义的属性和方法，提供了一种面向对象继承的机制，可以在子类访问超类上定义的方法。”我自信地回答道。虽然答案不能算标准，毕竟有段时间没读JS红宝书了。</p>
-<p>“那好，我这里给你个例子，ES6的class。”他说着在纸上写下了一段代码：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span> </span>&#123;</span><br><span class="line">  func1()&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span> </span>&#123;</span><br><span class="line">  func2()&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> b = <span class="keyword">new</span> B();</span><br></pre></td></tr></table></figure>
-<p>“你来讲一下这里的原型链结构吧。”</p>
-<p>我愣住了，脑中开始了对当前情况的估算。</p>
-<p>因为我清楚的记得ES6中class的实现不是单纯的原型继承，而且不同pollyfill的实现也有些区别。我开始冒冷汗，不知道该如何回答这个问题，于是只好想办法糊弄一下：</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">A.prototype.func1 = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;&#125;;</span><br><span class="line">B.prototype.func1 = <span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;&#125;;</span><br><span class="line">B.prototype = A;</span><br><span class="line">b.prototype = B;</span><br></pre></td></tr></table></figure>
-<p>当然，我自己心里很清楚这样写是存在很多问题的。不过实在是没有办法了。</p>
-<p>我的脑中渐渐开始出现自己失败被拒的场面，脚不由自主的抖了起来。</p>
-<p>“下一个问题。”看得出面试官并不太满意，我感到有些自责。</p>
-<p>“你的这个项目里RabbitMQ是怎么应用的，为什么要使用RabbitMQ？”</p>
-<p>终于到了我擅长的东西。我心中暗自叫好。</p>
-<p>于是我深吸了一口气，开始大侃特侃我们的项目。大部分东西都讲的很清楚，但是有几个问题却把我卡住了，恰恰是我之前有质疑过，但是又没有深入考虑其原因而将就下去的问题。</p>
-<p>比如使用AMQP的ACK机制来确保消息被consume，我忘记具体的参数名，只能说AMQP有提供这个机制，但是我们没有使用。</p>
-<p>再如AMQP的duration原理，redis的热点数据算法，缓存同步，缓存expire的必要性，Master/slave之间的MIGRATE，等等。</p>
-<p>这些都是我有考虑过，却没有去真正实践的东西，所以我只能知其然不知其所以然。而到了这时，面试的时间也差不多结束了，我已蔫成一个漏气的皮球，面试官的脸上依旧没有波澜。</p>
-<p>“那么你还有什么想问的吗？”面试官似乎是例行公事，最后问了这个问题。</p>
-<p>此时的我已不抱太大希望，不过出于好奇，还是问了一些关于项目的问题，比如项目的版本管理，使用的CI，部署的问题等等，如同唐僧西天取经。好在面试官人很好，一一解答了，也解决了我的不少疑问。</p>
-<p>于是面试就这样结束了。面试官让我留在小房间里等通知，他则是要去和别人商量一下结果。</p>
-<p>二十分钟后，HR打来电话，让我回去等通知。这时的我已经隐隐约约猜到了结果，整个人如同失了魂似的乘上了返程的地铁。</p>
-<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>回到学校之后我已不抱太大希望了，毕竟这是自己的第一次面试，没有经验。准备的也不够充分，临场发挥也没表现好，而且看得出来岗位的要求还是挺高的。如果能过，那真的是我的运气太好了。</p>
-<p>不过经过这次面试，我的收获也是很大的：</p>
-<ul>
-<li>一是意识到了还有很多地方可以主动发挥下。比如在做算法题时我本可以很快告诉面试官这道题的类型，并且跟他分享我的分析过程。但遗憾的是我只是低头写代码，即使写对了，边界情况考虑也周全了，也只是中规中矩，无法让他印象深刻。</li>
-<li>二是应该自己主动尝试引导面试问题的走向。到了面试后期的时候，我本可以将项目的描述转换成<strong>提出问题-分析问题-解决问题</strong>的结构，但是我所做的只是陈述而已，没有给面试官提问的机会，也没有进一步展现自己思考的过程。</li>
-<li>三是应该再诚实一些。有些问题我的解答十分模棱两可，那只是为了展示<strong>我知道，但是没精通</strong>这种自欺欺人的想法。实际上，对于不十分了解的知识点，直接承认自己无法解答，可能结果会更好。</li>
-</ul>
-<p>总结了这些的我，心情总算还是好了一些。</p>
-<p>第二天就收到了HR发来的婉拒邮件：</p>
-<p><img src="/images/image-20181002200614190.png" alt="image-20181002200614190"></p>
-<p>我的第一次职场面试就这样在风中消散了～</p>
-<p>总之，希望这些东西能帮到大家。（写出来主要是为了泄愤，能帮到人当然更好啦）</p>
-<p>祝大家都能找到心仪的工作。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2254,7 +2135,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-count">14</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
