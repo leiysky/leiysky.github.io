@@ -262,6 +262,175 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/02/02/Go中的反射-reflect/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/02/02/Go中的反射-reflect/" itemprop="url">Go中的反射(reflect)</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-02-02T23:41:37+08:00">
+                2019-02-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>许多语言都有反射的机制，并且每家都不尽相同。今天要谈的主要是<code>go</code>中的反射。</p>
+<p><code>go</code>标准库中有一个<code>reflect</code>库，其中实现的就是反射相关的内容。</p>
+<p>有些同学可能觉得反射对我们写业务逻辑的来说遥不可及，其实不然。<code>go</code>中许多的机制和标准库的实现都依赖于反射，比如说<code>encoding</code>中的<code>json</code>, <code>xml</code>等编码解码库，<code>format string</code>中的<code>%T</code>和<code>%v</code>……</p>
+<p>接下来就让我们从头开始认识一下<code>go</code>的<code>reflect</code>。</p>
+<h2 id="Go反射的基本概念"><a href="#Go反射的基本概念" class="headerlink" title="Go反射的基本概念"></a>Go反射的基本概念</h2><p><code>go</code>的反射中主要涉及了两个关键的类型：<code>reflect.Type</code>, <code>reflect.Value</code>。</p>
+<p>在<code>go</code>中，每个变量由<code>Type</code>和<code>Value</code>两部分组成。</p>
+<p><code>interface</code>类型变量的结构本质是一个<code>(value, type)</code>对，而<code>interface{}</code>则是一个能接受所有<code>interface</code>的类型（因为其没有<code>method</code>，可以满足任何<code>interface</code>）</p>
+<p><code>reflect.Type</code>顾名思义就是<code>go</code>中变量的类型。他最常见的出现方式就是通过<code>reflect.TypeOf</code>函数得到（<code>format string</code>中的<code>%T</code>就是调用这个函数得到的）。</p>
+<h3 id="reflect-Type"><a href="#reflect-Type" class="headerlink" title="reflect.Type"></a>reflect.Type</h3><p><code>reflect.Type</code>是一个<code>interface</code>，我们可以简单看一下它的一些主要的<code>method</code>：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Type <span class="keyword">interface</span> &#123;</span><br><span class="line">    Align() <span class="keyword">int</span></span><br><span class="line">    FieldAlign() <span class="keyword">int</span></span><br><span class="line">    Method(<span class="keyword">int</span>) Method</span><br><span class="line">    MethodByName(<span class="keyword">string</span>) (Method, <span class="keyword">bool</span>)</span><br><span class="line">    NumMethod() <span class="keyword">int</span></span><br><span class="line">    Name() <span class="keyword">string</span></span><br><span class="line">    PkgPath() <span class="keyword">string</span></span><br><span class="line">    Size() <span class="keyword">uintptr</span></span><br><span class="line">    String() <span class="keyword">string</span></span><br><span class="line">    Kind() Kind</span><br><span class="line">    Implements(u Type) <span class="keyword">bool</span></span><br><span class="line">    AssignableTo(u Type) <span class="keyword">bool</span></span><br><span class="line">    ConvertibleTo(u Type) <span class="keyword">bool</span></span><br><span class="line">    Comparable() <span class="keyword">bool</span></span><br><span class="line">    Bits() <span class="keyword">int</span></span><br><span class="line">    ChanDir() ChanDir</span><br><span class="line">    IsVariadic() <span class="keyword">bool</span></span><br><span class="line">    Elem() Type</span><br><span class="line">    FieldByName(name <span class="keyword">string</span>) (StructField, <span class="keyword">bool</span>)</span><br><span class="line">    FieldByNameFunc(match MatchFunc) (StructField, <span class="keyword">bool</span>)</span><br><span class="line">    In(i <span class="keyword">int</span>) Type</span><br><span class="line">    Key() Type</span><br><span class="line">    Len() <span class="keyword">int</span></span><br><span class="line">    NumField() <span class="keyword">int</span></span><br><span class="line">    NumIn() <span class="keyword">int</span></span><br><span class="line">    NumOut() <span class="keyword">int</span></span><br><span class="line">    Out(i <span class="keyword">int</span>) Type</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>需要注意的是：<code>Type</code>中的接口并非能在所有类型上调用。对于未实现的方法，比如在非<code>struct</code>的类型上调用<code>NumField</code>会直接导致<code>panic</code>。</p>
+</blockquote>
+<p><code>Align</code>可以返回一个类型的内存分布情况，这一块主要是<code>unsafe</code>的内容，在这篇文章里就不展开来讲了。</p>
+<p><code>Method</code>和<code>MethodByName</code>可以访问类型对象下的<code>method</code>，其中<code>Method</code>一般是和<code>MethodByName</code>搭配使用：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> v SomeType</span><br><span class="line">t := reflect.TypeOf(v)</span><br><span class="line"><span class="keyword">for</span> i := <span class="number">0</span>; i &lt; t.NumField(); i++ &#123;</span><br><span class="line">    m := t.Method(i)</span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>以上是一个遍历对象<code>method</code>的例子。</p>
+<p>这里顺带提一下<code>Method</code>类型。</p>
+<p><code>Method</code>是一个非常简单的<code>struct</code>，定义如下：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Method <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// Name is the method name.</span></span><br><span class="line">    <span class="comment">// PkgPath is the package path that qualifies a lower case (unexported)</span></span><br><span class="line">    <span class="comment">// method name. It is empty for upper case (exported) method names.</span></span><br><span class="line">    <span class="comment">// The combination of PkgPath and Name uniquely identifies a method</span></span><br><span class="line">    <span class="comment">// in a method set.</span></span><br><span class="line">    <span class="comment">// See https://golang.org/ref/spec#Uniqueness_of_identifiers</span></span><br><span class="line">    Name    <span class="keyword">string</span></span><br><span class="line">    PkgPath <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    Type  Type  <span class="comment">// method type</span></span><br><span class="line">    Func  Value <span class="comment">// func with receiver as first argument</span></span><br><span class="line">    Index <span class="keyword">int</span>   <span class="comment">// index for Type.Method</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里我们做个小实验：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"reflect"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> U <span class="keyword">struct</span> &#123;</span><br><span class="line">	B <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(u *U)</span> <span class="title">Hello</span><span class="params">(arg <span class="keyword">string</span>)</span></span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Hello</span><span class="params">(arg <span class="keyword">string</span>)</span></span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> u = &amp;U&#123;<span class="string">"hi"</span>&#125;</span><br><span class="line">	fmt.Println(reflect.TypeOf(Hello))</span><br><span class="line">	fmt.Println(reflect.TypeOf(u).Method(<span class="number">0</span>).Type)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里会输出什么呢？</p>
+<p>答案是：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">func(string)</span><br><span class="line">func(*main.U, string)</span><br></pre></td></tr></table></figure></p>
+<p>我们可以看到虽然两个<code>Hello</code>的函数签名是相同的，但是作为<code>Method</code>的<code>Hello</code>会得到一个<code>receiver</code>的指针作为参数（这里将<code>receiver</code>的类型改为<code>U</code>得到的也会是一个指针，有兴趣的读者可以多做做实验）。</p>
+<p>这就意味着<code>go</code>中的<code>method</code>本质上是个语法糖（比较像<code>python</code>的<code>method</code>传<code>self</code>），我们可以显式地知道每个<code>method</code>在内存中只会有一个实体（比起<code>C++</code>要好得多，虽然<code>C++</code>编译器的一般实现也是这样，但是<code>C++</code>的<code>method</code>都是通过<code>this</code>来获取的，对于用户来说完全是黑盒）。</p>
+<p><code>Name</code>, <code>Size</code>, <code>PkgPath</code>, <code>String</code>都是用来查看<code>Type</code>的基本信息。<code>Implements</code>用于判断<code>Type</code>是否实现了某个<code>interface</code>。</p>
+<p>这里有必要提一下<code>Kind</code>这个<code>method</code>，因为它真的十分好用。</p>
+<p><code>reflect.Kind</code>是一组枚举：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> (</span><br><span class="line">    Invalid Kind = <span class="literal">iota</span></span><br><span class="line">    Bool</span><br><span class="line">    Int</span><br><span class="line">    Int8</span><br><span class="line">    Int16</span><br><span class="line">    Int32</span><br><span class="line">    Int64</span><br><span class="line">    Uint</span><br><span class="line">    Uint8</span><br><span class="line">    Uint16</span><br><span class="line">    Uint32</span><br><span class="line">    Uint64</span><br><span class="line">    Uintptr</span><br><span class="line">    Float32</span><br><span class="line">    Float64</span><br><span class="line">    Complex64</span><br><span class="line">    Complex128</span><br><span class="line">    Array</span><br><span class="line">    Chan</span><br><span class="line">    Func</span><br><span class="line">    Interface</span><br><span class="line">    Map</span><br><span class="line">    Ptr</span><br><span class="line">    Slice</span><br><span class="line">    String</span><br><span class="line">    Struct</span><br><span class="line">    UnsafePointer</span><br><span class="line">)</span><br></pre></td></tr></table></figure></p>
+<p>这里面枚举出了所有的<code>go</code>基本类型，你可以使用<code>Kind</code>方法确切的知道某个变量到底是属于什么类型的。<br></p>
+<p>这样讲起来也许会太过抽象，所以我们试想一个场景。</p>
+<p>我们的手里有一个<code>struct</code>类型，它的结构十分复杂，且深度不确定。它可能是这样的：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> SomeStruct <span class="keyword">struct</span> &#123;</span><br><span class="line">    FieldA <span class="keyword">string</span></span><br><span class="line">    FieldB <span class="keyword">int16</span></span><br><span class="line">    FieldC <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">    FieldD *SomeStruct</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>虽然一般日常工作中可能不会有人这样写代码，但它就是出现了，你也没有办法，只能硬着头皮上。</p>
+<p>现在你的工作是遍历整个<code>struct</code>的每个<code>field</code>，并将其<code>print</code>出来，你要怎么做？</p>
+<p>一般人看到这个需求肯定一拍脑袋就递归搜索走起了，但是需要注意的是这里有个<code>interface{}</code>。</p>
+<p>这意味着这里的类型是动态的，你无法在编译时就决定其搜索策略。</p>
+<p>你可能想到使用<code>TypeOf</code>来识别<code>Type</code>，但是实际上<code>TypeOf</code>只能得到变量定义时的类型。比如说<code>type MyInt int</code>, <code>type YourInt int</code>，虽然大家都是<code>int</code>，但是在<code>Type</code>看来是不一样的。</p>
+<p>这个时候就要用上<code>Kind</code>了。得亏<code>go</code>作为一个强类型语言，类型十分严谨。你可以根据其<strong>底层类型</strong>决定搜索策略，比如说对于<code>int</code>, <code>int8</code>, <code>int16</code>, <code>int32</code>, <code>int64</code>, <code>uint</code>, <code>uint8</code>, <code>uint16</code>, <code>uint32</code>, <code>uint64</code>, <code>float32</code>, <code>float64</code>等类型直接<code>print</code>，而对于<code>struct</code>则继续迭代遍历其<code>field</code>。</p>
+<p>这时还有一种比较有意思的情况，就是<code>interface{}</code>的实际类型为<strong>指针</strong>。对于指针，反射无法直接提取其实际的值，只能通过解引用。</p>
+<p>面对这种情况，我们可以使用<code>Kind</code>判断变量的类型是否为指针，如果是指针则通过<code>Elem</code>方法取出其中的值。</p>
+<blockquote>
+<p>这时又可以引申出一种特殊情况，就是<code>go</code>中的多级指针。实际上<code>go</code>不允许显式定义多级指针，但是我们可以通过<code>var p = &amp;new(SomeStruct)</code>这种方式创造多级指针。对于多级指针，反射无法正常地进行类型的萃取，需要十分注意。正常人不应该这样写代码，尽管它可以这么写。这也是<code>go</code>和<code>C</code>十分相似的一个地方。</p>
+</blockquote>
+<h3 id="reflect-Value"><a href="#reflect-Value" class="headerlink" title="reflect.Value"></a>reflect.Value</h3><p><code>reflect.Value</code>是<code>go</code>的<code>interface</code>的核心。</p>
+<p>在<code>go</code>中，变量的类型可以按这种方式区分：<code>concrete type</code>和<code>interface type</code>。</p>
+<p><code>concrete type</code>就是我们在编译时便可确认的值，而<code>interface type</code>则是动态的。</p>
+<p><code>reflect.Value</code>可以接受任意类型的值，并对其进行一些处理，比如说<code>get</code>或者<code>set</code>。</p>
+<p><code>reflect.Vlaue</code>上的<code>method</code>非常多，并且可以直接通过<code>Type</code>方法获取<code>Value</code>的<code>Type</code>。这其中涵盖了<code>go</code>中各个类型的各种基本操作，在此就不多做赘述。</p>
+<h2 id="使用reflect实现遍历"><a href="#使用reflect实现遍历" class="headerlink" title="使用reflect实现遍历"></a>使用reflect实现遍历</h2><p>以我在前面提到的需求为例，我们尝试用<code>reflect</code>来实现。</p>
+<p>比如说我们要打印每一个数据项，那么我们可以这样写(DFS实现)：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> itr</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"reflect"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Traverse</span><span class="params">(i <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	v := reflect.ValueOf(i)</span><br><span class="line">	name := v.Type().Name()</span><br><span class="line">	<span class="keyword">if</span> v.Kind() == reflect.Ptr &#123;</span><br><span class="line">		name = v.Elem().Type().Name()</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Println(<span class="string">"Ready to traverse:"</span>, name)</span><br><span class="line">	traverse(name, v)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">traverse</span><span class="params">(path <span class="keyword">string</span>, v reflect.Value)</span></span> &#123;</span><br><span class="line">	<span class="keyword">switch</span> v.Kind() &#123;</span><br><span class="line">	<span class="keyword">case</span> reflect.Invalid:</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	<span class="keyword">case</span> reflect.Slice, reflect.Array:</span><br><span class="line">		<span class="keyword">for</span> idx := <span class="number">0</span>; idx &lt; v.Len(); idx++ &#123;</span><br><span class="line">			traverse(fmt.Sprintf(<span class="string">"%s[%d]"</span>, path, idx), v.Index(idx))</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> reflect.Map:</span><br><span class="line">		<span class="keyword">for</span> _, k := <span class="keyword">range</span> v.MapKeys() &#123;</span><br><span class="line">			traverse(fmt.Sprintf(<span class="string">"%s[%v]"</span>, path, k), v.MapIndex(k))</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> reflect.Struct:</span><br><span class="line">		<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; v.NumField(); i++ &#123;</span><br><span class="line">			traverse(fmt.Sprintf(<span class="string">"%s.%s"</span>, path, v.Type().Field(i).Name), v.Field(i))</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">case</span> reflect.Ptr:</span><br><span class="line">		<span class="keyword">if</span> v.IsNil() &#123;</span><br><span class="line">			fmt.Printf(<span class="string">"%s = nil"</span>, path)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			traverse(fmt.Sprintf(<span class="string">"(*%s)"</span>, path), v.Elem())</span><br><span class="line">		&#125;</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		fmt.Println(path, <span class="string">"="</span>, v)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这段代码里没有覆盖到<code>interface</code>的情况，如有需要可以自己加上。</p>
+<p>让我们来测试一下：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> itr</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"testing"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> testStruct <span class="keyword">struct</span> &#123;</span><br><span class="line">	a <span class="keyword">string</span></span><br><span class="line">	b <span class="keyword">int</span></span><br><span class="line">	c <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">	d []<span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestTraverse</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> a = &amp;testStruct&#123;<span class="string">"hello"</span>, <span class="number">123</span>, <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>&#123;<span class="string">"hi"</span>: <span class="string">"how are you"</span>&#125;, []<span class="keyword">int</span>&#123;<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">9</span>&#125;&#125;</span><br><span class="line">	Traverse(a)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>结果如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Ready to traverse: testStruct</span><br><span class="line">(*testStruct).a = hello</span><br><span class="line">(*testStruct).b = 123</span><br><span class="line">(*testStruct).c[hi] = how are you</span><br><span class="line">(*testStruct).d[0] = 3</span><br><span class="line">(*testStruct).d[1] = 4</span><br><span class="line">(*testStruct).d[2] = 5</span><br><span class="line">(*testStruct).d[3] = 6</span><br><span class="line">(*testStruct).d[4] = 9</span><br><span class="line">PASS</span><br><span class="line">ok      github.com/leiysky/itr  0.005s</span><br></pre></td></tr></table></figure></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/29/浅谈gRPC/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1907,184 +2076,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/10/03/Redis的LRU缓存/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/03/Redis的LRU缓存/" itemprop="url">Redis的LRU缓存</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-10-03T18:01:52+08:00">
-                2018-10-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Redis作为一个内存键值对存储的产品，以其高性能、多种数据类型、可选持久化且支持网络等特性成为了许多项目中的宠儿。</p>
-<p>一般来说，缓存在获得超快的读写速度的同时，作为代替会牺牲其存储空间。Redis使用内存作为存储介质，比起传统的使用硬盘作为载体的数据库，读写速度快了许多，但是可存储的数据量也受到了内存大小的限制。在频繁的读写操作下，必然会发生对于旧数据的驱逐(<strong>eviction</strong>)，可能是删除数据，或者是置换到外存中。</p>
-<p>Redis使用LRU作为唯一的驱逐算法(Redis4.0推出了<strong>LFU</strong>, <strong>Least Frequently Used</strong>算法，在本文的后面会提到)。本文将主要围绕Redis的<strong>最大内存限制</strong>和<strong>驱逐算法</strong>谈谈Redis作为缓存的一些细节。</p>
-<h2 id="Redis最大内存限制的配置"><a href="#Redis最大内存限制的配置" class="headerlink" title="Redis最大内存限制的配置"></a>Redis最大内存限制的配置</h2><p>进行了Redis的最大内存配置后，Redis将按照配置使用一个确定大小的内存进行存储。</p>
-<p>Redis最大内存有两种配置的方式，一种是在Redis运行时使用Redis的指令<code>CONFIG SET maxmemory 100mb</code>，可以将最大内存配置为<strong>100mb</strong>。另一种方式就是在<code>redis.conf</code>文件中进行配置<code>maxmemory 100mb</code>，也可以将最大内存配置为<strong>100mb</strong>。</p>
-<p>将<code>maxmemory</code>参数置为<strong>0</strong>的时候，表示没有内存限制。在<strong>64位系统</strong>下，这是默认的配置，但是在<strong>32位系统</strong>下，最大内存限制将被设为<strong>3GB</strong>。</p>
-<p>当Redis使用的内存达到最大内存限制的大小时，将会触发Redis的驱逐策略(<strong>eviction policies</strong>)。此时Redis可能会采取不同的行动，比如给造成内存超出限制的操作返回一个error，或者驱逐旧数据保证内存不超出限制。</p>
-<h2 id="Redis的驱逐策略"><a href="#Redis的驱逐策略" class="headerlink" title="Redis的驱逐策略"></a>Redis的驱逐策略</h2><p>当Redis的内存使用达到上限时，会触发通过<code>maxmemory-policy</code>配置设置的驱逐策略。</p>
-<p>具体的驱逐策略如下：</p>
-<ul>
-<li><strong>noeviction:</strong> 如果发生了会使内存使用超出限制的操作(大部分是写操作)，则返回一个error。</li>
-<li><strong>allkeys-lru:</strong> 尝试将符合LRU条件的key驱逐用来为新数据腾出空间。</li>
-<li><strong>volatile-lru:</strong> 和<strong>allkeys-lru</strong>相似，不过只会驱逐设置了<strong>expire set</strong>(即有持续时间)的key。</li>
-<li><strong>allkeys-random:</strong> 在所有的key中随机驱逐(比较迷)。</li>
-<li><strong>volatile-random:</strong> 在设置了<strong>expire set</strong>的key中随机驱逐。</li>
-<li><strong>volatile-ttl:</strong> 在设置了<strong>expire set</strong>的key中挑选<strong>TTL(time to live)</strong>最小的删除以腾出空间。</li>
-</ul>
-<p>其中涉及到<strong>volatile</strong>的几个选项在没有设置<strong>expire set</strong>的key的情况下会像<strong>noeviction</strong>一样返回error。</p>
-<p>驱逐策略可以在运行时动态配置，并且可以使用INFO实时监控缓存的命中情况。</p>
-<p>以下是选择驱逐策略的几个推荐原则：</p>
-<ul>
-<li>在有热点数据，或者不确定该选择哪种方式的时候，选择<strong>allkeys-lru</strong>。大部分情况下它的表现是最好的。</li>
-<li>在数据被环形扫描访问，或者缓存中的数据访问几率呈均匀分布的时候，可以使用<strong>allkeys-random</strong>。</li>
-<li>如果能提供一套对于不同<strong>TTL</strong>的数据的权衡方案，可以选用<strong>volatile-ttl</strong>。</li>
-</ul>
-<p>另外值得一提的是，设置<strong>expire</strong>也会消耗内存，因此在内存压力较大，且数据并非硬性需要<strong>expire</strong>的情况下，使用<strong>allkeys-lru</strong>并且摒弃<strong>expire</strong>是一种比较好的做法。</p>
-<h2 id="Redis驱逐的过程"><a href="#Redis驱逐的过程" class="headerlink" title="Redis驱逐的过程"></a>Redis驱逐的过程</h2><p>在这里非常有必要介绍一下Redis驱逐的大致流程：</p>
-<ul>
-<li>客户端使用了Redis的指令并且造成了内存使用的增加</li>
-<li>Redis检查内存使用是否超出限制，如果是则按照驱逐策略进行操作</li>
-<li>客户端执行新的指令，如此循环</li>
-</ul>
-<p>整个流程简单来讲就是<strong>使用过量后</strong>，再通过驱逐key来使内存的用量降至限制之下。但是这样一来某个操作如果一次性增加了大量的内存使用量(比如插入一个超大的数据)，Redis的内存用量就有可能明显超出内存限制。</p>
-<h2 id="粗略LRU算法-Approximated-LRU-algorithm"><a href="#粗略LRU算法-Approximated-LRU-algorithm" class="headerlink" title="粗略LRU算法(Approximated LRU algorithm)"></a>粗略LRU算法(Approximated LRU algorithm)</h2><p>实际上Redis的LRU算法并非完全实现原版LRU算法，而是做了一些魔改。这就意味着Redis无法总是选出LRU算法的最佳的驱逐对象，即LRU中定义的最近最少访问的数据。作为代替，他会在一些基本符合要求的数据中选取<strong>最后一次访问时间最早的</strong>那个key进行驱逐。</p>
-<p>从Redis3.0开始，该算法进行了一些改进，变得会为驱逐的对象建立一个pool。这样使得算法的性能更加接近原版LRU。</p>
-<p>Redis的LRU算法有个好处就是用户可以调整<strong>选择对象的数量</strong>来平衡算法的精度。该参数可以通过配置<code>maxmemory-samples 5</code>来修改。</p>
-<p>Redis之所以不选用原版LRU是因为原版LRU会消耗更多的内存。而且对于用户来说，Redis的LRU算法和原版LRU算法几乎是一样的，以下是一张测试结果对比图：</p>
-<p><img src="/images/lru_comparison.png" alt="lru_comparison"></p>
-<p>这个测试是通过使用一定数量的key来填充一个Redis服务器，之后按照插入顺序对所有key进行访问。这样一来按照LRU的规则，第一个被插入的数据将被选中。在此之后，插入原本插入key数量一半的key，根据LRU算法，原先插入数据的一半将被驱逐。</p>
-<p>图中的点分别代表三种不同的数据，从左上到右下的顺序插入：</p>
-<ul>
-<li>亮灰色代表被驱逐的点</li>
-<li>深灰色代表第一批被插入并没被驱逐的数据</li>
-<li>绿色表示后来新插入的数据</li>
-</ul>
-<p>对比可以发现在选取样本数量均为5的情况下，Redis3.0要更接近原版LRU的结果，但是还是有较大的差别。而选取样本为10的话，则十分接近了。</p>
-<p>需要注意的是，LRU只是一个预测数据被访问几率的模型。如果你的数据访问模式近似于幂律分布，即大部分被访问的数据都在一个确定的范围内，LRU算法的表现将会比较好。</p>
-<h2 id="LFU模式"><a href="#LFU模式" class="headerlink" title="LFU模式"></a>LFU模式</h2><p>Redis4.0中新增了LFU模式。该模式是通过计算数据访问频率，来进行数据到驱逐。所以热点数据保持的几率就更高。</p>
-<p>对比起LRU算法，LFU更加可靠。试想一个很少用的数据恰好在最近刚被访问了一次，而另一个比它常用的数据最后一次访问的时间要早于它，这样就有可能将更常用的数据驱逐。LFU就避免了这一个问题。</p>
-<p>可以通过以下驱逐策略配置LFU模式：</p>
-<ul>
-<li><strong>volatile-lfu:</strong> 对设置了<strong>expire set</strong>的数据使用LFU进行驱逐。</li>
-<li><strong>volatile-lfu:</strong> 对所有数据使用LFU进行驱逐。</li>
-</ul>
-<p>LFU与LRU很相似，他维护了一个概率计数器，叫做<strong>Morris counter</strong>，仅用几个<strong>bits</strong>来估算数据的访问频率。这个值会绑定一个衰减周期，每过一段时间该值便会衰减。这样点好处在于可以在一个窗口内统计数据的访问频率。</p>
-<p>与LRU不同的是，LFU有直接可调的参数：衰减的周期和计数器的上限。</p>
-<p>可以通过<code>lfu-decay-time 1</code>和<code>lfu-log-factor 10</code> 进行配置(这里写的均为默认值)。衰减周期单位为<strong>分钟</strong>，计数器的上限就比较复杂。以下是一张对照表，表示不同<code>factor</code>下，访问次数和频率的关系：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| factor | 100 hits   | 1000 hits  | 100K hits  | 1M hits    | 10M hits   |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| 0      | 104        | 255        | 255        | 255        | 255        |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| 1      | 18         | 49         | 255        | 255        | 255        |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| 10     | 10         | 18         | 142        | 255        | 255        |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br><span class="line">| 100    | 8          | 11         | 49         | 143        | 255        |</span><br><span class="line">+--------+------------+------------+------------+------------+------------+</span><br></pre></td></tr></table></figure>
-<p>对于<code>factor</code>的定义在此就不做解释，大家可以自己感受下。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2135,7 +2126,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-count">14</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -2185,7 +2176,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
