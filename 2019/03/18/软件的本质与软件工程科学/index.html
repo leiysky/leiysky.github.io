@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Golang," />
+  <meta name="keywords" content="系分," />
 
 
 
@@ -79,20 +79,18 @@
 
 
 
-<meta name="description" content="什么是RESTful？RESTful全名是可表述性状态转移(Representational State Transfer)，是一套HTTP API的设计风格。 看名字很抽象，所以这里我就结合理论大致的讲一下自己的理解。 REST的核心是资源的访问，以及客户端/服务端的C/S模式。 在REST中，API通过URI的形式来访问。与此同时，REST也为HTTP动词赋予了更加完善的语义。 最常用的动词">
-<meta name="keywords" content="Golang">
+<meta name="description" content="软件工程的定义软件工程是软件开发领域里对工程方法的系统应用。 1993年，电气电子工程师学会（IEEE）给出了一个更加综合的定义：”将系统化的、规范的、可度量的方法用于软件的开发、运行和维护的过程，即将工程化应用于软件开发中”。此后，IEEE多次给出软件工程的定义。 Software Crisis软件危机（Software Crisis）是早期计算机科学的一个术语，是指在软件开发及维护的过程中所遇">
+<meta name="keywords" content="系分">
 <meta property="og:type" content="article">
-<meta property="og:title" content="使用Go搭建RESTful API服务器">
-<meta property="og:url" content="http://leiysky.com/2018/12/07/使用Go搭建RESTful-API服务器/index.html">
+<meta property="og:title" content="软件的本质与软件工程科学">
+<meta property="og:url" content="http://leiysky.com/2019/03/18/软件的本质与软件工程科学/index.html">
 <meta property="og:site_name" content="Blog">
-<meta property="og:description" content="什么是RESTful？RESTful全名是可表述性状态转移(Representational State Transfer)，是一套HTTP API的设计风格。 看名字很抽象，所以这里我就结合理论大致的讲一下自己的理解。 REST的核心是资源的访问，以及客户端/服务端的C/S模式。 在REST中，API通过URI的形式来访问。与此同时，REST也为HTTP动词赋予了更加完善的语义。 最常用的动词">
+<meta property="og:description" content="软件工程的定义软件工程是软件开发领域里对工程方法的系统应用。 1993年，电气电子工程师学会（IEEE）给出了一个更加综合的定义：”将系统化的、规范的、可度量的方法用于软件的开发、运行和维护的过程，即将工程化应用于软件开发中”。此后，IEEE多次给出软件工程的定义。 Software Crisis软件危机（Software Crisis）是早期计算机科学的一个术语，是指在软件开发及维护的过程中所遇">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://leiysky.com/2018/12/07/使用Go搭建RESTful-API服务器/images/onion.png">
-<meta property="og:updated_time" content="2018-12-07T06:22:08.485Z">
+<meta property="og:updated_time" content="2019-03-18T14:23:40.016Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="使用Go搭建RESTful API服务器">
-<meta name="twitter:description" content="什么是RESTful？RESTful全名是可表述性状态转移(Representational State Transfer)，是一套HTTP API的设计风格。 看名字很抽象，所以这里我就结合理论大致的讲一下自己的理解。 REST的核心是资源的访问，以及客户端/服务端的C/S模式。 在REST中，API通过URI的形式来访问。与此同时，REST也为HTTP动词赋予了更加完善的语义。 最常用的动词">
-<meta name="twitter:image" content="http://leiysky.com/2018/12/07/使用Go搭建RESTful-API服务器/images/onion.png">
+<meta name="twitter:title" content="软件的本质与软件工程科学">
+<meta name="twitter:description" content="软件工程的定义软件工程是软件开发领域里对工程方法的系统应用。 1993年，电气电子工程师学会（IEEE）给出了一个更加综合的定义：”将系统化的、规范的、可度量的方法用于软件的开发、运行和维护的过程，即将工程化应用于软件开发中”。此后，IEEE多次给出软件工程的定义。 Software Crisis软件危机（Software Crisis）是早期计算机科学的一个术语，是指在软件开发及维护的过程中所遇">
 
 
 
@@ -122,13 +120,13 @@
 
 
 
-  <link rel="canonical" href="http://leiysky.com/2018/12/07/使用Go搭建RESTful-API服务器/"/>
+  <link rel="canonical" href="http://leiysky.com/2019/03/18/软件的本质与软件工程科学/"/>
 
 
 
 
 
-  <title>使用Go搭建RESTful API服务器 | Blog</title>
+  <title>软件的本质与软件工程科学 | Blog</title>
   
 
 
@@ -265,7 +263,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/07/使用Go搭建RESTful-API服务器/">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/03/18/软件的本质与软件工程科学/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="leiysky">
@@ -282,7 +280,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">使用Go搭建RESTful API服务器</h1>
+          <h1 class="post-title" itemprop="name headline">软件的本质与软件工程科学</h1>
         
 
         <div class="post-meta">
@@ -294,8 +292,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-12-07T13:21:16+08:00">
-                2018-12-07
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-03-18T21:57:24+08:00">
+                2019-03-18
               </time>
             
 
@@ -332,47 +330,70 @@
       
 
       
-        <h2 id="什么是RESTful？"><a href="#什么是RESTful？" class="headerlink" title="什么是RESTful？"></a>什么是RESTful？</h2><p><strong>RESTful</strong>全名是<strong>可表述性状态转移(Representational State Transfer)</strong>，是一套HTTP API的设计风格。</p>
-<p>看名字很抽象，所以这里我就结合理论大致的讲一下自己的理解。</p>
-<p><strong>REST</strong>的核心是<strong>资源</strong>的访问，以及客户端/服务端的<strong>C/S</strong>模式。</p>
-<p>在<strong>REST</strong>中，API通过URI的形式来访问。与此同时，<strong>REST</strong>也为<strong>HTTP动词</strong>赋予了更加完善的语义。</p>
-<p>最常用的动词有<code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>:</p>
+        <h2 id="软件工程的定义"><a href="#软件工程的定义" class="headerlink" title="软件工程的定义"></a>软件工程的定义</h2><p>软件工程是软件开发领域里对工程方法的系统应用。</p>
+<p>1993年，电气电子工程师学会（IEEE）给出了一个更加综合的定义：”将系统化的、规范的、可度量的方法用于软件的开发、运行和维护的过程，即将工程化应用于软件开发中”。此后，IEEE多次给出软件工程的定义。</p>
+<h2 id="Software-Crisis"><a href="#Software-Crisis" class="headerlink" title="Software Crisis"></a>Software Crisis</h2><p>软件危机（Software Crisis）是早期计算机科学的一个术语，是指在软件开发及维护的过程中所遇到的一系列严重问题，这些问题皆可能导致软件产品的寿命缩短、甚至夭折。软件开发是一项高难度、高风险的活动，由于它的高失败率，故有所谓“软件危机”之说。软件危机的本源是复杂、期望和改变。这个术语用来描述正急遽增加之计算机的力量带来的冲击和可能要处理的问题的复杂性。从本质上来说，它谈到了写出正确、可理解、可验证的计算机程序的困难。</p>
+<p>软件危机主要有几方面：</p>
 <ul>
-<li><code>GET</code>用于访问已有的资源</li>
-<li><code>POST</code>用于创建资源，并且该资源的标识由服务端维护</li>
-<li><code>PUT</code>用于更新资源，标识由客户端维护</li>
-<li><code>DELETE</code>用于删除一个资源</li>
+<li>项目运行超出预算</li>
+<li>项目运行超出时间</li>
+<li>软件质量低落</li>
+<li>软件通常不匹配需求</li>
+<li>项目无法管理，且代码难以维护</li>
 </ul>
-<p>通过<strong>HTTP动词</strong>，可以实现<strong>REST</strong>的可表述性部分，而状态转移则是通过API的分层来完成的。</p>
-<p><strong>REST</strong>中状态是由客户端维护的，服务端本身无状态。客户端如果要获取资源的情况，需要逐层访问API来实现。</p>
-<p>比如说对于某个网站的某个用户的某个信息，可以设计这样的一个<strong>REST API</strong>：</p>
+<p>解决方法：</p>
 <ul>
-<li><code>/users/:user_id/profiles/:profile_id</code>（<code>:xx_id</code>表示占位符）</li>
+<li>依赖高级工程人员等经验，进行合理的成本评估</li>
+<li>采取敏捷开发(Agile Software Development)的方式，优先进行核心功能的开发，并且在开发过程中不断优化需求</li>
+<li>提高计算机类专业的教育水准从而提高从业人员的平均水平</li>
+<li>制订详细的开发规范，积极进行CR以及重构</li>
 </ul>
-<p>这样一来<strong>REST</strong>的概念就清晰了许多。</p>
-<p><strong>REST</strong>的优点是对于资源的访问可视化，更加清晰。但是他也有缺点，就是不太适合一些命令式的<strong>API</strong>，对于这类<strong>API</strong>我们可能要引入<strong>CQRS(命令查询职责分离，Command Query Responsibility Segregation)</strong>的架构，使用一些RPC协议来完成命令式API的调用。</p>
-<h2 id="开工前的调研"><a href="#开工前的调研" class="headerlink" title="开工前的调研"></a>开工前的调研</h2><p>在开始编写服务端之前，需要先进行调研确定技术栈，方便之后的架构设计。</p>
-<p>Golang的优势在于有一套较为完善的标准库，非常适合微框架的发展。在参考了几套常用Golang HTTP Server的框架之后，我决定自己写一个中间件的包装组件。</p>
-<p>数据库方面，根据要求需要使用BoltDB，在语言库的方面没有更多选择。</p>
-<p>确定了这些之后就可以开始编写。</p>
-<h2 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h2><p>设计初期，我没有多想便选择了Web领域最成熟，也十分经典的架构<code>MVC</code>。</p>
-<p>对于中间件的设计，则是使用<code>AOP</code>的理念。</p>
-<p>在<code>MVC</code>架构中，有三个重要的成分：</p>
+<h2 id="软件生命周期"><a href="#软件生命周期" class="headerlink" title="软件生命周期"></a>软件生命周期</h2><p>软件生命周期主要由三个部分组成：</p>
 <ul>
-<li><code>Model</code>，模型层，主要负责处理数据的序列化和反序列化，这层一般不会涉及业务逻辑。由于设计的是<strong>REST</strong>服务器，因此可以抽象出一套类似<code>DAO</code>的<code>Model API</code>，<code>GetByID</code>, <code>GetAll</code>, <code>Update</code>, <code>Create</code>, <code>Delete</code>。</li>
-<li><code>View</code>，视觉层。对于<strong>REST</strong>服务器来说，所谓<code>View</code>其实就是呈现的<code>JSON</code>数据。</li>
-<li><code>Controller</code>，控制器层。主要处理路由的逻辑，比如参数的解析，数据的组装等。</li>
+<li>软件定义</li>
+<li>软件开发</li>
+<li>软件维护</li>
 </ul>
-<p>一般开发时不会完全按照这个范式，我选择在<code>Model</code>和<code>Controller</code>中间加入一个<code>Service</code>层。这一层主要做的事情是访问<code>Model</code>取出数据，对其进行一定的包装，包含一些业务逻辑。这样的好处在于可以简化<code>Controller</code>，也可以更方便的复用一些逻辑。</p>
-<p>这样一来整个项目的文件结构就清晰了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">src/</span><br><span class="line">  controllers/   用于放controller文件</span><br><span class="line">    user.go</span><br><span class="line">    ...</span><br><span class="line">  models/        用于放model文件</span><br><span class="line">    user.go</span><br><span class="line">    ...</span><br><span class="line">  services/      用于放service</span><br><span class="line">    user.go</span><br><span class="line">    ...</span><br><span class="line">  utils/         用于放一些常用工具</span><br><span class="line">    utils.go</span><br><span class="line">    ...</span><br><span class="line">  main.go        项目入口</span><br><span class="line">  README         项目说明</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure></p>
-<h2 id="项目编写"><a href="#项目编写" class="headerlink" title="项目编写"></a>项目编写</h2><p>有了一个好的架构之后项目的编写就容易多了，只需要照着框架填鸭即可。</p>
-<p>主要讲一下我自己实现的<code>MiddlewareComposer</code>。该工具可以将一系列的中间件包装成一个<code>http.HandleFunc</code>，调用时是一个洋葱的结构（参考<code>Koa</code>中间件的模式）</p>
-<p><img src="images/onion.png" alt="onion"></p>
-<p>这样的好处在于可以形成一个整齐的调用栈，处理log，异常等常见服务时非常方便。写起来逻辑也很清晰。</p>
-<p>实现起来也很简单，利用函数式编程的闭包特性，我们可以构造出一个自执行的函数。具体请看<a href="https://github.com/go-cloud-service/go-cloud-service/blob/master/utils/middleware.go" target="_blank" rel="noopener">这里</a></p>
-<p>原本还想实现一个路由的中间件，这样嵌套挂载写起来会很方便，但是因为时间关系，最后还是搭配了<code>Gorilla</code>的<code>mux</code>。</p>
-<p>对于<code>BoltDB</code>，我为其包装了一组<code>k-v DB</code>常用的API，包括<code>GET</code>，<code>SET</code>，<code>SCAN</code>等操作。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Golang在工程开发上真的非常省心省力。</p>
+<p>软件生命周期主要有六个阶段：</p>
+<ul>
+<li><strong>问题的定义与规划</strong>：确认软件开发目标及进行可行性评估</li>
+<li><strong>需求分析</strong>：对软件需要实现的各个功能进行详细分析</li>
+<li><strong>软件设计</strong>：针对需求分析的结果对软件架构进行设计，确认技术选型，服务划分等</li>
+<li><strong>程序编码</strong>：按照设计进行各模块的代码编写</li>
+<li><strong>软件测试</strong>：软件编写完成后进行可用性等多方面测试</li>
+<li><strong>运行维护</strong>：对软件进行维护，后续增加功能或修复BUG</li>
+</ul>
+<h2 id="SWEBok-KA"><a href="#SWEBok-KA" class="headerlink" title="SWEBok KA"></a>SWEBok KA</h2><ul>
+<li><strong>Software Requirements</strong>: 软件需求</li>
+<li><strong>Software Design</strong>: 软件设计</li>
+<li><strong>Software Construction</strong>: 软件构造（架构设计与开发）</li>
+<li><strong>Software Testing</strong>: 软件测试</li>
+<li><strong>Software Maintenance</strong>: 软件维护</li>
+<li><strong>Software Configuration Management</strong>: 软件配置管理</li>
+<li><strong>Software Engineering Management</strong>: 软件工程管理</li>
+<li><strong>Software Engineering Process</strong>: 软件工程过程</li>
+<li><strong>Software Engineering Models and Methods</strong>: 软件工程模型与方法（设计模式）</li>
+<li><strong>Software Quality</strong>: 软件质量</li>
+<li><strong>Software Engineering Professional Practice</strong>: 软件工程专业实践（最佳实践）</li>
+<li><strong>Software Engineering Economics</strong>: 软件工程经济</li>
+<li><strong>Computing Foundations</strong>: 计算基础</li>
+<li><strong>Mathematical Foundations</strong>: 数学基础</li>
+<li><strong>Engineering Foundations</strong>: 工程基础</li>
+</ul>
+<h2 id="CMMI"><a href="#CMMI" class="headerlink" title="CMMI"></a>CMMI</h2><ul>
+<li><p><strong>初始级(Initial)</strong>：软件过程是无序的，有时甚至是混乱的，对过程几乎没有定义，成功取决于个人努力。管理是反应式的。</p>
+</li>
+<li><p><strong>可重复级/受管理级(Repeatable)</strong>：建立了基本的项目管理过程来跟踪费用、进度和功能特性。制定了必要的过程纪律，能重复早先类似应用项目取得的成功经验。</p>
+</li>
+<li><p><strong>已定义级(Defined)</strong>：已将软件管理和工程两方面的过程文档化、标准化，并综合成该组织的标准软件过程。所有项目均使用经批准、剪裁的标准软件过程来开发和维护软件，软件产品的生产在整个软件过程是可见的。</p>
+</li>
+<li><p><strong>量化管理级(Managed)</strong>： 分析对软件过程和产品质量的详细度量数据，对软件过程和产品都有定量的理解与控制。管理有一个作出结论的客观依据，管理能够在定量的范围内预测性能。</p>
+</li>
+<li><p><strong>优化管理级(Optimizing)</strong>：过程的量化反馈和先进的新思想、新技术促使过程持续不断改进。</p>
+</li>
+</ul>
+<h2 id="SWEBok"><a href="#SWEBok" class="headerlink" title="SWEBok"></a>SWEBok</h2><p>软件工程知识体系(Software Engineering Body of Knowledge)是一个合格的软件工程师所需要具备的知识体系，它包括了：软件需求、软件设计、软件构造、软件测试、软件维护、软件配置管理、软件工程管理、软件工程模型与方法（设计模式）、软件质量、软件工程专业实践（最佳实践）、软件工程经济。</p>
+<p>一个合格的软件工程师，应当能够了解整个软件的生命周期，并且精通其中几个阶段。因此他必须通过整个软件工程知识体系的培训。</p>
 
       
     </div>
@@ -390,7 +411,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Golang/" rel="tag"># Golang</a>
+            <a href="/tags/系分/" rel="tag"># 系分</a>
           
         </div>
       
@@ -403,8 +424,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/11/30/头条后台开发面经/" rel="next" title="头条后台开发面经">
-                <i class="fa fa-chevron-left"></i> 头条后台开发面经
+              <a href="/2019/02/03/Go中的同步机制sync/" rel="next" title="Go中的同步机制sync">
+                <i class="fa fa-chevron-left"></i> Go中的同步机制sync
               </a>
             
           </div>
@@ -412,10 +433,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2018/12/20/Docker不完全指南/" rel="prev" title="Docker不完全指南">
-                Docker不完全指南 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -538,7 +555,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是RESTful？"><span class="nav-number">1.</span> <span class="nav-text">什么是RESTful？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#开工前的调研"><span class="nav-number">2.</span> <span class="nav-text">开工前的调研</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#架构设计"><span class="nav-number">3.</span> <span class="nav-text">架构设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#项目编写"><span class="nav-number">4.</span> <span class="nav-text">项目编写</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#软件工程的定义"><span class="nav-number">1.</span> <span class="nav-text">软件工程的定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Software-Crisis"><span class="nav-number">2.</span> <span class="nav-text">Software Crisis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#软件生命周期"><span class="nav-number">3.</span> <span class="nav-text">软件生命周期</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SWEBok-KA"><span class="nav-number">4.</span> <span class="nav-text">SWEBok KA</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CMMI"><span class="nav-number">5.</span> <span class="nav-text">CMMI</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SWEBok"><span class="nav-number">6.</span> <span class="nav-text">SWEBok</span></a></li></ol></div>
             
 
           </div>
