@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="简答题简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点瀑布模型优势：开发流程明确 劣势：开发周期长，偏离需求后难以调整，风险控制能力较弱 增量模型优势：渐进式开发，可以逐步调整开发流程 劣势：容易失去对软件整体的掌控 螺旋模型优势：风险驱动，对于风险的控制能力较强 劣势：可能无法正确定义“风险” 简述统一过程三大特点，与面向对象的方法有什么关系？用例驱动用例驱动是一种敏捷开发方法，在编写代码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统分析与设计第三次作业">
+<meta property="og:url" content="http://leiysky.com/2019/04/10/系统分析与设计第三次作业/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="简答题简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点瀑布模型优势：开发流程明确 劣势：开发周期长，偏离需求后难以调整，风险控制能力较弱 增量模型优势：渐进式开发，可以逐步调整开发流程 劣势：容易失去对软件整体的掌控 螺旋模型优势：风险驱动，对于风险的控制能力较强 劣势：可能无法正确定义“风险” 简述统一过程三大特点，与面向对象的方法有什么关系？用例驱动用例驱动是一种敏捷开发方法，在编写代码">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-05-08T13:29:30.327Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="系统分析与设计第三次作业">
+<meta name="twitter:description" content="简答题简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点瀑布模型优势：开发流程明确 劣势：开发周期长，偏离需求后难以调整，风险控制能力较弱 增量模型优势：渐进式开发，可以逐步调整开发流程 劣势：容易失去对软件整体的掌控 螺旋模型优势：风险驱动，对于风险的控制能力较强 劣势：可能无法正确定义“风险” 简述统一过程三大特点，与面向对象的方法有什么关系？用例驱动用例驱动是一种敏捷开发方法，在编写代码">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://leiysky.com/2019/04/10/系统分析与设计第三次作业/"/>
+
+
+
+
+
+  <title>系统分析与设计第三次作业 | Blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Welcome to leiysky's blog</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/04/10/系统分析与设计第三次作业/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">系统分析与设计第三次作业</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-04-10T21:11:04+08:00">
+                2019-04-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="简答题"><a href="#简答题" class="headerlink" title="简答题"></a>简答题</h1><h2 id="简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点"><a href="#简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点" class="headerlink" title="简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点"></a>简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点</h2><h3 id="瀑布模型"><a href="#瀑布模型" class="headerlink" title="瀑布模型"></a>瀑布模型</h3><p>优势：开发流程明确</p>
+<p>劣势：开发周期长，偏离需求后难以调整，风险控制能力较弱</p>
+<h3 id="增量模型"><a href="#增量模型" class="headerlink" title="增量模型"></a>增量模型</h3><p>优势：渐进式开发，可以逐步调整开发流程</p>
+<p>劣势：容易失去对软件整体的掌控</p>
+<h3 id="螺旋模型"><a href="#螺旋模型" class="headerlink" title="螺旋模型"></a>螺旋模型</h3><p>优势：风险驱动，对于风险的控制能力较强</p>
+<p>劣势：可能无法正确定义“风险”</p>
+<h1 id="简述统一过程三大特点，与面向对象的方法有什么关系？"><a href="#简述统一过程三大特点，与面向对象的方法有什么关系？" class="headerlink" title="简述统一过程三大特点，与面向对象的方法有什么关系？"></a>简述统一过程三大特点，与面向对象的方法有什么关系？</h1><h2 id="用例驱动"><a href="#用例驱动" class="headerlink" title="用例驱动"></a>用例驱动</h2><p>用例驱动是一种敏捷开发方法，在编写代码之前先编写单元测试用代码。</p>
+<h2 id="以体系结构为中心"><a href="#以体系结构为中心" class="headerlink" title="以体系结构为中心"></a>以体系结构为中心</h2><p>重视模块与接口的设计，以系统的体系结构为中心。</p>
+<h2 id="迭代和增量"><a href="#迭代和增量" class="headerlink" title="迭代和增量"></a>迭代和增量</h2><p>迭代和增量允许以不完整，不完全的知识开始开发</p>
+<h2 id="与面对对象的联系"><a href="#与面对对象的联系" class="headerlink" title="与面对对象的联系"></a>与面对对象的联系</h2><p>统一软件开发过程是一个面向对象且基于网络的程序开发方法论。它可以为所有方面和层次的程序提供指导方针，模板以及事例支持，统一软件开发过程和类似的产品，把开发中面向过程的方面（例如定义的阶段，技术和实践）和其他开发的组件（例如文档，模型，手册，以及代码等等）整合在一个同一的框架内。</p>
+<h1 id="简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？"><a href="#简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？" class="headerlink" title="简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？"></a>简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？</h1><p>每个阶段本质上是两个里程碑之间的时间跨度。在每个阶段的结尾执行一次评估以确定这个阶段的目标是否已经满足。如果评估结果令人满意的话，可以允许项目进入下一个阶段。</p>
+<h2 id="初始阶段"><a href="#初始阶段" class="headerlink" title="初始阶段"></a>初始阶段</h2><p>初始阶段结束时是第一个重要的里程碑：生命周期目标(Lifecycle Objective)里程碑。生命周期目标里程碑评价项目基本的生存能力。</p>
+<h2 id="细化阶段"><a href="#细化阶段" class="headerlink" title="细化阶段"></a>细化阶段</h2><p>细化阶段结束时第二个重要的里程碑：生命周期结构(Lifecycle Architecture)里程碑。生命周期结构里程碑为系统的结构建立了管理基准并使项目小组能够在构建阶段中进行衡量。此刻，要检验详细的系统目标和范围、结构的选择以及主要风险的解决方案。</p>
+<h2 id="构建阶段"><a href="#构建阶段" class="headerlink" title="构建阶段"></a>构建阶段</h2><p>构建阶段结束时是第三个重要的里程碑：初始功能(Initial Operational)里程碑。初始功能里程碑决定了产品是否可以在测试环境中进行部署。此刻，要确定软件、环境、用户是否可以开始系统的运作。此时的产品版本也常被称为“beta”版。</p>
+<h2 id="交付阶段"><a href="#交付阶段" class="headerlink" title="交付阶段"></a>交付阶段</h2><p>在交付阶段的终点是第四个里程碑：产品发布(Product Release)里程碑。此时，要确定目标是否实现，是否应该开始另一个开发周期。在一些情况下这个里程碑可能与下一个周期的初始阶段的结束重合。</p>
+<h1 id="软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？"><a href="#软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？" class="headerlink" title="软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？"></a>软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？</h1><p>软件企业采用基于统一过程的软件项目规划，利用软件产品范围的弹性，合理规划范围（20%业务决定80%满意度），使得软件生产按固定节奏运行，固定迭代周期、固定开发周期、固定升级周期。统一过程中，软件开发生命周期根据时间（固定周期发布）和RUP的核心工作流（固定节奏生产）划分为二维空间。时间维从组织管理的角度描述整个软件开发生命周期，是RUP的动态组成部分，核心工作流从技术角度描述RUP的静态组成部分。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/03/27/LevelDB源码剖析/" rel="next" title="LevelDB源码剖析">
+                <i class="fa fa-chevron-left"></i> LevelDB源码剖析
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/04/12/系统分析与设计第4次作业/" rel="prev" title="系统分析与设计第4次作业">
+                系统分析与设计第4次作业 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">leiysky</p>
+              <p class="site-description motion-element" itemprop="description">A simple blog(temp)</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">tags</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#简答题"><span class="nav-number">1.</span> <span class="nav-text">简答题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点"><span class="nav-number">1.1.</span> <span class="nav-text">简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#瀑布模型"><span class="nav-number">1.1.1.</span> <span class="nav-text">瀑布模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#增量模型"><span class="nav-number">1.1.2.</span> <span class="nav-text">增量模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#螺旋模型"><span class="nav-number">1.1.3.</span> <span class="nav-text">螺旋模型</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#简述统一过程三大特点，与面向对象的方法有什么关系？"><span class="nav-number">2.</span> <span class="nav-text">简述统一过程三大特点，与面向对象的方法有什么关系？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#用例驱动"><span class="nav-number">2.1.</span> <span class="nav-text">用例驱动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#以体系结构为中心"><span class="nav-number">2.2.</span> <span class="nav-text">以体系结构为中心</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#迭代和增量"><span class="nav-number">2.3.</span> <span class="nav-text">迭代和增量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#与面对对象的联系"><span class="nav-number">2.4.</span> <span class="nav-text">与面对对象的联系</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？"><span class="nav-number">3.</span> <span class="nav-text">简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#初始阶段"><span class="nav-number">3.1.</span> <span class="nav-text">初始阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#细化阶段"><span class="nav-number">3.2.</span> <span class="nav-text">细化阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#构建阶段"><span class="nav-number">3.3.</span> <span class="nav-text">构建阶段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#交付阶段"><span class="nav-number">3.4.</span> <span class="nav-text">交付阶段</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？"><span class="nav-number">4.</span> <span class="nav-text">软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">leiysky</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

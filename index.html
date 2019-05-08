@@ -262,6 +262,733 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/05/08/系统分析与设计第5次作业/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/08/系统分析与设计第5次作业/" itemprop="url">系统分析与设计第5次作业</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-05-08T22:13:17+08:00">
+                2019-05-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/05/08/BigTable论文分析/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/08/BigTable论文分析/" itemprop="url">BigTable论文分析</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-05-08T08:10:51+08:00">
+                2019-05-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p><code>BigTable</code>是谷歌在2004年时开发的<code>NoSQL</code>数据库，引领了新世纪<code>NoSQL</code>的潮流，也为传统数据库的<code>Scale-out</code>提供了思路，是十分划时代的产品。</p>
+<p>由于<code>BigTable</code>本身是闭源的（开源版本数据库产品为<code>HBase</code>，存储引擎部分为<code>LevelDB</code>）,因此这篇文章主要分析的是<code>Google</code>在2006年发表的<code>BigTable</code>论文（主要作者为<code>Jeff Dean</code>等大牛）。</p>
+<p>虽然现在已经是9102年了，很多技术已经有了翻天覆地的变化，但是这篇论文中的很多思想仍然十分有借鉴意义（虽然大部分内容算是广告）。</p>
+<h1 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h1><p><code>BigTable</code>是十分精简的一篇论文，只有14页。</p>
+<p>其主要分为10个部分，分别是：</p>
+<ul>
+<li><code>1 Introduction</code>: 简介</li>
+<li><code>2 Data Model</code>: 主要介绍<code>BigTable</code>的数据存储模型</li>
+<li><code>3 API</code>: 接口设计</li>
+<li><code>4 Building Blocks</code>: 相关的infra组件</li>
+<li><code>5 Implementation</code>: 具体实现</li>
+<li><code>6 Refinements</code>: 系统优化</li>
+<li><code>7 Performance Evaluation</code>: 性能评估</li>
+<li><code>8 Real Applications</code>: 实际场景下的应用</li>
+<li><code>9 Lessons</code>: 一些心得</li>
+<li><code>10 Related Workd</code>: 相关工作</li>
+</ul>
+<p>接下来本文将对各个部分进行尽可能细致的分析。</p>
+<h1 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h1><blockquote>
+<p>Over the last two and a half years we have designed, implemented, and deployed a distributed storage system for managing structured data at Google called Bigtable. Bigtable is designed to reliably scale to petabytes of data and thousands of machines. Bigtable has achieved several goals: wide applicability, scalability, high performance, and high availability.<br>Bigtable is used by more than sixty Google products and projects, including Google Analytics, Google Finance, Orkut, Personalized Search, Writely, and Google Earth. These products use Bigtable for a variety of demanding workloads, which range from throughput-oriented batch-processing jobs to latency-sensitive serving of data to end users. The Bigtable clusters used by these products span a wide range of configurations, from a handful to thousands of servers, and store up to several hundred terabytes of data.</p>
+</blockquote>
+<p><code>Introduction</code>的开头首先介绍了一下<code>BigTable</code>诞生的背景，以及它的一些特点。</p>
+<p>我们可以看到一些关键词：</p>
+<ul>
+<li><code>distributed storage system</code>: <code>BigTable</code>与传统数据库很大的一个不同是——它是一个真正意义上的分布式存储。可以做到完全Sharding，读写都在不同的节点上完成。不像传统的主从复制模式，只能在主节点进行写操作。</li>
+<li><code>wide applicability, scalability, high performance, and high availability</code>: 我们知道大家在推销自己的产品时总会有一些夸大的成分，G家也不例外。这里提到<code>BigTable</code>实现了高通用性，扩展性，高性能，高可用。后两点存疑，高通用性主要得益于<code>key-value</code>的模型，但也只是通用，并不一定好用。因此我们重点关注的它的扩展性。</li>
+</ul>
+<p>这一部分我们可以看到<code>BigTable</code>尝试去解决的一些问题。</p>
+<p>首先我们知道，传统的<code>RDBMS</code>关系型数据库非常依赖单机的性能。</p>
+<p>在计算机领域<code>Scale-out</code>可以分成两个流派：</p>
+<ul>
+<li>以IBM为首的大型机流派，通过堆砌单机的性能来支撑更高负载的系统，也就是垂直扩展</li>
+<li>以Google等互联网公司为首的分布式集群流派，通过堆砌机器数量来提高性能，也就是水平扩展</li>
+</ul>
+<p>老牌的数据库，如<code>Oracle</code>, <code>MySQL</code>, 都是设计成的单机模式，当单机的性能达到瓶颈时就无法扩展了。</p>
+<p>然而在互联网的场景下，会有很多海量数据处理的需求。</p>
+<p>谷歌作为互联网企业的领头羊，很早就摸到了传统数据库的天花板，因此他们尝试着设计了一套分布式存储的解决方案，也就是<code>BigTable</code>。</p>
+<p>在解决<code>Scale-out</code>问题的同时，谷歌也在思考另一个问题，就是能否将数据的存储模型做的更加的通用化。</p>
+<p>为此，他们结合<code>key-value</code>的映射模型，设计了<code>row-column-data</code>的映射模型。</p>
+<p>虽然后来的很多场景证明这种方式存在一些缺陷（事务封装，查询优化等），谷歌也在2010年后研发了新的<code>Spanner</code>数据库，但这仍不失为一次伟大的尝试。</p>
+<h1 id="Data-Model"><a href="#Data-Model" class="headerlink" title="Data Model"></a>Data Model</h1><p>这一部分主要是介绍了<code>BigTable</code>的一个数据存储模型。</p>
+<p><code>BigTable</code>使用的是</p>
+<p><code>(row:string, column:string, time:int64) → string</code></p>
+<p>这样的一种映射。</p>
+<p>通过<code>row</code>, <code>column</code>和时间戳对应一个具体的value。</p>
+<p>这里有一张图：<br><img src="images/bigtable-datamodel.png" alt="data model"></p>
+<p>我们可以尝试用<code>RDBMS</code>的<code>Table</code>中的一些概念来描述这个模型。</p>
+<p>在数据库中的每个<code>Table</code>会有一个<code>Schema</code>，也就是表头。这个表头描述了每条记录的<code>fields</code>。</p>
+<p>每条记录都会有一个<code>Primary Key</code>，用于帮助数据库定位到唯一的一条记录。</p>
+<p>在<code>BigTable</code>中每一个<code>row</code>对应的表里的一条记录，这个<code>row</code>扮演的就是一个<code>Primary Key</code>的角色。</p>
+<p><code>column</code>则是对应的记录的<code>fields</code>。</p>
+<p>两者的<code>Table</code>概念是比较相似的，但是不同的是，<code>BigTable</code>直接将<code>TimeStamp</code>作为<code>key</code>的一部分（虽然<code>RDBMS</code>也可以使用<code>created_time</code>之类的做联合主键，但这是<code>optional</code>的），而且<code>BigTable</code>的<code>column</code>有<code>column families</code>的概念，这个之后会提到。</p>
+<p>这就表示<code>BigTable</code>会更加强调一个时间戳的区别，我们可以将其定义为<code>版本</code>，即相同<code>(row, column)</code>的不同版本。</p>
+<p>论文中提供了一个使用场景的例子：Google的网页爬虫存储。对于一个<code>Page</code>，可以把<code>URL</code>作为<code>row</code>，将<code>Page</code>的具体内容存储在<code>content</code>这个<code>column</code>下。同时，我们可以将爬取的时间作为<code>timestamp</code>，这样可以记录一个网页在不同时间下的内容。</p>
+<p>现在<code>BigTable</code>的<code>Data Model</code>的形态已经描绘出来了，接下来我们来看看一些细节。</p>
+<h2 id="Rows"><a href="#Rows" class="headerlink" title="Rows"></a>Rows</h2><p>论文中<code>row</code>相关的point如下：</p>
+<ul>
+<li><code>BigTable</code>的<code>row key</code>可以是任意的字符串</li>
+<li>对于单个<code>row key</code>的每个读写请求都是原子的</li>
+<li><code>BigTable</code>会按照字典序维护<code>row key</code></li>
+<li><code>row key</code>有动态的分区，每个<code>row range</code>被称作<code>tablet</code>，是分布式存储的基本单元（<code>entry</code>和<code>tablet</code>是<code>1toN</code>关系）</li>
+</ul>
+<p>使用任意的字符串作为<code>row key</code>的好处是用户可以自定义<code>row key</code>的内容，这样表达能力会更强。</p>
+<p>由于<code>BigTable</code>是按照<code>row key</code>的字典序来编排记录的，用户可以利用这点来做一些局部查找的优化。比如说，需要对某个域名下的所有网站进行分析，可以使用<code>URL</code>作为<code>row key</code>。这样像<code>www.baidu.com/a.html</code>，<code>www.baidu.com/b.html</code>很有可能在同一个<code>tablet</code>上，因为有共同的<code>prefix</code>。如此一来查询的速度就可以得到一定程度上的优化。</p>
+<p>但是这样缺点也很明显，那就是随着<code>key</code>长度的增加，比较的复杂度也会线性增长，所以需要用户自己来平衡。</p>
+<p><code>BigTable</code>本身没有提供事务的功能，但是能保证原子性，因此在业务层实现事务也不会特别困难。</p>
+<h2 id="Coloumn-Families"><a href="#Coloumn-Families" class="headerlink" title="Coloumn Families"></a>Coloumn Families</h2><p><code>Column Families</code>一般被翻译成<code>列族</code>，这个概念使用过<code>HBase</code>的同学会比较熟悉。</p>
+<p>简单来讲，每个<code>Column Families</code>下会有许多的<code>Column</code>。用户需要通过<code>family:qualifier</code>的方式获取到具体到具体的<code>Column</code>。</p>
+<h2 id="Timestamps"><a href="#Timestamps" class="headerlink" title="Timestamps"></a>Timestamps</h2><p><code>BigTable</code>主要的应用场景还是Google的爬虫业务。</p>
+<p>我们知道爬虫本质上是提供了一个网页快照，那么为了方便管理，一般会保留多个版本的快照。</p>
+<p><code>BigTable</code>使用了64位整数来表示一个微秒级的时间戳。因为时间戳具有单调递增的特性，可以用来表示一个版本关系。</p>
+<p><code>BigTable</code>在此之上还提供了一些版本GC的功能，比如可以配置为只保留最后N个版本的记录。</p>
+<h1 id="API"><a href="#API" class="headerlink" title="API"></a>API</h1><p><code>BigTable</code>作为一个<code>NoSQL</code>数据库，其API也十分简洁。</p>
+<p>这里直接以论文中的C++代码为例：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Open the table</span></span><br><span class="line">Table *T = OpenOrDie(<span class="string">"/bigtable/web/webtable"</span>);</span><br><span class="line"><span class="comment">// Write a new anchor and delete an old anchor </span></span><br><span class="line"><span class="function">RowMutation <span class="title">r1</span><span class="params">(T, <span class="string">"com.cnn.www"</span>)</span></span>; </span><br><span class="line">r1.Set(<span class="string">"anchor:www.c-span.org"</span>, <span class="string">"CNN"</span>); </span><br><span class="line">r1.Delete(<span class="string">"anchor:www.abc.com"</span>);</span><br><span class="line">Operation op;</span><br><span class="line">Apply(&amp;op, &amp;r1);</span><br><span class="line"></span><br><span class="line"><span class="function">Scanner <span class="title">scanner</span><span class="params">(T)</span></span>;</span><br><span class="line">ScanStream *stream;</span><br><span class="line">stream = scanner.FetchColumnFamily(<span class="string">"anchor"</span>); stream-&gt;SetReturnAllVersions(); scanner.Lookup(<span class="string">"com.cnn.www"</span>);</span><br><span class="line"><span class="keyword">for</span> (; !stream-&gt;Done(); stream-&gt;Next()) &#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">"%s %s %lld %s\n"</span>, scanner.RowName(),</span><br><span class="line">       stream-&gt;ColumnName(),</span><br><span class="line">       stream-&gt;MicroTimestamp(),</span><br><span class="line">       stream-&gt;Value());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="Building-blocks"><a href="#Building-blocks" class="headerlink" title="Building blocks"></a>Building blocks</h1><p>这一部分主要描述了<code>BigTable</code>的外部依赖。</p>
+<p><code>BigTable</code>是一个运行在云上的分布式数据库，其使用大名鼎鼎的<code>GFS</code>作为文件系统，用于存储<code>data</code>和<code>log</code>文件。</p>
+<p>这里先提一下，<code>BigTable</code>使用的是<code>LSM-tree</code>的数据结构，其数据文件主要分为<code>SSTable</code>和<code>LOG</code>文件。<code>SSTable</code>即为存储具体data的数据文件。</p>
+<p><code>BigTable</code>同时还依赖了<code>Chubby</code>，一个使用<code>Paxos</code>算法的分布式锁中间件，用于保证集群的一致性。</p>
+<h1 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h1><p>终于到了论文的核心部分，这一部分描述了<code>BigTable</code>的具体实现。</p>
+<p><code>BigTable</code>主要有三个组件：</p>
+<ul>
+<li>Client用于连接<code>BigTable</code>的库，类似SDK</li>
+<li>一个Master节点</li>
+<li>许多个Tablet节点</li>
+</ul>
+<p>这里需要注意的是Client无需通过Master节点来知道自己该访问哪个Tablet节点。</p>
+<p><code>BigTable</code>的Master节点主要负责的是为Tablet节点分配Tablet，检测Tablet节点的状态（节点增减，负载等），回收GFS上的资源，维护Tablet的meta信息（列族创建等）。</p>
+<p>我们可以发现这其中的Master承担的更像是一个Monitor的角色，但也正是因为Client不会直接依赖Master，系统的可用性会有些许提升。</p>
+<p>接下来将从四部分来描述<code>BigTable</code>的具体实现：</p>
+<ul>
+<li><code>Tablet Location</code>: Tablet节点的定位</li>
+<li><code>Tablet Assignment</code>: Tablet的分配</li>
+<li><code>Tablet Serving</code>: Tablet处理请求的过程</li>
+<li><code>Comapctions</code>: LSM-tree的Compaction</li>
+</ul>
+<h2 id="Tablet-Location"><a href="#Tablet-Location" class="headerlink" title="Tablet Location"></a>Tablet Location</h2><p><code>BigTable</code>采用了一个三层的B+树来存储<code>Tablet</code>的位置信息，如下图：<br><img src="images/tablet-meta.png" alt="Tablet location hierarchy"></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/04/12/系统分析与设计第4次作业/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/12/系统分析与设计第4次作业/" itemprop="url">系统分析与设计第4次作业</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-04-12T20:29:44+08:00">
+                2019-04-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="用例的概念"><a href="#用例的概念" class="headerlink" title="用例的概念"></a>用例的概念</h1><p>在软件和系统工程中，用例是一种对系统如何反应外界请求的描述，通常通过用户的使用场景来获取需求。每个用例提供了一个或多个场景，该场景说明了系统是如何和最终用户或其它系统互动，也就是谁可以用系统做什么，从而获得一个明确的业务目标。</p>
+<h1 id="用例和场景的关系？什么是主场景或-happy-path？"><a href="#用例和场景的关系？什么是主场景或-happy-path？" class="headerlink" title="用例和场景的关系？什么是主场景或 happy path？"></a>用例和场景的关系？什么是主场景或 happy path？</h1><p>关系：每个用例提供了一个或多个场景。其中场景是指使用场景，用来说明系统可以做什么，系统是如何和用户或其他系统交互的，从而获得一个明确的业务目标。</p>
+<p>主场景：也被称为 happy path，每一个用例中都包含一个主场景，主场景对应于系统主要的交互，通常是成功的场景，是最常用的直接地实现用户目标的场景。</p>
+<h1 id="用例有哪些形式？"><a href="#用例有哪些形式？" class="headerlink" title="用例有哪些形式？"></a>用例有哪些形式？</h1><ul>
+<li>简短（高级层次）：一段简短的总结，通常是主要成功场景。在早期需求分析期间，快速了解主题和范围。可能只需要几分钟就可以创建。</li>
+<li>非正式（简便格式）：非正式段落格式。涵盖各种场景的多个段落。</li>
+<li>完全级：所有的步骤和变化都写得很详细，并有支持部分，如前提条件和成功保证。在以简短的格式识别和编写了许多用例之后，然后在第一个需求研讨会期间，详细地编写了一些（例如10%）具有体系结构重要性和高价值的用例。</li>
+</ul>
+<h1 id="对于复杂业务，为什么编制完整用例非常难？"><a href="#对于复杂业务，为什么编制完整用例非常难？" class="headerlink" title="对于复杂业务，为什么编制完整用例非常难？"></a>对于复杂业务，为什么编制完整用例非常难？</h1><p>复杂的业务本身业务流程就很复杂繁琐，而且涉及到的场景非常多，场景与场景之间也有各种各样的关联，编制完整用例需要建模相关知识和熟悉各个业务流程，还要注意用户交互的细节和相对于的支撑。</p>
+<h1 id="什么是用例图？"><a href="#什么是用例图？" class="headerlink" title="什么是用例图？"></a>什么是用例图？</h1><p>用例图是指由参与者（Actor）、用例（Use Case），边界以及它们之间的关系构成的用于描述系统功能的视图，也是外部用户所能观察到的系统功能的模型图。</p>
+<h1 id="用例图的基本符号与元素？"><a href="#用例图的基本符号与元素？" class="headerlink" title="用例图的基本符号与元素？"></a>用例图的基本符号与元素？</h1><p>参与者：一个小人。<br>用例：一个圆框。<br>系统边界：一个方框。<br>关联关系：一个虚线箭头，箭头指向消息接收方。<br>包含关系：一个虚线箭头，有&lt; includes &gt;标识。箭头方向指向被包含者。<br>扩展关系：一个虚线箭头，有&lt; extends &gt;标识，箭头方向指向被继承者。<br>泛化关系：一个实线箭头，箭头是个小三角，指向父用例。</p>
+<h1 id="用例图的画法与步骤"><a href="#用例图的画法与步骤" class="headerlink" title="用例图的画法与步骤"></a>用例图的画法与步骤</h1><p>对语境建模：</p>
+<ul>
+<li>识别系统外部的参与者。</li>
+<li>将类似参与者组织成泛化的结构层次。</li>
+<li>在需要加深理解的地方，为每个参与者提供一个构造型。</li>
+<li>将参与者放入到用例图中，并说明参与者与用例之间的通信路径。</li>
+</ul>
+<p>对需求建模：</p>
+<ul>
+<li>识别系统的外部参与者来建立系统的语境</li>
+<li>考虑每一个参与者期望的行为或需要系统提供的行为。</li>
+<li>把这些公共的行为命名为用例。</li>
+<li>确定提供者用例和扩展用例。</li>
+<li>对这些用例，参与者和它们之间的关系建模。</li>
+<li>用注释修饰用例</li>
+</ul>
+<h1 id="用例图给利益相关人与开发者的价值有哪些？"><a href="#用例图给利益相关人与开发者的价值有哪些？" class="headerlink" title="用例图给利益相关人与开发者的价值有哪些？"></a>用例图给利益相关人与开发者的价值有哪些？</h1><p>用例图是由软件需求分析到最终实现的第一步，它描述人们如何使用一个系统。用例视图显示谁是相关的用户、用户希望系统提供什么样的服务，以及用户需要为系统提供的服务，以便使系统的用户更容易理解这些元素的用途，也便于软件开发人员最终实现这些元素。用例图在各种开发活动中被广泛的应用。</p>
+<h1 id="建模练习题"><a href="#建模练习题" class="headerlink" title="建模练习题"></a>建模练习题</h1><p><img src="images/美团外卖.png" alt=""></p>
+<p><img src="images/饿了么.png" alt=""></p>
+<h2 id="为什么相似的系统的用例图是相似的？"><a href="#为什么相似的系统的用例图是相似的？" class="headerlink" title="为什么相似的系统的用例图是相似的？"></a>为什么相似的系统的用例图是相似的？</h2><p>因为相似的系统业务相似，为了使降低用户的学习成本会使用相似的交互方式。</p>
+<h2 id="如果是定旅馆业务，请对比-Asg-RH-用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？"><a href="#如果是定旅馆业务，请对比-Asg-RH-用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？" class="headerlink" title="如果是定旅馆业务，请对比 Asg_RH 用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？"></a>如果是定旅馆业务，请对比 Asg_RH 用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？</h2><p>充分发挥LBS的优势，通过人工智能对用户数据进行分析，再定点投放。</p>
+<h2 id="如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？"><a href="#如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？" class="headerlink" title="如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？"></a>如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？</h2><p>在用例图中对创新用例使用某种颜色进行高亮标记。</p>
+<h1 id="请使用-SCRUM-方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表"><a href="#请使用-SCRUM-方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表" class="headerlink" title="请使用 SCRUM 方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表"></a>请使用 SCRUM 方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表</h1><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Imp</th>
+<th>Est</th>
+<th>How to Demo</th>
+<th>note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>搜索旅馆</td>
+<td>5</td>
+<td>2</td>
+<td>用户在搜索框输入旅馆信息进行检索</td>
+</tr>
+<tr>
+<td>2</td>
+<td>查看房间</td>
+<td>9</td>
+<td>1</td>
+<td>点击一个旅馆，进入查看旅馆房间信息页面</td>
+</tr>
+<tr>
+<td>3</td>
+<td>预定房间</td>
+<td>9</td>
+<td>1</td>
+<td>用户点击预订后尝试创建一个订单</td>
+<td>可能失败</td>
+</tr>
+<tr>
+<td>4</td>
+<td>支付订单</td>
+<td>10</td>
+<td>2</td>
+<td>用户可以支付订单以确认，超时自动取消订单</td>
+<td>使用微信和支付宝API</td>
+</tr>
+<tr>
+<td>5</td>
+<td>查看订单</td>
+<td>7</td>
+<td>1</td>
+<td>用户能够在个人中心看到自己的预定情况，以及查看订单详情</td>
+</tr>
+<tr>
+<td>6</td>
+<td>取消订单</td>
+<td>7</td>
+<td>1</td>
+<td>用户满足条件时可以取消订单并等待审核</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>用例</th>
+<th>事务</th>
+<th>计算</th>
+<th>权重</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>搜索旅馆</td>
+<td>4</td>
+<td>2</td>
+<td>简单</td>
+</tr>
+<tr>
+<td>查看房间</td>
+<td>3</td>
+<td>2</td>
+<td>平均</td>
+</tr>
+<tr>
+<td>预定房间</td>
+<td>3</td>
+<td>3</td>
+<td>复杂</td>
+</tr>
+<tr>
+<td>支付订单</td>
+<td>6</td>
+<td>5</td>
+<td>复杂</td>
+</tr>
+<tr>
+<td>查看订单</td>
+<td>2</td>
+<td>2</td>
+<td>平均</td>
+</tr>
+<tr>
+<td>取消订单</td>
+<td>4</td>
+<td>3</td>
+<td>复杂</td>
+</tr>
+</tbody>
+</table>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/04/10/系统分析与设计第三次作业/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/10/系统分析与设计第三次作业/" itemprop="url">系统分析与设计第三次作业</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-04-10T21:11:04+08:00">
+                2019-04-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="简答题"><a href="#简答题" class="headerlink" title="简答题"></a>简答题</h1><h2 id="简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点"><a href="#简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点" class="headerlink" title="简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点"></a>简述瀑布模型、增量模型、螺旋模型（含原型方法）的优缺点</h2><h3 id="瀑布模型"><a href="#瀑布模型" class="headerlink" title="瀑布模型"></a>瀑布模型</h3><p>优势：开发流程明确</p>
+<p>劣势：开发周期长，偏离需求后难以调整，风险控制能力较弱</p>
+<h3 id="增量模型"><a href="#增量模型" class="headerlink" title="增量模型"></a>增量模型</h3><p>优势：渐进式开发，可以逐步调整开发流程</p>
+<p>劣势：容易失去对软件整体的掌控</p>
+<h3 id="螺旋模型"><a href="#螺旋模型" class="headerlink" title="螺旋模型"></a>螺旋模型</h3><p>优势：风险驱动，对于风险的控制能力较强</p>
+<p>劣势：可能无法正确定义“风险”</p>
+<h1 id="简述统一过程三大特点，与面向对象的方法有什么关系？"><a href="#简述统一过程三大特点，与面向对象的方法有什么关系？" class="headerlink" title="简述统一过程三大特点，与面向对象的方法有什么关系？"></a>简述统一过程三大特点，与面向对象的方法有什么关系？</h1><h2 id="用例驱动"><a href="#用例驱动" class="headerlink" title="用例驱动"></a>用例驱动</h2><p>用例驱动是一种敏捷开发方法，在编写代码之前先编写单元测试用代码。</p>
+<h2 id="以体系结构为中心"><a href="#以体系结构为中心" class="headerlink" title="以体系结构为中心"></a>以体系结构为中心</h2><p>重视模块与接口的设计，以系统的体系结构为中心。</p>
+<h2 id="迭代和增量"><a href="#迭代和增量" class="headerlink" title="迭代和增量"></a>迭代和增量</h2><p>迭代和增量允许以不完整，不完全的知识开始开发</p>
+<h2 id="与面对对象的联系"><a href="#与面对对象的联系" class="headerlink" title="与面对对象的联系"></a>与面对对象的联系</h2><p>统一软件开发过程是一个面向对象且基于网络的程序开发方法论。它可以为所有方面和层次的程序提供指导方针，模板以及事例支持，统一软件开发过程和类似的产品，把开发中面向过程的方面（例如定义的阶段，技术和实践）和其他开发的组件（例如文档，模型，手册，以及代码等等）整合在一个同一的框架内。</p>
+<h1 id="简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？"><a href="#简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？" class="headerlink" title="简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？"></a>简述统一过程四个阶段的划分准则是什么？每个阶段关键的里程碑是什么？</h1><p>每个阶段本质上是两个里程碑之间的时间跨度。在每个阶段的结尾执行一次评估以确定这个阶段的目标是否已经满足。如果评估结果令人满意的话，可以允许项目进入下一个阶段。</p>
+<h2 id="初始阶段"><a href="#初始阶段" class="headerlink" title="初始阶段"></a>初始阶段</h2><p>初始阶段结束时是第一个重要的里程碑：生命周期目标(Lifecycle Objective)里程碑。生命周期目标里程碑评价项目基本的生存能力。</p>
+<h2 id="细化阶段"><a href="#细化阶段" class="headerlink" title="细化阶段"></a>细化阶段</h2><p>细化阶段结束时第二个重要的里程碑：生命周期结构(Lifecycle Architecture)里程碑。生命周期结构里程碑为系统的结构建立了管理基准并使项目小组能够在构建阶段中进行衡量。此刻，要检验详细的系统目标和范围、结构的选择以及主要风险的解决方案。</p>
+<h2 id="构建阶段"><a href="#构建阶段" class="headerlink" title="构建阶段"></a>构建阶段</h2><p>构建阶段结束时是第三个重要的里程碑：初始功能(Initial Operational)里程碑。初始功能里程碑决定了产品是否可以在测试环境中进行部署。此刻，要确定软件、环境、用户是否可以开始系统的运作。此时的产品版本也常被称为“beta”版。</p>
+<h2 id="交付阶段"><a href="#交付阶段" class="headerlink" title="交付阶段"></a>交付阶段</h2><p>在交付阶段的终点是第四个里程碑：产品发布(Product Release)里程碑。此时，要确定目标是否实现，是否应该开始另一个开发周期。在一些情况下这个里程碑可能与下一个周期的初始阶段的结束重合。</p>
+<h1 id="软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？"><a href="#软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？" class="headerlink" title="软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？"></a>软件企业为什么能按固定节奏生产、固定周期发布软件产品？它给企业项目管理带来哪些好处？</h1><p>软件企业采用基于统一过程的软件项目规划，利用软件产品范围的弹性，合理规划范围（20%业务决定80%满意度），使得软件生产按固定节奏运行，固定迭代周期、固定开发周期、固定升级周期。统一过程中，软件开发生命周期根据时间（固定周期发布）和RUP的核心工作流（固定节奏生产）划分为二维空间。时间维从组织管理的角度描述整个软件开发生命周期，是RUP的动态组成部分，核心工作流从技术角度描述RUP的静态组成部分。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/03/27/LevelDB源码剖析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1358,787 +2085,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/20/Docker不完全指南/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/20/Docker不完全指南/" itemprop="url">Docker不完全指南</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-12-20T12:33:05+08:00">
-                2018-12-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="Docker-简介"><a href="#Docker-简介" class="headerlink" title="Docker 简介"></a>Docker 简介</h2><p>虚拟化一直以来都是云计算领域重要的概念。有了虚拟化，对于云提供商而言，机器的资源更便于管理和分配，于用户而言，则是消除了物理机的概念，在隔离环境下搭建属于自己的云服务变得十分容易。</p>
-<p>但是传统的虚拟化技术，多多少少都会有性能上的损失，一方面是浪费了计算资源，另一方面管理起来也十分不便。他们大多有一个共同的特点，就是提供了一个与物理机使用上较为相似的虚拟机环境。</p>
-<p>那么云服务一定需要一个虚拟机的环境吗？答案是否定的。</p>
-<p>这就有了<code>Docker</code>。</p>
-<p><code>Docker</code>是容器虚拟化技术的一个成功的实现。他抽象出的容器概念最大程度的简化了虚拟环境的概念。你可以将一个<code>Docker</code>容器作为一个虚拟机环境使用，也可以作为一个服务的运行环境。</p>
-<p><code>Docker</code>优点主要有：</p>
-<ul>
-<li>性能高，不会像传统的硬件虚拟化丢失那么多IO或者运算性能</li>
-<li>跨平台能力强</li>
-<li>打包部署流程方便</li>
-</ul>
-<h2 id="Docker-基本概念"><a href="#Docker-基本概念" class="headerlink" title="Docker 基本概念"></a>Docker 基本概念</h2><p>在开始讲<code>Docker</code>的使用之前，需要先介绍几个<code>Docker</code>中的核心概念，这样方便我们理解<code>Docker</code>在生产中的作用，也能很好地帮助我们找到最佳实践。</p>
-<h3 id="Docker-容器"><a href="#Docker-容器" class="headerlink" title="Docker 容器"></a>Docker 容器</h3><p>使用<code>Docker</code>作为部署环境的应用都是运行在<code>Docker</code>容器中的。每个容器都有一个<code>Container ID</code>，用于标识这个容器。此外还有<code>name</code>等属性，详情可以参考<a href="https://docs.docker.com" target="_blank" rel="noopener">官方文档</a>（可能需要科学上网）。</p>
-<p>每个容器都来源于<code>Docker Image</code>镜像，你可以将一个容器理解为一个镜像的实例。</p>
-<p>容器有几种状态：<code>created</code>, <code>running</code>, <code>restarting</code>, <code>removing</code>, <code>paused</code>, <code>exited</code>, <code>dead</code>。</p>
-<p>在这里就不展开来讲，但大家可以发现这些状态与一个服务的状态很相似。我们可以将容器的概念扩展为：<strong>基于一个镜像搭建的服务的实例</strong>。</p>
-<p>在使用容器时，有几个需要注意的地方：</p>
-<ul>
-<li>容器不会自己保存状态，你对其进行的一切修改都将在重启容器后消失</li>
-<li>最好将与docker相关的应用加入到docker用户组中</li>
-</ul>
-<h3 id="Docker-镜像"><a href="#Docker-镜像" class="headerlink" title="Docker 镜像"></a>Docker 镜像</h3><p>在<code>Docker</code>中镜像是一个很重要的概念，我们的容器都源自于此。</p>
-<p><code>Docker Image</code>是由<code>Docker</code>的提供商提供的镜像。</p>
-<p>比如说<code>Ubuntu</code>提供的<code>ubuntu:16.04</code>镜像，就是一个典型的<code>Docker Image</code>。</p>
-<p>这个镜像就是一个<code>Ubuntu 16.04</code>的系统实例，你可以使用<code>docker run</code>来运行它。运行成功后就可以创建出一个<code>ubuntu:16.04</code>的容器。在这个容器里，你可以像使用一个真正的<code>Ubuntu</code>系统那样来使用它（像是虚拟机）。</p>
-<p>不过一般来说<code>Docker</code>是不提倡用户将容器作为一个虚拟机来使用的，这与他的设计理念以及实现方式有关，这部分后面会展开来讲。</p>
-<p>一个<code>Docker Image</code>的<strong>标识</strong>由几部分组成，比如说<code>registry.vmatrix.org.cn/mysql:5.7</code>这个镜像：</p>
-<ul>
-<li><code>registry.vmatrix.org.cn/</code>这部分表示镜像的<code>Registry</code>（这也是个Docker的概念，后面会提到，注意和<code>Repository</code>区分）。默认是<code>docker.io/</code>，在没有指定这部分的情况下会使用默认值。</li>
-<li><code>mysql</code>这部分是镜像的<code>repository</code>，它并不会定位到一个具体的镜像，只是定向到了一个镜像仓库，里面包含了镜像的各个版本。</li>
-<li><code>:5.7</code>是镜像的<code>tag</code>，即对于具体镜像版本的标识，在没有指定具体值时一般会使用<code>latest</code>（某些<code>Registry</code>没有提供latest，最好还是指明）。</li>
-</ul>
-<h3 id="Docker-client-amp-dockerd"><a href="#Docker-client-amp-dockerd" class="headerlink" title="Docker client &amp; dockerd"></a>Docker client &amp; dockerd</h3><p>以上几个都是<code>Docker</code>设计上的一些概念，涉及到具体使用时，我们需要借助<code>Docker client</code>和<code>dockerd</code>来管理镜像和容器。</p>
-<p><code>Docker client</code>，顾名思义，就是一个<code>Docker</code>的客户端程序。我们可以使用它来<code>拉取(pull)</code>，<code>推送(push)</code>，<code>运行(run)</code>镜像。</p>
-<p>但是实际上客户端并不会真的做这些事情，他只是帮助用户去调用<code>Docker</code>的相关API。</p>
-<p>实际上干这些脏活累活的是<code>dockerd</code>。<code>dockerd</code>是<code>Docker Daemon</code>的缩写，比较常见的<code>UNIX</code>程序明明方式。顾名思义，它是一个守护进程，负责<code>docker</code>容器的调度，资源分配，生命周期维护等等。</p>
-<p>打个比方，如果<code>Docker</code>容器是码头上的各个集装箱，里面有各种各样的货物，甚至有人在办公，那么<code>Docker client</code>就是码头的<strong>客服中心</strong>，<code>dockerd</code>就是整个包含了码头工人，码头起重机等的码头系统。与事实有些出入的地方可能就是<code>dockerd</code>实际上负责的事情更多一些。</p>
-<h2 id="Docker-实践"><a href="#Docker-实践" class="headerlink" title="Docker 实践"></a>Docker 实践</h2><p>介绍完了Docker的一些基本概念，我们可以开始做一些实践了。</p>
-<p>现在有一个场景：</p>
-<ul>
-<li>有一个Web项目需要部署到云平台上，现在云平台提供商提供了一套上传docker镜像进行部署的方式</li>
-<li>该项目包括几部分：前端（需要静态文件代理），服务端（由Golang编写，仅一个二进制文件，但是只能在指定系统运行），数据库</li>
-</ul>
-<p>我们来一个渐进式的探索。</p>
-<h3 id="方案一"><a href="#方案一" class="headerlink" title="方案一"></a>方案一</h3><blockquote>
-<p>使用物理机进行部署。要什么云平台。</p>
-</blockquote>
-<p>步骤如下：</p>
-<ul>
-<li>安装一个<code>Ubuntu 18.04</code>系统</li>
-<li>配置一下用户名密码之类的</li>
-<li>安装<code>Golang 1.11</code>，<code>Nginx</code>，<code>MySQL 8.0</code></li>
-<li>服务端：把代码拉下来放到某个文件夹，编译后启动</li>
-<li>前端：把前端资源打包，放到某个文件夹，启动nginx，配置静态文件代理，配置文件放到<code>/etc/nginx/conf.d/default.conf</code></li>
-<li>数据库：启动mysqld，配置用户名，创建数据库，建表etc。</li>
-</ul>
-<p>好了，花了一天时间终于部署完了，可累死我了。</p>
-<p>这个时候老板突然打了个电话过来：“喂，PT呀，咱们那台机器是不是还没跑满？”（此处主人公名叫PT）</p>
-<p>“嗯，对啊。”</p>
-<p>“那再部署一个服务没问题吧？”</p>
-<p>“当然OK。”</p>
-<p>于是新的工单过来了，看了一眼需求：</p>
-<ul>
-<li>MySQL 5.6</li>
-<li>Golang &lt;= 1.4</li>
-</ul>
-<p>我擦，这个版本完全错开了，还得多开实例？</p>
-<p>麻烦死了，还是不直接用物理机了。</p>
-<h3 id="方案二"><a href="#方案二" class="headerlink" title="方案二"></a>方案二</h3><blockquote>
-<p>使用虚拟机部署环境，虚拟机使用某知名开源（免费）软件</p>
-</blockquote>
-<p>又搞了一天，总算是弄完了。在物理机上开了两个虚拟机实例，分别跑的不同的服务。</p>
-<p>这次我留了个心眼，把虚拟机镜像做了备份，到时候部署的时候，嘻嘻嘻。</p>
-<p>这时，老板又来电话了：“PT呀，有个客户买了我们的服务，你去给他们部署一套吧。”</p>
-<p>“那路费住宿费……”</p>
-<p>“统统报销。”</p>
-<p>“好嘞～”</p>
-<p>嘿嘿，部署给他一下子搞定，剩下的时间还可以拿来出去玩玩，权当多放一天假了。</p>
-<p>于是PT带着电脑，揣着备份的镜像，一路哼着歌到了对方公司。</p>
-<p>“您好，我是来给你们部署服务的。”</p>
-<p>“欢迎欢迎，这边请。”</p>
-<p>对方公司技术人员打开了一台PC机：“您就装在这台电脑上吧。”</p>
-<p>PT吓了一跳，定睛一看，什么？居然是Windows？</p>
-<p>“这年头还有用windows做部署的公司……”PT暗自想到，心里充满了不屑。</p>
-<p>但是到部署的时候他就感受到蛋疼了。</p>
-<p>自己使用的虚拟机软件没有Windows版本的，无法部署。</p>
-<p>“这年头还有不兼容Windows的软件？？？”</p>
-<p>PT实在没有办法了，只能以版本不兼容为理由，回公司重新准备一套服务部署方案。</p>
-<p>美好的出差时光就这样没了，自己还要多掏一趟路费，PT心中暗自下了决定，以后再也不在生产环境用这种开源软件。</p>
-<h3 id="方案三"><a href="#方案三" class="headerlink" title="方案三"></a>方案三</h3><p>PT决定使用Docker来做部署。</p>
-<p>他使用了最原始的方法（以下方式十分危险，请勿学习）：</p>
-<ul>
-<li>装了一个<code>Docker</code></li>
-<li><code>pull</code>了一个<code>ubuntu:16.04</code>镜像</li>
-<li>在镜像中运行<code>bash</code>，安装所需软件</li>
-<li>在镜像中编译，部署</li>
-<li><code>commit</code></li>
-</ul>
-<p>这样一来一个跨平台的服务镜像就完成了。虽然体积有点大，有足足50GB，但是好歹能部署了。</p>
-<p>什么，你问怎么发新版本？当然是写一个脚本，<code>docker cp</code>到容器里替换掉原来的文件，然后<code>commit</code>。</p>
-<p>几个月之后PT发现这个容器已经100GB了，再这样下去硬盘迟早要撑不住。</p>
-<p>于是他决定再换一个方式。</p>
-<h3 id="方案四"><a href="#方案四" class="headerlink" title="方案四"></a>方案四</h3><p>PT终于学会了写<code>Dockerfile</code>。</p>
-<p>他为每个部分写了Dockerfile。</p>
-<p>前端：<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> nginx:stable-alpine</span><br><span class="line"><span class="keyword">COPY</span> . /www</span><br><span class="line">RUN cd /www &amp;&amp;\</span><br><span class="line">    npm run lint &amp;&amp;\</span><br><span class="line">    npm run test &amp;&amp;\</span><br><span class="line">    npm run build</span><br><span class="line">ENTRYPOINT nginx start</span><br></pre></td></tr></table></figure></p>
-<p>服务端：<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> golang:<span class="number">1</span>-alpine</span><br><span class="line"><span class="keyword">COPY</span> . /www</span><br><span class="line">RUN cd /www &amp;&amp;\</span><br><span class="line">    go test &amp;&amp;\</span><br><span class="line">    go build &amp;&amp;\</span><br><span class="line">ENTRYPOINT ./www/main</span><br></pre></td></tr></table></figure></p>
-<p>数据库则是直接用的<code>MySQL:8.0</code>的镜像。</p>
-<p>除此之外，他还学会了使用<code>docker-compose</code>来管理项目，为了解决每次拉取镜像速度很慢的问题还搭建了公司的<code>registry</code>。他做得越来越有模有样了，也得到了老板的嘉奖，或许还有机会提薪。</p>
-<p>学会了<code>Docker</code>之后，PT终于走上了人生巅峰。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上的实践内容虽是戏说，但也是基于实际的业务场景的。使用<code>Docker</code>能大大降低部署的成本，但也需要掌握正确的使用方法。</p>
-<p>具体的<code>Dockerfile</code>写法还需参考官方文档。</p>
-<p>关于为什么不使用<code>commit</code>，有兴趣的同学可以自己思考一下，再结合<code>Docker</code>的<a href="https://www.github.com/docker/docker-ce" target="_blank" rel="noopener">源码</a>或是分析的博客，做更深一步的探索。笔者学识尚浅，也只能讲这么多。</p>
-<p>另外推荐大家使用Matrix的<code>registry</code>: <a href="https://registry.vmatrix.org.cn" target="_blank" rel="noopener">https://registry.vmatrix.org.cn</a></p>
-<p>需要账号的可以找博主要，目前收录了一些常用的镜像（比如<code>alpine</code>），也可以进一步引入更多镜像。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/07/使用Go搭建RESTful-API服务器/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/07/使用Go搭建RESTful-API服务器/" itemprop="url">使用Go搭建RESTful API服务器</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-12-07T13:21:16+08:00">
-                2018-12-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="什么是RESTful？"><a href="#什么是RESTful？" class="headerlink" title="什么是RESTful？"></a>什么是RESTful？</h2><p><strong>RESTful</strong>全名是<strong>可表述性状态转移(Representational State Transfer)</strong>，是一套HTTP API的设计风格。</p>
-<p>看名字很抽象，所以这里我就结合理论大致的讲一下自己的理解。</p>
-<p><strong>REST</strong>的核心是<strong>资源</strong>的访问，以及客户端/服务端的<strong>C/S</strong>模式。</p>
-<p>在<strong>REST</strong>中，API通过URI的形式来访问。与此同时，<strong>REST</strong>也为<strong>HTTP动词</strong>赋予了更加完善的语义。</p>
-<p>最常用的动词有<code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>:</p>
-<ul>
-<li><code>GET</code>用于访问已有的资源</li>
-<li><code>POST</code>用于创建资源，并且该资源的标识由服务端维护</li>
-<li><code>PUT</code>用于更新资源，标识由客户端维护</li>
-<li><code>DELETE</code>用于删除一个资源</li>
-</ul>
-<p>通过<strong>HTTP动词</strong>，可以实现<strong>REST</strong>的可表述性部分，而状态转移则是通过API的分层来完成的。</p>
-<p><strong>REST</strong>中状态是由客户端维护的，服务端本身无状态。客户端如果要获取资源的情况，需要逐层访问API来实现。</p>
-<p>比如说对于某个网站的某个用户的某个信息，可以设计这样的一个<strong>REST API</strong>：</p>
-<ul>
-<li><code>/users/:user_id/profiles/:profile_id</code>（<code>:xx_id</code>表示占位符）</li>
-</ul>
-<p>这样一来<strong>REST</strong>的概念就清晰了许多。</p>
-<p><strong>REST</strong>的优点是对于资源的访问可视化，更加清晰。但是他也有缺点，就是不太适合一些命令式的<strong>API</strong>，对于这类<strong>API</strong>我们可能要引入<strong>CQRS(命令查询职责分离，Command Query Responsibility Segregation)</strong>的架构，使用一些RPC协议来完成命令式API的调用。</p>
-<h2 id="开工前的调研"><a href="#开工前的调研" class="headerlink" title="开工前的调研"></a>开工前的调研</h2><p>在开始编写服务端之前，需要先进行调研确定技术栈，方便之后的架构设计。</p>
-<p>Golang的优势在于有一套较为完善的标准库，非常适合微框架的发展。在参考了几套常用Golang HTTP Server的框架之后，我决定自己写一个中间件的包装组件。</p>
-<p>数据库方面，根据要求需要使用BoltDB，在语言库的方面没有更多选择。</p>
-<p>确定了这些之后就可以开始编写。</p>
-<h2 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h2><p>设计初期，我没有多想便选择了Web领域最成熟，也十分经典的架构<code>MVC</code>。</p>
-<p>对于中间件的设计，则是使用<code>AOP</code>的理念。</p>
-<p>在<code>MVC</code>架构中，有三个重要的成分：</p>
-<ul>
-<li><code>Model</code>，模型层，主要负责处理数据的序列化和反序列化，这层一般不会涉及业务逻辑。由于设计的是<strong>REST</strong>服务器，因此可以抽象出一套类似<code>DAO</code>的<code>Model API</code>，<code>GetByID</code>, <code>GetAll</code>, <code>Update</code>, <code>Create</code>, <code>Delete</code>。</li>
-<li><code>View</code>，视觉层。对于<strong>REST</strong>服务器来说，所谓<code>View</code>其实就是呈现的<code>JSON</code>数据。</li>
-<li><code>Controller</code>，控制器层。主要处理路由的逻辑，比如参数的解析，数据的组装等。</li>
-</ul>
-<p>一般开发时不会完全按照这个范式，我选择在<code>Model</code>和<code>Controller</code>中间加入一个<code>Service</code>层。这一层主要做的事情是访问<code>Model</code>取出数据，对其进行一定的包装，包含一些业务逻辑。这样的好处在于可以简化<code>Controller</code>，也可以更方便的复用一些逻辑。</p>
-<p>这样一来整个项目的文件结构就清晰了：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">src/</span><br><span class="line">  controllers/   用于放controller文件</span><br><span class="line">    user.go</span><br><span class="line">    ...</span><br><span class="line">  models/        用于放model文件</span><br><span class="line">    user.go</span><br><span class="line">    ...</span><br><span class="line">  services/      用于放service</span><br><span class="line">    user.go</span><br><span class="line">    ...</span><br><span class="line">  utils/         用于放一些常用工具</span><br><span class="line">    utils.go</span><br><span class="line">    ...</span><br><span class="line">  main.go        项目入口</span><br><span class="line">  README         项目说明</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure></p>
-<h2 id="项目编写"><a href="#项目编写" class="headerlink" title="项目编写"></a>项目编写</h2><p>有了一个好的架构之后项目的编写就容易多了，只需要照着框架填鸭即可。</p>
-<p>主要讲一下我自己实现的<code>MiddlewareComposer</code>。该工具可以将一系列的中间件包装成一个<code>http.HandleFunc</code>，调用时是一个洋葱的结构（参考<code>Koa</code>中间件的模式）</p>
-<p><img src="images/onion.png" alt="onion"></p>
-<p>这样的好处在于可以形成一个整齐的调用栈，处理log，异常等常见服务时非常方便。写起来逻辑也很清晰。</p>
-<p>实现起来也很简单，利用函数式编程的闭包特性，我们可以构造出一个自执行的函数。具体请看<a href="https://github.com/go-cloud-service/go-cloud-service/blob/master/utils/middleware.go" target="_blank" rel="noopener">这里</a></p>
-<p>原本还想实现一个路由的中间件，这样嵌套挂载写起来会很方便，但是因为时间关系，最后还是搭配了<code>Gorilla</code>的<code>mux</code>。</p>
-<p>对于<code>BoltDB</code>，我为其包装了一组<code>k-v DB</code>常用的API，包括<code>GET</code>，<code>SET</code>，<code>SCAN</code>等操作。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Golang在工程开发上真的非常省心省力。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/11/30/头条后台开发面经/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/11/30/头条后台开发面经/" itemprop="url">头条后台开发面经</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-11-30T12:47:35+08:00">
-                2018-11-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="头条后台开发面经"><a href="#头条后台开发面经" class="headerlink" title="头条后台开发面经"></a>头条后台开发面经</h2><p>先说下背景。投的岗位是头条基础架构部门的后台开发的内推，但是部门实际上的需求是需要一个能写前端的实习生来做适配。</p>
-<p>听到这个需求之后的我一惊。</p>
-<p><strong>“这TMD不就是招全栈吗！”</strong></p>
-<p>这样的想法突然在我脑中浮现。</p>
-<p>我不禁想起了一位师兄说过的话：“公司招全栈都是骗小孩的。”</p>
-<p>再看看自己，前端不精通，后台也不懂，只能做做全栈搬砖才能维持得了生活的样子，于是没技术的泪水从我的双眼汩汩流出。</p>
-<p>没办法了，就让我来做这个被骗的小孩子吧。</p>
-<h3 id="简历投递"><a href="#简历投递" class="headerlink" title="简历投递"></a>简历投递</h3><p>有了上次投网易的经验，我意识到了一个很重要的地方。</p>
-<p>首先简历是面试官了解你的第一渠道，他的提问肯定是跟着你的简历来的，你简历怎么写他就怎么问。</p>
-<p>上次我的简历里面写的项目情况太过详细，直接提到了<code>RabbitMQ</code>，<code>Redis</code>，<code>Docker</code>等技术名词。这就导致了面试官可以直接从这些技术上开始发问，也是我翻车的直接原因（面试官问到了<code>RabbitMQ</code>的消息确认机制，但是我只记得一个<code>consumer</code>的<code>noAck</code>参数，没讲出<code>producer</code>的<code>confirmChannel</code>和<code>transaction</code>）。</p>
-<p>所以这次我的简历写的就很简单，只讲了项目是什么，没讲到细节。</p>
-<p>事实证明这是一个正确的决定，因为这让我主导了整个面试的过程。</p>
-<h3 id="面试过程"><a href="#面试过程" class="headerlink" title="面试过程"></a>面试过程</h3><h4 id="一面"><a href="#一面" class="headerlink" title="一面"></a>一面</h4><p>面试是通过牛客网的面试平台来做的。不得不说头条的效率很高，我投递简历之后一小时HR小姐姐就打电话来跟我约时间了，挂电话之后不到一分钟就收到了面试通知的邮件。</p>
-<p>到了约定的时间，面试官进入了频道，面试流程正式开始：</p>
-<p>简单自我介绍一下就开始了提问。因为是技术岗，自我介绍这方面并不是很重要的部分，所以没必要太严肃。</p>
-<ol>
-<li><p>TCP相关问题</p>
-<p>Q: TCP有了解吧，讲一下四次挥手的过程</p>
-<p>A: 嗯，我们都知道TCP是一个全双工的协议，断开连接的请求可以由任意一方发起。比如说断开的发起者A，接受者B。这时先由A发出FIN包表示我要中断这个连接，B接收到之后发送一个FIN ACK，表示我收到了这个请求。之后B把读写任务完成之后再发送一个FIN包给A，表示我已经OK了，可以关了。A收到这个FIN后发送一个FIN ACK表示我已经知道你OK了。B收到ACK之后就可以关闭连接，但是A会进入一个<code>TIME_WAIT</code>状态（<strong>这个一定要提到，是重点</strong>）。</p>
-<p>Q: 那这个<code>TIME_WAIT</code>是什么呢？（果然）</p>
-<p>A: <code>TIME_WAIT</code>主要是因为TCP里面不会对ACK包进行ACK，所以A无法确定自己的ACK是否被B收到。这时候有两种情况，一种是B收到了ACK，那么没问题，B关闭了连接，A等待一个<code>TIME_WAIT</code>之后关闭连接。另一种是B没收到ACK，过了<code>CLOSE_WAIT</code>之后重新发送一个FIN。如果这时候A的连接已经关闭，并且该socketfd被其他进程使用的话，这个FIN就可能会影响到其他的进程。所以需要设置一个等待时间，这个时间一般是<code>2MSL</code>（ip包的存活时间），以此保证连接安全。<br>（但是因为TIME_WAIT会导致fd利用率下降，所以一般有两种解决方式，一种是使用socket选项对<code>TIME_WAIT</code>状态的fd进行复用，或者是客户端发起断开，让<code>TIME_WAIT</code>由客户端处理）</p>
-<p>Q: 拥塞控制和流量控制呢？</p>
-<p>A: 吧啦吧啦吧啦……</p>
-</li>
-</ol>
-<ol start="2">
-<li><p>数据库相关</p>
-<p>Q: 你们有学数据库吧</p>
-<p>A: 额，有（其实我很想说没学。。因为我数据库确实没学好，让我讲事务锁的实现，查询优化之类的我肯定是讲不出来的。。。）</p>
-<p>Q: 那能讲一下SQL里面<code>GROUP BY</code>是做什么用的吗？<br><br>A: 啊，这个（虚惊一场）。<code>GROUP BY</code>是把查询出来的表按照字段分组的一个指令，比如说<code>count()</code>之类的函数，<code>GROUP BY</code>可以把它们合起来。</p>
-<p>（这个时候我发现面试官好像还想问点别的，心里那叫一个慌啊。但是好在我灵机一动，转移了话题）</p>
-<p>A: 说到SQL，我之前有做过一个很有意思的查询优化。</p>
-<p>Q: 哦？说来听听 （太好了，上套了）</p>
-<p>A: 嗯嗯（此时我的头点的像磕头机一样）。情况是这样的吧啦吧啦吧啦……（此处省略一万字，大致就是一个有两个嵌套子查询<code>JOIN</code>时因为表过大触发临时表存储造成索引丢失，之后导致百万级表全表扫描的问题，解决方案是手动加了一个查询时的索引，估计是<code>MySQL</code>优化器的问题。反正不管怎样，把面试官忽悠的得不要不要的）</p>
-<p>Q: 嗯，这个可以有（赞赏</p>
-</li>
-<li><p>写代码环节</p>
-<p>面试的流程很快，之前只讲了十几分钟的样子，就到最后的环节了。</p>
-<p>Q: 来做一下这道题吧</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">题目描述：</span><br><span class="line">  输入一个数组，找到其中第一个缺失的正整数</span><br><span class="line"> 时间O(n)，空间O(1) （指复杂度）</span><br><span class="line"></span><br><span class="line"> 样例：</span><br><span class="line"> input: 1 2 3 5 -1 </span><br><span class="line"> output: 4</span><br><span class="line"> input: 2 4 3 0</span><br><span class="line"> output: 1</span><br><span class="line"> input: 7 8 9</span><br><span class="line"> output: 1</span><br></pre></td></tr></table></figure>
-<p>我想了大约一分钟，有了思路。</p>
-<p>大致思路就是用空间换时间（没办法。。我真的很久没写算法题了。。），使用一个bitmap来存储插入的记录，标记一遍之后扫描一遍找到第一个没被标记的位就可以。</p>
-<p>但是尴尬的是，我几乎不会写C++了。。。本来想用vector来解决，结果被扩容的问题给恶心到了，只能跟面试官讲了思路。面试官看出了我的窘迫，又给我换了道题。</p>
-<p>接下来的题就比较中规中矩，写一个函数来把一段代码里的注释删掉。（c++的单行多行注释<code>//</code>, <code>/* ... */</code>）</p>
-<p>不过我还是没写出来，又是只讲了思路（尴尬到极点，因为面试官出题前有说他们很看重代码风格。。），之后解释了自己的窘迫情况。</p>
-<p>不过好在面试官表示理解（可能是对我之前的表现比较满意，而且我也把思路讲出来了）。</p>
-</li>
-</ol>
-<p>一面就到此结束了，面试官问我有啥要问的，我就例行公事地问了下对自己表现的满意程度。</p>
-<p>“挺牛逼的，就是编码习惯不太好，回去还是多写点。”</p>
-<p>“嗯嗯。”</p>
-<p>可真把我给牛逼坏了。</p>
-<h4 id="二面"><a href="#二面" class="headerlink" title="二面"></a>二面</h4><p>之前的面试官面完我后叫我等等，他去叫来了leader，之后就是第二轮面试。</p>
-<p>之前给我内推的师兄曾经说过他们的leader会把一些东西挖的很深，果然名不虚传。。。</p>
-<p>首先也是自我介绍，不过这次我讲的详细了一些，把项目经历也讲了几遍，提到了一些自己做过比较重要的事情。</p>
-<ol>
-<li><p>WebServer相关</p>
-<p>Q: 你平常写这个项目的话，应该还是比较了解<code>HTTP</code>吧？能讲讲<code>WebServer</code>主要是做什么的吗？有哪些<code>WebServer</code>产品？</p>
-<p>A: <code>WebServer</code>的话，<code>Apache</code>, <code>Nginx</code>这些比较常见，我们是用<code>Nginx</code>搭的一个反向代理。吧啦吧啦吧啦（此处省略一万字，大致讲了我们整个网络拓扑）。此外<code>Nginx</code>还可以做静态文件代理之类的，还有负载均衡。</p>
-<p>Q: 嗯，那你如果要写一个<code>WebServer</code>的话要做些什么呢？</p>
-<p>A: 额，我不是很明白您的意思……（真的没搞懂，不懂的时候一定要问清楚）</p>
-<p>Q: 比如一个<code>HTTP</code>请求过来，你要怎么处理呢？</p>
-<p>A: 哦哦，明白了（原来他想问的是<code>HTTP</code>底层连接调度之类的）。吧啦吧啦吧啦……（大概讲了下<code>TCPServer</code>的一些东西，比如说<code>bind</code>, <code>listen</code>, <code>accept</code>这些术语，然后又讲了从<code>fork &amp; accept</code>到多线程和线程池，再到<code>reactor</code>这些I/O多路复用模型 ）</p>
-<p>Q: 嗯。（一本满足）</p>
-</li>
-<li><p>HTTP相关</p>
-<p>Q: 讲一下HTTP包具体的报文结构</p>
-<p>A: 嗯，吧啦吧啦吧啦……</p>
-<p>Q: HTTP的Cookies是做什么用的</p>
-<p>A: 吧啦吧啦吧啦……</p>
-<p>Q: 如果没有Cookies怎么实现</p>
-<p>A: 也可以用<code>jwt</code>，在<code>Authentication</code>里面放上<code>token</code>。</p>
-<p>Q: Session是什么原理？</p>
-<p>A: 吧啦吧啦吧啦……</p>
-<p>Q: 你们的Session是怎么实现的？</p>
-<p>A: 就是用户登录成功后给他一个<code>session_id</code>，作为<code>key</code>，然后把用户的一些相关信息的<code>JSON</code>字符串存进去。</p>
-<p>Q: Session_id怎么生成的？</p>
-<p>A: （我靠，这都要问）我们用了一个第三方的包，里面是直接用<code>redis</code>的<code>incr</code>实现ID。</p>
-<p>Q: 那怎么保证用户自己无法伪造一个Session_id？</p>
-<p>A: 我们会基于时间戳之类的给用户返回一个<code>MD5+salt</code>加密的<code>token</code>，<code>id</code>和里面存的<code>token</code>都对应<code>session</code>对象才能通过校验。</p>
-</li>
-</ol>
-<p>此处突然转弯</p>
-<ol start="3">
-<li><p>Redis相关</p>
-<p>Q: 你们是用Redis做这个事，那么Redis能做什么？</p>
-<p>A: （心中暗喜，这个我熟）可以做缓存，也可以做Pub/Sub的一个消息队列。</p>
-<p>Q: 常用的数据结构有哪些呢？</p>
-<p>A: 简单的<code>kvmap</code>呀，<code>hash</code>, <code>list</code>之类的（内置的<code>ziplist</code>, <code>zipmap</code>这些没讲）。</p>
-<p>Q: Pub/Sub是什么样的？</p>
-<p>A: 大致就是先<code>declare</code>一个<code>queue</code>，<code>producer</code>负责往里面丢东西，<code>consumer</code>订阅之后就可以从里面获取消息。</p>
-<p>Q: 如果Redis撑不住了怎么办？</p>
-<p>A: 这就触及到我的知识盲区了。</p>
-</li>
-</ol>
-<p>又突然转弯</p>
-<ol start="4">
-<li><p>数据库相关</p>
-<p>Q: 你们的数据库是单机是吧？</p>
-<p>A: 嗯。（虽然很难为情，但确实是的）</p>
-<p>Q: 那假如现在我突然给你很高的并发请求，比如百万级，数据库单机肯定撑不住的，这时候怎么做？</p>
-<p>A: 可以分库分表，分布式存储。</p>
-<p>Q: 那我查询的时候要怎么查询呢？</p>
-<p>A: 这个时候就需要把查询包装成一个服务，用一个<code>query proxy</code>做这个事情。</p>
-<p>Q: 这个<code>query proxy</code>具体是做了什么事情呢？</p>
-<p>A: 主要是内置一个<code>MySQL</code>的<code>query parser</code>吧，可以先检查<code>SQL</code>的语法问题，并且查下各节点数据库的<code>metadata</code>，看看应该给它接到哪个数据库，之后分配一条查询连接（以上都是我猜的，如果让我实现一个代理我会这么做。。。）。</p>
-<p>Q: 嗯，差不多吧。</p>
-</li>
-</ol>
-<p>接下来又讲了几个之前遇到过的救灾业务场景，就进入了福利的编码时间。</p>
-<ol start="5">
-<li><p>写代码</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">题目描述：</span><br><span class="line">   输入一个数组，把0放到左边，其他放到右边</span><br></pre></td></tr></table></figure>
-<p>用一个cursor标记一下0元素的最后位置，遇到0交换一下就行，注意更新cursor。</p>
-</li>
-</ol>
-<h3 id="面试总结"><a href="#面试总结" class="headerlink" title="面试总结"></a>面试总结</h3><p>面试结束了，leader大概给我讲了一下工作的情况，不出意外应该是稳了。</p>
-<p>整个面试流程大致是这样，有些细节记不太清了。</p>
-<p>总结下来，有几点比较重要：</p>
-<ul>
-<li>理论基础，计网，OS，数据库，这些都应该能够融会贯通。</li>
-<li>有项目的一定要把项目里的每个细节都抠到，多思考。（我是背了多年的锅才能回答上leader的问题）</li>
-<li>理论基础和工程经验都不太行的同学一定要多练习写代码，可以写一些<code>TCPServer</code>，上<code>leetcode</code>刷刷题。（像我这样写题用C++结果STL都忘记怎么用的肯定是不行的。。。）</li>
-<li>面试不要太紧张，要尽可能去把自己懂得东西都讲出来。</li>
-</ul>
-<p>现在想到的大概就这些，有机会会再写一篇博客讲一下<code>MySQL</code>查询优化的过程。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/11/14/Golang-gzip源码剖析/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/11/14/Golang-gzip源码剖析/" itemprop="url">Golang gzip源码剖析</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-11-14T18:09:09+08:00">
-                2018-11-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>gzip是<a href="https://tools.ietf.org/html/rfc1952" target="_blank" rel="noopener">RFC1952</a>中定义的一种压缩格式，Golang官方的gzip包对其进行了实现。</p>
-<h2 id="类型定义"><a href="#类型定义" class="headerlink" title="类型定义"></a>类型定义</h2><p>gzip包中实现了对gzip文件的Writer：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// A Writer is an io.WriteCloser.</span></span><br><span class="line"><span class="comment">// Writes to a Writer are compressed and written to w.</span></span><br><span class="line"><span class="keyword">type</span> Writer <span class="keyword">struct</span> &#123;</span><br><span class="line">	Header      <span class="comment">// written at first call to Write, Flush, or Close</span></span><br><span class="line">	w           io.Writer</span><br><span class="line">	level       <span class="keyword">int</span></span><br><span class="line">	wroteHeader <span class="keyword">bool</span></span><br><span class="line">	compressor  *flate.Writer</span><br><span class="line">	digest      <span class="keyword">uint32</span> <span class="comment">// CRC-32, IEEE polynomial (section 8)</span></span><br><span class="line">	size        <span class="keyword">uint32</span> <span class="comment">// Uncompressed size (section 2.3.1)</span></span><br><span class="line">	closed      <span class="keyword">bool</span></span><br><span class="line">	buf         [<span class="number">10</span>]<span class="keyword">byte</span></span><br><span class="line">	err         error</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其中的<code>w</code>是对于目标文件的Writer，对其进行<code>Write</code>写入的数据都是经过压缩的。</p>
-<p>并且定义了一组配置常量：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// These constants are copied from the flate package, so that code that imports</span></span><br><span class="line"><span class="comment">// "compress/gzip" does not also have to import "compress/flate".</span></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	NoCompression      = flate.NoCompression</span><br><span class="line">	BestSpeed          = flate.BestSpeed</span><br><span class="line">	BestCompression    = flate.BestCompression</span><br><span class="line">	DefaultCompression = flate.DefaultCompression</span><br><span class="line">	HuffmanOnly        = flate.HuffmanOnly</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-<h2 id="函数实现"><a href="#函数实现" class="headerlink" title="函数实现"></a>函数实现</h2><p>创建Writer的函数：</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// NewWriter returns a new Writer.</span></span><br><span class="line"><span class="comment">// Writes to the returned writer are compressed and written to w.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// It is the caller's responsibility to call Close on the Writer when done.</span></span><br><span class="line"><span class="comment">// Writes may be buffered and not flushed until Close.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// Callers that wish to set the fields in Writer.Header must do so before</span></span><br><span class="line"><span class="comment">// the first call to Write, Flush, or Close.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewWriter</span><span class="params">(w io.Writer)</span> *<span class="title">Writer</span></span> &#123;</span><br><span class="line">	z, _ := NewWriterLevel(w, DefaultCompression)</span><br><span class="line">	<span class="keyword">return</span> z</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewWriterLevel is like NewWriter but specifies the compression level instead</span></span><br><span class="line"><span class="comment">// of assuming DefaultCompression.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// The compression level can be DefaultCompression, NoCompression, HuffmanOnly</span></span><br><span class="line"><span class="comment">// or any integer value between BestSpeed and BestCompression inclusive.</span></span><br><span class="line"><span class="comment">// The error returned will be nil if the level is valid.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewWriterLevel</span><span class="params">(w io.Writer, level <span class="keyword">int</span>)</span> <span class="params">(*Writer, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> level &lt; HuffmanOnly || level &gt; BestCompression &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">"gzip: invalid compression level: %d"</span>, level)</span><br><span class="line">	&#125;</span><br><span class="line">	z := <span class="built_in">new</span>(Writer)</span><br><span class="line">	z.init(w, level)</span><br><span class="line">	<span class="keyword">return</span> z, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">init</span><span class="params">(w io.Writer, level <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	compressor := z.compressor</span><br><span class="line">	<span class="keyword">if</span> compressor != <span class="literal">nil</span> &#123;</span><br><span class="line">		compressor.Reset(w)</span><br><span class="line">	&#125;</span><br><span class="line">	*z = Writer&#123;</span><br><span class="line">		Header: Header&#123;</span><br><span class="line">			OS: <span class="number">255</span>, <span class="comment">// unknown</span></span><br><span class="line">		&#125;,</span><br><span class="line">		w:          w,</span><br><span class="line">		level:      level,</span><br><span class="line">		compressor: compressor,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>NewWriter</code>本质上也是通过调用<code>NewWriterLevel</code>创建的Writer，使用的是默认的压缩等级。</p>
-<p><code>init</code>实现了<code>Writer</code>类型中的<code>init</code>方法，主要做的是Writer的初始化。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Reset discards the Writer z's state and makes it equivalent to the</span></span><br><span class="line"><span class="comment">// result of its original state from NewWriter or NewWriterLevel, but</span></span><br><span class="line"><span class="comment">// writing to w instead. This permits reusing a Writer rather than</span></span><br><span class="line"><span class="comment">// allocating a new one.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">Reset</span><span class="params">(w io.Writer)</span></span> &#123;</span><br><span class="line">	z.init(w, z.level)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>Reset</code>函数的实现为了节约内存，选择重用一个Writer而不是新建一个。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// writeBytes writes a length-prefixed byte slice to z.w.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">writeBytes</span><span class="params">(b []<span class="keyword">byte</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(b) &gt; <span class="number">0xffff</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"gzip.Write: Extra data is too large"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	le.PutUint16(z.buf[:<span class="number">2</span>], <span class="keyword">uint16</span>(<span class="built_in">len</span>(b)))</span><br><span class="line">	_, err := z.w.Write(z.buf[:<span class="number">2</span>])</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	_, err = z.w.Write(b)</span><br><span class="line">	<span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// writeString writes a UTF-8 string s in GZIP's format to z.w.</span></span><br><span class="line"><span class="comment">// GZIP (RFC 1952) specifies that strings are NUL-terminated ISO 8859-1 (Latin-1).</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">writeString</span><span class="params">(s <span class="keyword">string</span>)</span> <span class="params">(err error)</span></span> &#123;</span><br><span class="line">	<span class="comment">// GZIP stores Latin-1 strings; error if non-Latin-1; convert if non-ASCII.</span></span><br><span class="line">	needconv := <span class="literal">false</span></span><br><span class="line">	<span class="keyword">for</span> _, v := <span class="keyword">range</span> s &#123;</span><br><span class="line">		<span class="keyword">if</span> v == <span class="number">0</span> || v &gt; <span class="number">0xff</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> errors.New(<span class="string">"gzip.Write: non-Latin-1 header string"</span>)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> v &gt; <span class="number">0x7f</span> &#123;</span><br><span class="line">			needconv = <span class="literal">true</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> needconv &#123;</span><br><span class="line">		b := <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">0</span>, <span class="built_in">len</span>(s))</span><br><span class="line">		<span class="keyword">for</span> _, v := <span class="keyword">range</span> s &#123;</span><br><span class="line">			b = <span class="built_in">append</span>(b, <span class="keyword">byte</span>(v))</span><br><span class="line">		&#125;</span><br><span class="line">		_, err = z.w.Write(b)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		_, err = io.WriteString(z.w, s)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// GZIP strings are NUL-terminated.</span></span><br><span class="line">	z.buf[<span class="number">0</span>] = <span class="number">0</span></span><br><span class="line">	_, err = z.w.Write(z.buf[:<span class="number">1</span>])</span><br><span class="line">	<span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>writeBytes</code>和<code>writeString</code>是两个私有函数。<code>writeBytes</code>主要用于向writer写入一个带有前缀的byte切片。<code>writeString</code>则是向Writer写入一个UTF-8的字符串。在<code>writeString</code>中对于字符的范围进行了判断，对于ASCII可表示的字符直接进行存储，而如果字符超出了这个范围，则会进行转换。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Write writes a compressed form of p to the underlying io.Writer. The</span></span><br><span class="line"><span class="comment">// compressed bytes are not necessarily flushed until the Writer is closed.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">Write</span><span class="params">(p []<span class="keyword">byte</span>)</span> <span class="params">(<span class="keyword">int</span>, error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">var</span> n <span class="keyword">int</span></span><br><span class="line">	<span class="comment">// Write the GZIP header lazily.</span></span><br><span class="line">	<span class="keyword">if</span> !z.wroteHeader &#123;</span><br><span class="line">		z.wroteHeader = <span class="literal">true</span></span><br><span class="line">		z.buf = [<span class="number">10</span>]<span class="keyword">byte</span>&#123;<span class="number">0</span>: gzipID1, <span class="number">1</span>: gzipID2, <span class="number">2</span>: gzipDeflate&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Extra != <span class="literal">nil</span> &#123;</span><br><span class="line">			z.buf[<span class="number">3</span>] |= <span class="number">0x04</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Name != <span class="string">""</span> &#123;</span><br><span class="line">			z.buf[<span class="number">3</span>] |= <span class="number">0x08</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Comment != <span class="string">""</span> &#123;</span><br><span class="line">			z.buf[<span class="number">3</span>] |= <span class="number">0x10</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.ModTime.After(time.Unix(<span class="number">0</span>, <span class="number">0</span>)) &#123;</span><br><span class="line">			<span class="comment">// Section 2.3.1, the zero value for MTIME means that the</span></span><br><span class="line">			<span class="comment">// modified time is not set.</span></span><br><span class="line">			le.PutUint32(z.buf[<span class="number">4</span>:<span class="number">8</span>], <span class="keyword">uint32</span>(z.ModTime.Unix()))</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.level == BestCompression &#123;</span><br><span class="line">			z.buf[<span class="number">8</span>] = <span class="number">2</span></span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> z.level == BestSpeed &#123;</span><br><span class="line">			z.buf[<span class="number">8</span>] = <span class="number">4</span></span><br><span class="line">		&#125;</span><br><span class="line">		z.buf[<span class="number">9</span>] = z.OS</span><br><span class="line">		_, z.err = z.w.Write(z.buf[:<span class="number">10</span>])</span><br><span class="line">		<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Extra != <span class="literal">nil</span> &#123;</span><br><span class="line">			z.err = z.writeBytes(z.Extra)</span><br><span class="line">			<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Name != <span class="string">""</span> &#123;</span><br><span class="line">			z.err = z.writeString(z.Name)</span><br><span class="line">			<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.Comment != <span class="string">""</span> &#123;</span><br><span class="line">			z.err = z.writeString(z.Comment)</span><br><span class="line">			<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span> <span class="number">0</span>, z.err</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> z.compressor == <span class="literal">nil</span> &#123;</span><br><span class="line">			z.compressor, _ = flate.NewWriter(z.w, z.level)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	z.size += <span class="keyword">uint32</span>(<span class="built_in">len</span>(p))</span><br><span class="line">	z.digest = crc32.Update(z.digest, crc32.IEEETable, p)</span><br><span class="line">	n, z.err = z.compressor.Write(p)</span><br><span class="line">	<span class="keyword">return</span> n, z.err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>Write</code>函数中主要的写入工作还是通过<code>writeString</code>和<code>writeBytes</code>来实现的，它对于gzip的文件格式做了规范，使得输出的内容符合gzip的定义。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Flush flushes any pending compressed data to the underlying writer.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// It is useful mainly in compressed network protocols, to ensure that</span></span><br><span class="line"><span class="comment">// a remote reader has enough data to reconstruct a packet. Flush does</span></span><br><span class="line"><span class="comment">// not return until the data has been written. If the underlying</span></span><br><span class="line"><span class="comment">// writer returns an error, Flush returns that error.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// In the terminology of the zlib library, Flush is equivalent to Z_SYNC_FLUSH.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">Flush</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> z.err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> z.closed &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> !z.wroteHeader &#123;</span><br><span class="line">		z.Write(<span class="literal">nil</span>)</span><br><span class="line">		<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> z.err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	z.err = z.compressor.Flush()</span><br><span class="line">	<span class="keyword">return</span> z.err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>Flush</code>的作用是在进行http等网络通信时，判断服务端socket的reader是否能接收整个压缩过的包。如果遇到无法写入的情况，<code>Flush</code>会挂起，直到数据被成功写入才返回。在此期间如果有异常出现，<code>Flush</code>会返回对应的<code>error</code>。</p>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Close closes the Writer by flushing any unwritten data to the underlying</span></span><br><span class="line"><span class="comment">// io.Writer and writing the GZIP footer.</span></span><br><span class="line"><span class="comment">// It does not close the underlying io.Writer.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(z *Writer)</span> <span class="title">Close</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> z.err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> z.closed &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	z.closed = <span class="literal">true</span></span><br><span class="line">	<span class="keyword">if</span> !z.wroteHeader &#123;</span><br><span class="line">		z.Write(<span class="literal">nil</span>)</span><br><span class="line">		<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> z.err</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	z.err = z.compressor.Close()</span><br><span class="line">	<span class="keyword">if</span> z.err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> z.err</span><br><span class="line">	&#125;</span><br><span class="line">	le.PutUint32(z.buf[:<span class="number">4</span>], z.digest)</span><br><span class="line">	le.PutUint32(z.buf[<span class="number">4</span>:<span class="number">8</span>], z.size)</span><br><span class="line">	_, z.err = z.w.Write(z.buf[:<span class="number">8</span>])</span><br><span class="line">	<span class="keyword">return</span> z.err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2184,7 +2135,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">18</span>
+                  <span class="site-state-item-count">22</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>

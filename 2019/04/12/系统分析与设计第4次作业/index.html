@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="用例的概念在软件和系统工程中，用例是一种对系统如何反应外界请求的描述，通常通过用户的使用场景来获取需求。每个用例提供了一个或多个场景，该场景说明了系统是如何和最终用户或其它系统互动，也就是谁可以用系统做什么，从而获得一个明确的业务目标。 用例和场景的关系？什么是主场景或 happy path？关系：每个用例提供了一个或多个场景。其中场景是指使用场景，用来说明系统可以做什么，系统是如何和用户或其他系">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统分析与设计第4次作业">
+<meta property="og:url" content="http://leiysky.com/2019/04/12/系统分析与设计第4次作业/index.html">
+<meta property="og:site_name" content="Blog">
+<meta property="og:description" content="用例的概念在软件和系统工程中，用例是一种对系统如何反应外界请求的描述，通常通过用户的使用场景来获取需求。每个用例提供了一个或多个场景，该场景说明了系统是如何和最终用户或其它系统互动，也就是谁可以用系统做什么，从而获得一个明确的业务目标。 用例和场景的关系？什么是主场景或 happy path？关系：每个用例提供了一个或多个场景。其中场景是指使用场景，用来说明系统可以做什么，系统是如何和用户或其他系">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://leiysky.com/2019/04/12/系统分析与设计第4次作业/images/美团外卖.png">
+<meta property="og:image" content="http://leiysky.com/2019/04/12/系统分析与设计第4次作业/images/饿了么.png">
+<meta property="og:updated_time" content="2019-05-08T14:13:04.475Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="系统分析与设计第4次作业">
+<meta name="twitter:description" content="用例的概念在软件和系统工程中，用例是一种对系统如何反应外界请求的描述，通常通过用户的使用场景来获取需求。每个用例提供了一个或多个场景，该场景说明了系统是如何和最终用户或其它系统互动，也就是谁可以用系统做什么，从而获得一个明确的业务目标。 用例和场景的关系？什么是主场景或 happy path？关系：每个用例提供了一个或多个场景。其中场景是指使用场景，用来说明系统可以做什么，系统是如何和用户或其他系">
+<meta name="twitter:image" content="http://leiysky.com/2019/04/12/系统分析与设计第4次作业/images/美团外卖.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://leiysky.com/2019/04/12/系统分析与设计第4次作业/"/>
+
+
+
+
+
+  <title>系统分析与设计第4次作业 | Blog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Welcome to leiysky's blog</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/04/12/系统分析与设计第4次作业/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">系统分析与设计第4次作业</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-04-12T20:29:44+08:00">
+                2019-04-12
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="用例的概念"><a href="#用例的概念" class="headerlink" title="用例的概念"></a>用例的概念</h1><p>在软件和系统工程中，用例是一种对系统如何反应外界请求的描述，通常通过用户的使用场景来获取需求。每个用例提供了一个或多个场景，该场景说明了系统是如何和最终用户或其它系统互动，也就是谁可以用系统做什么，从而获得一个明确的业务目标。</p>
+<h1 id="用例和场景的关系？什么是主场景或-happy-path？"><a href="#用例和场景的关系？什么是主场景或-happy-path？" class="headerlink" title="用例和场景的关系？什么是主场景或 happy path？"></a>用例和场景的关系？什么是主场景或 happy path？</h1><p>关系：每个用例提供了一个或多个场景。其中场景是指使用场景，用来说明系统可以做什么，系统是如何和用户或其他系统交互的，从而获得一个明确的业务目标。</p>
+<p>主场景：也被称为 happy path，每一个用例中都包含一个主场景，主场景对应于系统主要的交互，通常是成功的场景，是最常用的直接地实现用户目标的场景。</p>
+<h1 id="用例有哪些形式？"><a href="#用例有哪些形式？" class="headerlink" title="用例有哪些形式？"></a>用例有哪些形式？</h1><ul>
+<li>简短（高级层次）：一段简短的总结，通常是主要成功场景。在早期需求分析期间，快速了解主题和范围。可能只需要几分钟就可以创建。</li>
+<li>非正式（简便格式）：非正式段落格式。涵盖各种场景的多个段落。</li>
+<li>完全级：所有的步骤和变化都写得很详细，并有支持部分，如前提条件和成功保证。在以简短的格式识别和编写了许多用例之后，然后在第一个需求研讨会期间，详细地编写了一些（例如10%）具有体系结构重要性和高价值的用例。</li>
+</ul>
+<h1 id="对于复杂业务，为什么编制完整用例非常难？"><a href="#对于复杂业务，为什么编制完整用例非常难？" class="headerlink" title="对于复杂业务，为什么编制完整用例非常难？"></a>对于复杂业务，为什么编制完整用例非常难？</h1><p>复杂的业务本身业务流程就很复杂繁琐，而且涉及到的场景非常多，场景与场景之间也有各种各样的关联，编制完整用例需要建模相关知识和熟悉各个业务流程，还要注意用户交互的细节和相对于的支撑。</p>
+<h1 id="什么是用例图？"><a href="#什么是用例图？" class="headerlink" title="什么是用例图？"></a>什么是用例图？</h1><p>用例图是指由参与者（Actor）、用例（Use Case），边界以及它们之间的关系构成的用于描述系统功能的视图，也是外部用户所能观察到的系统功能的模型图。</p>
+<h1 id="用例图的基本符号与元素？"><a href="#用例图的基本符号与元素？" class="headerlink" title="用例图的基本符号与元素？"></a>用例图的基本符号与元素？</h1><p>参与者：一个小人。<br>用例：一个圆框。<br>系统边界：一个方框。<br>关联关系：一个虚线箭头，箭头指向消息接收方。<br>包含关系：一个虚线箭头，有&lt; includes &gt;标识。箭头方向指向被包含者。<br>扩展关系：一个虚线箭头，有&lt; extends &gt;标识，箭头方向指向被继承者。<br>泛化关系：一个实线箭头，箭头是个小三角，指向父用例。</p>
+<h1 id="用例图的画法与步骤"><a href="#用例图的画法与步骤" class="headerlink" title="用例图的画法与步骤"></a>用例图的画法与步骤</h1><p>对语境建模：</p>
+<ul>
+<li>识别系统外部的参与者。</li>
+<li>将类似参与者组织成泛化的结构层次。</li>
+<li>在需要加深理解的地方，为每个参与者提供一个构造型。</li>
+<li>将参与者放入到用例图中，并说明参与者与用例之间的通信路径。</li>
+</ul>
+<p>对需求建模：</p>
+<ul>
+<li>识别系统的外部参与者来建立系统的语境</li>
+<li>考虑每一个参与者期望的行为或需要系统提供的行为。</li>
+<li>把这些公共的行为命名为用例。</li>
+<li>确定提供者用例和扩展用例。</li>
+<li>对这些用例，参与者和它们之间的关系建模。</li>
+<li>用注释修饰用例</li>
+</ul>
+<h1 id="用例图给利益相关人与开发者的价值有哪些？"><a href="#用例图给利益相关人与开发者的价值有哪些？" class="headerlink" title="用例图给利益相关人与开发者的价值有哪些？"></a>用例图给利益相关人与开发者的价值有哪些？</h1><p>用例图是由软件需求分析到最终实现的第一步，它描述人们如何使用一个系统。用例视图显示谁是相关的用户、用户希望系统提供什么样的服务，以及用户需要为系统提供的服务，以便使系统的用户更容易理解这些元素的用途，也便于软件开发人员最终实现这些元素。用例图在各种开发活动中被广泛的应用。</p>
+<h1 id="建模练习题"><a href="#建模练习题" class="headerlink" title="建模练习题"></a>建模练习题</h1><p><img src="images/美团外卖.png" alt=""></p>
+<p><img src="images/饿了么.png" alt=""></p>
+<h2 id="为什么相似的系统的用例图是相似的？"><a href="#为什么相似的系统的用例图是相似的？" class="headerlink" title="为什么相似的系统的用例图是相似的？"></a>为什么相似的系统的用例图是相似的？</h2><p>因为相似的系统业务相似，为了使降低用户的学习成本会使用相似的交互方式。</p>
+<h2 id="如果是定旅馆业务，请对比-Asg-RH-用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？"><a href="#如果是定旅馆业务，请对比-Asg-RH-用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？" class="headerlink" title="如果是定旅馆业务，请对比 Asg_RH 用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？"></a>如果是定旅馆业务，请对比 Asg_RH 用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？</h2><p>充分发挥LBS的优势，通过人工智能对用户数据进行分析，再定点投放。</p>
+<h2 id="如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？"><a href="#如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？" class="headerlink" title="如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？"></a>如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？</h2><p>在用例图中对创新用例使用某种颜色进行高亮标记。</p>
+<h1 id="请使用-SCRUM-方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表"><a href="#请使用-SCRUM-方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表" class="headerlink" title="请使用 SCRUM 方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表"></a>请使用 SCRUM 方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表</h1><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Imp</th>
+<th>Est</th>
+<th>How to Demo</th>
+<th>note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>搜索旅馆</td>
+<td>5</td>
+<td>2</td>
+<td>用户在搜索框输入旅馆信息进行检索</td>
+</tr>
+<tr>
+<td>2</td>
+<td>查看房间</td>
+<td>9</td>
+<td>1</td>
+<td>点击一个旅馆，进入查看旅馆房间信息页面</td>
+</tr>
+<tr>
+<td>3</td>
+<td>预定房间</td>
+<td>9</td>
+<td>1</td>
+<td>用户点击预订后尝试创建一个订单</td>
+<td>可能失败</td>
+</tr>
+<tr>
+<td>4</td>
+<td>支付订单</td>
+<td>10</td>
+<td>2</td>
+<td>用户可以支付订单以确认，超时自动取消订单</td>
+<td>使用微信和支付宝API</td>
+</tr>
+<tr>
+<td>5</td>
+<td>查看订单</td>
+<td>7</td>
+<td>1</td>
+<td>用户能够在个人中心看到自己的预定情况，以及查看订单详情</td>
+</tr>
+<tr>
+<td>6</td>
+<td>取消订单</td>
+<td>7</td>
+<td>1</td>
+<td>用户满足条件时可以取消订单并等待审核</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>用例</th>
+<th>事务</th>
+<th>计算</th>
+<th>权重</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>搜索旅馆</td>
+<td>4</td>
+<td>2</td>
+<td>简单</td>
+</tr>
+<tr>
+<td>查看房间</td>
+<td>3</td>
+<td>2</td>
+<td>平均</td>
+</tr>
+<tr>
+<td>预定房间</td>
+<td>3</td>
+<td>3</td>
+<td>复杂</td>
+</tr>
+<tr>
+<td>支付订单</td>
+<td>6</td>
+<td>5</td>
+<td>复杂</td>
+</tr>
+<tr>
+<td>查看订单</td>
+<td>2</td>
+<td>2</td>
+<td>平均</td>
+</tr>
+<tr>
+<td>取消订单</td>
+<td>4</td>
+<td>3</td>
+<td>复杂</td>
+</tr>
+</tbody>
+</table>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/04/10/系统分析与设计第三次作业/" rel="next" title="系统分析与设计第三次作业">
+                <i class="fa fa-chevron-left"></i> 系统分析与设计第三次作业
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/05/08/BigTable论文分析/" rel="prev" title="BigTable论文分析">
+                BigTable论文分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">leiysky</p>
+              <p class="site-description motion-element" itemprop="description">A simple blog(temp)</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">tags</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#用例的概念"><span class="nav-number">1.</span> <span class="nav-text">用例的概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#用例和场景的关系？什么是主场景或-happy-path？"><span class="nav-number">2.</span> <span class="nav-text">用例和场景的关系？什么是主场景或 happy path？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#用例有哪些形式？"><span class="nav-number">3.</span> <span class="nav-text">用例有哪些形式？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#对于复杂业务，为什么编制完整用例非常难？"><span class="nav-number">4.</span> <span class="nav-text">对于复杂业务，为什么编制完整用例非常难？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是用例图？"><span class="nav-number">5.</span> <span class="nav-text">什么是用例图？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#用例图的基本符号与元素？"><span class="nav-number">6.</span> <span class="nav-text">用例图的基本符号与元素？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#用例图的画法与步骤"><span class="nav-number">7.</span> <span class="nav-text">用例图的画法与步骤</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#用例图给利益相关人与开发者的价值有哪些？"><span class="nav-number">8.</span> <span class="nav-text">用例图给利益相关人与开发者的价值有哪些？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#建模练习题"><span class="nav-number">9.</span> <span class="nav-text">建模练习题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么相似的系统的用例图是相似的？"><span class="nav-number">9.1.</span> <span class="nav-text">为什么相似的系统的用例图是相似的？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如果是定旅馆业务，请对比-Asg-RH-用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？"><span class="nav-number">9.2.</span> <span class="nav-text">如果是定旅馆业务，请对比 Asg_RH 用例图，简述如何利用不同时代、不同地区产品的用例图，展现、突出创新业务和技术？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？"><span class="nav-number">9.3.</span> <span class="nav-text">如何利用用例图定位创新思路（业务创新、或技术创新、或商业模式创新）在系统中的作用？</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#请使用-SCRUM-方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表"><span class="nav-number">10.</span> <span class="nav-text">请使用 SCRUM 方法，选择一个用例图，编制某定旅馆开发的需求（backlog）开发计划表</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">leiysky</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
