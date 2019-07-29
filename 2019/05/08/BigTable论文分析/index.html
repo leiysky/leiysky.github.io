@@ -88,7 +88,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://leiysky.com/2019/05/08/BigTable论文分析/images/bigtable-datamodel.png">
 <meta property="og:image" content="http://leiysky.com/2019/05/08/BigTable论文分析/images/tablet-meta.png">
-<meta property="og:updated_time" content="2019-05-08T13:09:56.040Z">
+<meta property="og:updated_time" content="2019-06-17T02:45:57.615Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="BigTable论文分析">
 <meta name="twitter:description" content="前言BigTable是谷歌在2004年时开发的NoSQL数据库，引领了新世纪NoSQL的潮流，也为传统数据库的Scale-out提供了思路，是十分划时代的产品。 由于BigTable本身是闭源的（开源版本数据库产品为HBase，存储引擎部分为LevelDB）,因此这篇文章主要分析的是Google在2006年发表的BigTable论文（主要作者为Jeff Dean等大牛）。 虽然现在已经是9102年">
@@ -427,8 +427,58 @@
 <li><code>Tablet Serving</code>: Tablet处理请求的过程</li>
 <li><code>Comapctions</code>: LSM-tree的Compaction</li>
 </ul>
-<h2 id="Tablet-Location"><a href="#Tablet-Location" class="headerlink" title="Tablet Location"></a>Tablet Location</h2><p><code>BigTable</code>采用了一个三层的B+树来存储<code>Tablet</code>的位置信息，如下图：<br><img src="images/tablet-meta.png" alt="Tablet location hierarchy"></p>
-
+<h2 id="Tablet-Location"><a href="#Tablet-Location" class="headerlink" title="Tablet Location"></a>Tablet Location</h2><p><code>BigTable</code>采用了一个3级的B+树来存储<code>Tablet</code>的位置信息，如下图：<br><img src="images/tablet-meta.png" alt="Tablet location hierarchy"></p>
+<p>第一级是一个存储在<code>Chubby</code>的文件，其中包含了<code>root tablet</code>的位置信息。</p>
+<p>而<code>root tablet</code>中有一个特殊的<code>METADATA</code>表（实际上就是<strong>第一个</strong>表），其中存储了所有<code>tablet</code>的位置信息。</p>
+<p><code>root tablet</code>节点不会发生分裂，因此<code>B+</code>树的级数不会超过3级。</p>
+<p><code>METADATA</code>中每一个<code>row</code>会存储<code>tablet</code>的位置信息。</p>
+<p>其中<code>row key</code>是一个由<code>tablet</code>的表和末尾行编码出的字符串，可以定位到唯一的<code>tablet</code>。</p>
+<p><code>BigTable</code>的实现中可以通过<code>root tablet</code>定位到$2^{34}$个<code>tablet</code>。</p>
+<p>前面提到过，<code>Client</code>访问<code>Tablet Server</code>时并不会经过<code>Master</code>。<code>Client</code>会将<code>tablet location</code>缓存下来，查找时直接通过缓存来进行查找。</p>
+<p>当<code>Client</code>找不到目标<code>tablet</code>的位置信息时，或者缓存的数据不正确时，它会递归地通过<code>Chubby file</code>这个入口去进行查找，最后再将结果缓存。</p>
+<p>比如某个<code>Client</code>的缓存信息为空，那当它尝试去查找某个<code>tablet</code>的信息的过程如下：</p>
+<ul>
+<li>查找本地缓存，发现为空</li>
+<li>从Chubby查找<code>root tablet</code>的位置信息</li>
+<li>从<code>root tablet</code>查找<code>METADATA</code></li>
+<li>将目标<code>tablet</code>的位置信息缓存</li>
+</ul>
+<p>有缓存的情况下，<code>Client</code>无需访问GFS来获取<code>tablet</code>的位置信息，所以查询的开销会小很多。</p>
+<h2 id="Tablet-Assignment"><a href="#Tablet-Assignment" class="headerlink" title="Tablet Assignment"></a>Tablet Assignment</h2><p>之前有提到过，<code>Tablet Server</code>与<code>Tablet</code>是一对多的关系，因此会存在着<code>Tablet</code>的分配问题。</p>
+<p>在<code>BigTable</code>中，<code>Master</code>节点会维护存活的<code>Tablet Server</code>的集合，并且维护<code>Tablet</code>的分配情况（包括未被分配的<code>Tablet</code>）。</p>
+<p>当存在一个未被分配的<code>Tablet</code>，并且存在一个<code>Tablet Server</code>有足够的空间来容纳该<code>Tablet</code>时，<code>Master</code>节点会向目标<code>Tablet Server</code>发送一个请求让其接收<code>Tablet</code>，这是最简单的一个分配过程。</p>
+<p><code>Tablet</code>的分配需要保持强一致，因此<code>BigTable</code>使用<code>Chubby</code>来维护与<code>Tablet Server</code>的联系。</p>
+<p>当一个<code>Tablet Server</code>启动时，它会获得一个全局的互斥锁（这个锁本质上是一个<code>Chubby</code>的全局唯一文件，会保存在一个特定的目录下）。</p>
+<p><code>Master</code>通过监视这个目录来发现<code>Tablet Server</code>。</p>
+<p>当一个<code>Tablet Server</code>失去它的锁时，就会停止服务它的<code>Tablets</code>。<code>Chubby</code>提供了一种高效的机制，可以让一个<code>Tablet Server</code>判断自己是否还持有锁。</p>
+<p><code>Tablet Server</code>会持续的更新自己的锁的状态，只要其对应的文件还在。如果文件已经被删除了，那么这个<code>Tablet Server</code>就无法再提供服务，它会进行自裁。这里通过文件存在与否来决定<code>Tablet Server</code>的死活主要是为了将控制权交给<code>Master</code>，具体的管理过程后面会提到。</p>
+<p>当一个<code>Tablet Server</code>被集群删除时，它就会尝试释放自己的锁以便<code>Master</code>重新分配。</p>
+<p><code>Master</code>节点负责检测一个<code>Tablet Server</code>是否停止服务它的<code>Tablets</code>，如果是则为那些<code>Tablets</code>重新分配<code>Tablet Server</code>。</p>
+<p><code>Master</code>的检测有如下要点：</p>
+<ul>
+<li><code>Master</code>会周期性轮询<code>Tablet Server</code>的锁的状态——这里是直接向<code>Tablet Server</code>询问状态信息，因为这样的话，在因为网络等原因无法访问到<code>Tablet Server</code>的情况下，<code>Master</code>可以认为<code>Tablet Server</code>已经失效。</li>
+<li>当<code>Master</code>无法访问到<code>Tablet Server</code>或者<code>Tablet Server</code>汇报自己的锁已失效时，<code>Master</code>就会尝试去获取<code>Tablet Server</code>的锁。如果能获取到锁说明<code>Chubby</code>服务是存活的，对应的<code>Tablet Server</code>则存在问题。因此<code>Master</code>可以通过删除掉该文件来防止<code>Tablet Server</code>重新提供服务。</li>
+<li>一个<code>Tablet Server</code>的文件被删除后，<code>Master</code>可以将其被分配的<code>Tablets</code>重新分配。</li>
+<li><code>Master</code>在与<code>Chubby</code>的<code>session</code>断开后会进行自裁，以此保障系统的健壮性。<code>Master</code>的失效并不会影响系统的运作。</li>
+</ul>
+<p><code>Master</code>在被集群管理系统启动的时候需要重建<code>Tablets</code>分配的情况，因此<code>Master</code>的启动将遵循以下步骤：</p>
+<ol>
+<li>从<code>Chubby</code>获取一个全局唯一的<code>master</code>锁，防止并发启动<code>Master</code></li>
+<li>扫描<code>Tablet Server</code>的目录，获取存活的<code>Tablet Server</code>的信息</li>
+<li>与所有的<code>Tablet Server</code>通信以确定<code>Tablets</code>的分配情况</li>
+<li>扫描<code>METADATA</code>文件，获取所有<code>Tablets</code>的情况</li>
+</ol>
+<p>这样一来就可以重建已被分配和未被分配的<code>Tablets</code>的集合。</p>
+<p>但是这种设计会造成一个问题，就是第4步必须在<code>METADATA</code>被分配了之后才能进行。所以在进行重建步骤3时，如果没有发现<code>root Tablet Server</code>的分配情况，<code>Master</code>会将<code>root Tablet Server</code>加入未分配集合。这样可以确保<code>root</code>被分配。</p>
+<p><code>Tablet Server</code> 的集合只有在几种情况下才会生改变：</p>
+<ul>
+<li>创建了新的 <code>Table</code> 或者某个 <code>Table</code> 被删除</li>
+<li>两个 <code>Table</code> 合并</li>
+<li>一个 <code>Table</code> 分裂成两个</li>
+</ul>
+<p><code>Master</code> 可以始终保持对 <code>Tablet</code> 的跟踪，因为前两种变更都是由 <code>Master</code> 主动发起的。</p>
+<p>对于分裂的情况，<code>Master</code> 的处理方式比较特殊。它是由 <code>Tablet Server</code> 先在 <code>METADATA</code> 表里面记录上新的 <code>Tablet</code> 的信息，在提交之后再通知 <code>Master</code>。这种情况下如果因为某些原因分裂失败了，<code>Master</code> 在分配新的 <code>Tablet</code> 给 <code>Tablet Server</code> 时也会检测到其分裂的情况，从而作出修复。</p>
+<h2 id="Tablet-Serving"><a href="#Tablet-Serving" class="headerlink" title="Tablet Serving"></a>Tablet Serving</h2>
       
     </div>
     
@@ -461,6 +511,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/07/29/使用ANTLR4编写parser/" rel="prev" title="使用ANTLR4编写parser">
+                使用ANTLR4编写parser <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -537,7 +591,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-count">23</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -583,7 +637,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#目录"><span class="nav-number">2.</span> <span class="nav-text">目录</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Introduction"><span class="nav-number">3.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Data-Model"><span class="nav-number">4.</span> <span class="nav-text">Data Model</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Rows"><span class="nav-number">4.1.</span> <span class="nav-text">Rows</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Coloumn-Families"><span class="nav-number">4.2.</span> <span class="nav-text">Coloumn Families</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Timestamps"><span class="nav-number">4.3.</span> <span class="nav-text">Timestamps</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#API"><span class="nav-number">5.</span> <span class="nav-text">API</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Building-blocks"><span class="nav-number">6.</span> <span class="nav-text">Building blocks</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Implementation"><span class="nav-number">7.</span> <span class="nav-text">Implementation</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Tablet-Location"><span class="nav-number">7.1.</span> <span class="nav-text">Tablet Location</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#目录"><span class="nav-number">2.</span> <span class="nav-text">目录</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Introduction"><span class="nav-number">3.</span> <span class="nav-text">Introduction</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Data-Model"><span class="nav-number">4.</span> <span class="nav-text">Data Model</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Rows"><span class="nav-number">4.1.</span> <span class="nav-text">Rows</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Coloumn-Families"><span class="nav-number">4.2.</span> <span class="nav-text">Coloumn Families</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Timestamps"><span class="nav-number">4.3.</span> <span class="nav-text">Timestamps</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#API"><span class="nav-number">5.</span> <span class="nav-text">API</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Building-blocks"><span class="nav-number">6.</span> <span class="nav-text">Building blocks</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Implementation"><span class="nav-number">7.</span> <span class="nav-text">Implementation</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Tablet-Location"><span class="nav-number">7.1.</span> <span class="nav-text">Tablet Location</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tablet-Assignment"><span class="nav-number">7.2.</span> <span class="nav-text">Tablet Assignment</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tablet-Serving"><span class="nav-number">7.3.</span> <span class="nav-text">Tablet Serving</span></a></li></ol></li></ol></div>
             
 
           </div>

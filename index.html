@@ -262,6 +262,147 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/07/29/使用ANTLR4编写parser/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="leiysky">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/07/29/使用ANTLR4编写parser/" itemprop="url">使用ANTLR4编写parser</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-07-29T19:59:06+08:00">
+                2019-07-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>ANTLR 是一款由 Java 编写的开源语法解析工具。</p>
+<p>我们知道在编译的过程中，主要有词法分析(Lexical Analysis), 语法分析(Grammar Analysis), 语义分析(Semantic Analysis), 中间代码生成(Intermediate Code Generation)等过程。</p>
+<p>但是这是对于高级语言的编译过程，有时候我们需要设计一些 DSL 或者配置文件格式，这时候只需要词法分析和语法分析就可以解决我们的需求。</p>
+<p>ANTLR 可以通过 BNF 或者 EBNF 文法的语法定义文件生成默认的 Lexer 和基本的 ast，并且提供了 listener, visitor 两种可选的方式来遍历 ast。对比起 yacc 和 lex 的组合，它的好处在于能生成相对友好的代码方便你进行处理（不用在几千行的 <code>.y</code> 文件里面爬摸滚打了）。</p>
+<p>ANTLR 的最新版本是 4，在这篇文章里我将使用 Go 作为生成的 target 语言。</p>
+<h2 id="ANTLR4-的安装"><a href="#ANTLR4-的安装" class="headerlink" title="ANTLR4 的安装"></a>ANTLR4 的安装</h2><p><a href="https://github.com/antlr/antlr4/blob/master/doc/getting-started.md" target="_blank" rel="noopener">自己看</a></p>
+<h2 id="简单的-EBNF-文法"><a href="#简单的-EBNF-文法" class="headerlink" title="简单的 EBNF 文法"></a>简单的 EBNF 文法</h2><p>EBNF, 即扩展巴恩斯范式，是一种上下文无关文法。现代编程语言基本都使用 EBNF 来进行语法定义。</p>
+<p>我们首先来简单定义一个四则运算表达式的语法规则:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">grammar Math;</span><br><span class="line"></span><br><span class="line">math : expr EOF;</span><br><span class="line"></span><br><span class="line">expr :    op=(&apos;+&apos;|&apos;-&apos;) expr                    # unaryExpr</span><br><span class="line">      |   left=expr op=(&apos;*&apos;|&apos;/&apos;) right=expr    # infixExpr</span><br><span class="line">      |   left=expr op=(&apos;+&apos;|&apos;-&apos;) right=expr    # infixExpr</span><br><span class="line">      |   value=NUM                            # numberExpr</span><br><span class="line">      ;</span><br><span class="line"></span><br><span class="line">ADD: &apos;+&apos;;</span><br><span class="line">SUB: &apos;-&apos;;</span><br><span class="line">MUL: &apos;*&apos;;</span><br><span class="line">DIV: &apos;/&apos;;</span><br><span class="line"></span><br><span class="line">NUM :   [0-9]+ (&apos;.&apos; [0-9]+)? ([eE] [+-]? [0-9]+)?;</span><br><span class="line">WS  :   [ \t\r\n] -&gt; channel(HIDDEN);</span><br></pre></td></tr></table></figure>
+<p>将其保存为 <code>Math.g4</code>(注意，文件名必须与 grammar 一致)。</p>
+<p>使用如下指令生成代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ antlr -Dlanguage=Go -visitor -o . Math.g4</span><br></pre></td></tr></table></figure>
+<p>我们可以看到当前目录下生成了几个文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── Math.g4</span><br><span class="line">├── Math.tokens</span><br><span class="line">├── MathLexer.tokens</span><br><span class="line">├── math_base_listener.go</span><br><span class="line">├── math_base_visitor.go</span><br><span class="line">├── math_lexer.go</span><br><span class="line">├── math_listener.go</span><br><span class="line">├── math_parser.go</span><br><span class="line">└── math_visitor.go</span><br></pre></td></tr></table></figure>
+<p>其中 <code>math_parser.go</code> 包括了生成的基本 ast 的定义，<code>math_listener.go</code> 和 <code>math_visitor.go</code> 分别包含了 <code>listener</code> 和 <code>visitor</code> 的接口定义。</p>
+<p><code>listener</code> 和 <code>visitor</code> 的区别在于，<code>listener</code> 的遍历路线 ANTLR 已经帮你选好了，你只需要写对于不同节点的处理方式即可。而 <code>visitor</code> 则意味着你需要自己编写遍历的逻辑。</p>
+<p>接下来我们自己定义一个可以进行 Evaluate 的 ast：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> NodeType <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">  NodeExpr NodeType = <span class="literal">iota</span></span><br><span class="line">  NodeValue</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> OpType <span class="keyword">int</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">  OpAdd OpType = <span class="literal">iota</span></span><br><span class="line">  OpSub</span><br><span class="line">  OpMul</span><br><span class="line">  OpDiv</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Node <span class="keyword">struct</span> &#123;</span><br><span class="line">  Type      NodeType</span><br><span class="line">  Left      *Node</span><br><span class="line">  Right     *Node</span><br><span class="line">  Op        OpType</span><br><span class="line">  Val       <span class="keyword">float64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(n *Node)</span> <span class="title">Evaluate</span><span class="params">()</span> <span class="title">float64</span></span> &#123;</span><br><span class="line">  <span class="keyword">if</span> n.Type == NodeExpr &#123;</span><br><span class="line">    <span class="keyword">switch</span> n.Op &#123;</span><br><span class="line">    <span class="keyword">case</span> OpAdd:</span><br><span class="line">      <span class="keyword">return</span> n.Left.Evaluate() + n.Right.Evaluate()</span><br><span class="line">    <span class="keyword">case</span> OpSub:</span><br><span class="line">      <span class="keyword">return</span> n.Left.Evaluate() - n.Right.Evaluate()</span><br><span class="line">    <span class="keyword">case</span> OpMul:</span><br><span class="line">      <span class="keyword">return</span> n.Left.Evaluate() * n.Right.Evaluate()</span><br><span class="line">    <span class="keyword">case</span> OpDiv:</span><br><span class="line">      <span class="keyword">return</span> n.Left.Evaluate() / n.Right.Evaluate()</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> n.Evaluate()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么该如何转换出这样的结构呢？</p>
+<p>我们可以使用 <code>visitor</code> 来重构整个 ast：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> convertVisitor <span class="keyword">struct</span> &#123;</span><br><span class="line">	BaseMathVisitor</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v *convertVisitor)</span> <span class="title">Visit</span><span class="params">(tree antlr.ParseTree)</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	<span class="keyword">return</span> tree.Accept(v)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v *convertVisitor)</span> <span class="title">VisitMath</span><span class="params">(ctx *MathContext)</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	<span class="keyword">return</span> ctx.Expr().Accept(v)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v *convertVisitor)</span> <span class="title">VisitExpr</span><span class="params">(ctx *ExprContext)</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	node := &amp;Node&#123;&#125;</span><br><span class="line">	<span class="keyword">if</span> ctx.value != <span class="literal">nil</span> &#123;</span><br><span class="line">		node.Type = NodeValue</span><br><span class="line">		node.Val, _ = strconv.ParseFloat(ctx.value.GetText(), <span class="number">64</span>)</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> <span class="built_in">len</span>(ctx.AllExpr()) == <span class="number">1</span> &#123;</span><br><span class="line">		node.Left = &amp;Node&#123;</span><br><span class="line">			Type: NodeValue,</span><br><span class="line">			Val:  <span class="number">0</span>,</span><br><span class="line">		&#125;</span><br><span class="line">		node.Right = ctx.Expr(<span class="number">0</span>).Accept(v).(*Node)</span><br><span class="line">		<span class="keyword">switch</span> ctx.op.GetTokenType() &#123;</span><br><span class="line">		<span class="keyword">case</span> MathLexerADD:</span><br><span class="line">			node.Op = OpAdd</span><br><span class="line">		<span class="keyword">case</span> MathLexerSUB:</span><br><span class="line">			node.Op = OpSub</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> <span class="built_in">len</span>(ctx.AllExpr()) &gt; <span class="number">1</span> &#123;</span><br><span class="line">		node.Left = ctx.Expr(<span class="number">0</span>).Accept(v).(*Node)</span><br><span class="line">		node.Right = ctx.Expr(<span class="number">1</span>).Accept(v).(*Node)</span><br><span class="line">		<span class="keyword">switch</span> ctx.op.GetTokenType() &#123;</span><br><span class="line">		<span class="keyword">case</span> MathLexerADD:</span><br><span class="line">			node.Op = OpAdd</span><br><span class="line">		<span class="keyword">case</span> MathLexerSUB:</span><br><span class="line">			node.Op = OpSub</span><br><span class="line">		<span class="keyword">case</span> MathLexerMUL:</span><br><span class="line">			node.Op = OpMul</span><br><span class="line">		<span class="keyword">case</span> MathLexerDIV:</span><br><span class="line">			node.Op = OpDiv</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> node</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Parse</span><span class="params">(expr <span class="keyword">string</span>)</span> *<span class="title">Node</span></span> &#123;</span><br><span class="line">	input := antlr.NewInputStream(expr)</span><br><span class="line">	lexer := NewMathLexer(input)</span><br><span class="line">	tokenStream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)</span><br><span class="line">	parser := NewMathParser(tokenStream)</span><br><span class="line">	tree := parser.Math()</span><br><span class="line">	v := &amp;convertVisitor&#123;&#125;</span><br><span class="line">	<span class="keyword">return</span> v.Visit(tree).(*Node)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>调用 <code>Parse</code> 既可以将表达式的字符串转换为我们的 <code>Node</code>。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://leiysky.com/2019/05/08/BigTable论文分析/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -428,8 +569,58 @@
 <li><code>Tablet Serving</code>: Tablet处理请求的过程</li>
 <li><code>Comapctions</code>: LSM-tree的Compaction</li>
 </ul>
-<h2 id="Tablet-Location"><a href="#Tablet-Location" class="headerlink" title="Tablet Location"></a>Tablet Location</h2><p><code>BigTable</code>采用了一个三层的B+树来存储<code>Tablet</code>的位置信息，如下图：<br><img src="images/tablet-meta.png" alt="Tablet location hierarchy"></p>
-
+<h2 id="Tablet-Location"><a href="#Tablet-Location" class="headerlink" title="Tablet Location"></a>Tablet Location</h2><p><code>BigTable</code>采用了一个3级的B+树来存储<code>Tablet</code>的位置信息，如下图：<br><img src="images/tablet-meta.png" alt="Tablet location hierarchy"></p>
+<p>第一级是一个存储在<code>Chubby</code>的文件，其中包含了<code>root tablet</code>的位置信息。</p>
+<p>而<code>root tablet</code>中有一个特殊的<code>METADATA</code>表（实际上就是<strong>第一个</strong>表），其中存储了所有<code>tablet</code>的位置信息。</p>
+<p><code>root tablet</code>节点不会发生分裂，因此<code>B+</code>树的级数不会超过3级。</p>
+<p><code>METADATA</code>中每一个<code>row</code>会存储<code>tablet</code>的位置信息。</p>
+<p>其中<code>row key</code>是一个由<code>tablet</code>的表和末尾行编码出的字符串，可以定位到唯一的<code>tablet</code>。</p>
+<p><code>BigTable</code>的实现中可以通过<code>root tablet</code>定位到$2^{34}$个<code>tablet</code>。</p>
+<p>前面提到过，<code>Client</code>访问<code>Tablet Server</code>时并不会经过<code>Master</code>。<code>Client</code>会将<code>tablet location</code>缓存下来，查找时直接通过缓存来进行查找。</p>
+<p>当<code>Client</code>找不到目标<code>tablet</code>的位置信息时，或者缓存的数据不正确时，它会递归地通过<code>Chubby file</code>这个入口去进行查找，最后再将结果缓存。</p>
+<p>比如某个<code>Client</code>的缓存信息为空，那当它尝试去查找某个<code>tablet</code>的信息的过程如下：</p>
+<ul>
+<li>查找本地缓存，发现为空</li>
+<li>从Chubby查找<code>root tablet</code>的位置信息</li>
+<li>从<code>root tablet</code>查找<code>METADATA</code></li>
+<li>将目标<code>tablet</code>的位置信息缓存</li>
+</ul>
+<p>有缓存的情况下，<code>Client</code>无需访问GFS来获取<code>tablet</code>的位置信息，所以查询的开销会小很多。</p>
+<h2 id="Tablet-Assignment"><a href="#Tablet-Assignment" class="headerlink" title="Tablet Assignment"></a>Tablet Assignment</h2><p>之前有提到过，<code>Tablet Server</code>与<code>Tablet</code>是一对多的关系，因此会存在着<code>Tablet</code>的分配问题。</p>
+<p>在<code>BigTable</code>中，<code>Master</code>节点会维护存活的<code>Tablet Server</code>的集合，并且维护<code>Tablet</code>的分配情况（包括未被分配的<code>Tablet</code>）。</p>
+<p>当存在一个未被分配的<code>Tablet</code>，并且存在一个<code>Tablet Server</code>有足够的空间来容纳该<code>Tablet</code>时，<code>Master</code>节点会向目标<code>Tablet Server</code>发送一个请求让其接收<code>Tablet</code>，这是最简单的一个分配过程。</p>
+<p><code>Tablet</code>的分配需要保持强一致，因此<code>BigTable</code>使用<code>Chubby</code>来维护与<code>Tablet Server</code>的联系。</p>
+<p>当一个<code>Tablet Server</code>启动时，它会获得一个全局的互斥锁（这个锁本质上是一个<code>Chubby</code>的全局唯一文件，会保存在一个特定的目录下）。</p>
+<p><code>Master</code>通过监视这个目录来发现<code>Tablet Server</code>。</p>
+<p>当一个<code>Tablet Server</code>失去它的锁时，就会停止服务它的<code>Tablets</code>。<code>Chubby</code>提供了一种高效的机制，可以让一个<code>Tablet Server</code>判断自己是否还持有锁。</p>
+<p><code>Tablet Server</code>会持续的更新自己的锁的状态，只要其对应的文件还在。如果文件已经被删除了，那么这个<code>Tablet Server</code>就无法再提供服务，它会进行自裁。这里通过文件存在与否来决定<code>Tablet Server</code>的死活主要是为了将控制权交给<code>Master</code>，具体的管理过程后面会提到。</p>
+<p>当一个<code>Tablet Server</code>被集群删除时，它就会尝试释放自己的锁以便<code>Master</code>重新分配。</p>
+<p><code>Master</code>节点负责检测一个<code>Tablet Server</code>是否停止服务它的<code>Tablets</code>，如果是则为那些<code>Tablets</code>重新分配<code>Tablet Server</code>。</p>
+<p><code>Master</code>的检测有如下要点：</p>
+<ul>
+<li><code>Master</code>会周期性轮询<code>Tablet Server</code>的锁的状态——这里是直接向<code>Tablet Server</code>询问状态信息，因为这样的话，在因为网络等原因无法访问到<code>Tablet Server</code>的情况下，<code>Master</code>可以认为<code>Tablet Server</code>已经失效。</li>
+<li>当<code>Master</code>无法访问到<code>Tablet Server</code>或者<code>Tablet Server</code>汇报自己的锁已失效时，<code>Master</code>就会尝试去获取<code>Tablet Server</code>的锁。如果能获取到锁说明<code>Chubby</code>服务是存活的，对应的<code>Tablet Server</code>则存在问题。因此<code>Master</code>可以通过删除掉该文件来防止<code>Tablet Server</code>重新提供服务。</li>
+<li>一个<code>Tablet Server</code>的文件被删除后，<code>Master</code>可以将其被分配的<code>Tablets</code>重新分配。</li>
+<li><code>Master</code>在与<code>Chubby</code>的<code>session</code>断开后会进行自裁，以此保障系统的健壮性。<code>Master</code>的失效并不会影响系统的运作。</li>
+</ul>
+<p><code>Master</code>在被集群管理系统启动的时候需要重建<code>Tablets</code>分配的情况，因此<code>Master</code>的启动将遵循以下步骤：</p>
+<ol>
+<li>从<code>Chubby</code>获取一个全局唯一的<code>master</code>锁，防止并发启动<code>Master</code></li>
+<li>扫描<code>Tablet Server</code>的目录，获取存活的<code>Tablet Server</code>的信息</li>
+<li>与所有的<code>Tablet Server</code>通信以确定<code>Tablets</code>的分配情况</li>
+<li>扫描<code>METADATA</code>文件，获取所有<code>Tablets</code>的情况</li>
+</ol>
+<p>这样一来就可以重建已被分配和未被分配的<code>Tablets</code>的集合。</p>
+<p>但是这种设计会造成一个问题，就是第4步必须在<code>METADATA</code>被分配了之后才能进行。所以在进行重建步骤3时，如果没有发现<code>root Tablet Server</code>的分配情况，<code>Master</code>会将<code>root Tablet Server</code>加入未分配集合。这样可以确保<code>root</code>被分配。</p>
+<p><code>Tablet Server</code> 的集合只有在几种情况下才会生改变：</p>
+<ul>
+<li>创建了新的 <code>Table</code> 或者某个 <code>Table</code> 被删除</li>
+<li>两个 <code>Table</code> 合并</li>
+<li>一个 <code>Table</code> 分裂成两个</li>
+</ul>
+<p><code>Master</code> 可以始终保持对 <code>Tablet</code> 的跟踪，因为前两种变更都是由 <code>Master</code> 主动发起的。</p>
+<p>对于分裂的情况，<code>Master</code> 的处理方式比较特殊。它是由 <code>Tablet Server</code> 先在 <code>METADATA</code> 表里面记录上新的 <code>Tablet</code> 的信息，在提交之后再通知 <code>Master</code>。这种情况下如果因为某些原因分裂失败了，<code>Master</code> 在分配新的 <code>Tablet</code> 给 <code>Tablet Server</code> 时也会检测到其分裂的情况，从而作出修复。</p>
+<h2 id="Tablet-Serving"><a href="#Tablet-Serving" class="headerlink" title="Tablet Serving"></a>Tablet Serving</h2>
           
         
       
@@ -1913,184 +2104,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://leiysky.com/2018/12/29/浅谈gRPC/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="leiysky">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/29/浅谈gRPC/" itemprop="url">浅谈gRPC</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-12-29T12:58:53+08:00">
-                2018-12-29
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="什么是gRPC？"><a href="#什么是gRPC？" class="headerlink" title="什么是gRPC？"></a>什么是gRPC？</h2><p><a href="https://grpc.io" target="_blank" rel="noopener">gRPC</a> 是谷歌推出的一款开源RPC框架，主要应用于微服务领域。</p>
-<p>它的特点是基于HTTP/2，支持跨语言（目前有C, Java和golang版本，其中C版本更是有C, C++, Node.js, Python, Ruby, Obj-C, PHP以及C#的上层实现），支持流式通信（节约性能）。</p>
-<p>在gRPC中，运行着服务的分布式节点需要开启一个gRPC服务器。客户端可以通过gRPC客户端来像调用本地的函数一样直接调用远程服务（如下图所示）。</p>
-<p><img src="/images/gRPC.png" alt="gRPC应用结构示意图"></p>
-<p>gRPC默认使用的通信数据结构是谷歌的<code>Protocol Buffers</code>，简称<code>protobuf</code>。<code>protobuf</code>的严格定义是一套 <strong>结构数据化机制</strong> 这套通信协议最大的特点就是跨语言，可自定义schema，以及体积小，在频繁RPC的场景下与<code>Thrift</code>一样十分受到青睐。（具体内容可以参考<a href="https://developers.google.com/protocol-buffers/" target="_blank" rel="noopener">protobuf官网</a>）</p>
-<h2 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h2><p>在这里将举一些在golang中使用gRPC的例子。</p>
-<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>首先我们要安装<code>protobuf</code>。</p>
-<p>安装golang版本之前需要先安装c++版本的，源码包可以到<a href="https://github.com/protocolbuffers/protobuf/releases" target="_blank" rel="noopener">这里</a>下载。</p>
-<p>运行以下指令进行安装：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> cd path/to/protobuf</span><br><span class="line"><span class="meta">$</span> ./configure</span><br><span class="line"><span class="meta">$</span> sudo make</span><br><span class="line"><span class="meta">$</span> make install</span><br></pre></td></tr></table></figure></p>
-<p>等漫长的等待之后安装就完成了，可以运行<code>protoc</code>指令测试一下。</p>
-<p>之后我们安装golang版本的：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> go get -u github.com/golang/protobuf/protoc-gen-go</span><br></pre></td></tr></table></figure></p>
-<p>运行以上指令即可安装。</p>
-<h3 id="试用"><a href="#试用" class="headerlink" title="试用"></a>试用</h3><p>这里我们使用官方提供的例子，首先获取官方的相关源码：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> export PATH=$PATH:$GOPATH/bin # 确保GOBIN在PATH中</span><br><span class="line"><span class="meta">$</span> go get -u google.golang.org/grpc/examples/helloworld/greeter_client</span><br><span class="line"><span class="meta">$</span> go get -u google.golang.org/grpc/examples/helloworld/greeter_server</span><br></pre></td></tr></table></figure></p>
-<p>接下来就可以试试了：<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> greeter_server &amp;</span><br><span class="line"><span class="meta">$</span> greeter_client</span><br></pre></td></tr></table></figure></p>
-<p>我们可以看到终端中打印出了一些信息。</p>
-<h3 id="简单分析example代码"><a href="#简单分析example代码" class="headerlink" title="简单分析example代码"></a>简单分析example代码</h3><p>样例目录的结构为：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">├── greeter_client</span><br><span class="line">│   └── main.go</span><br><span class="line">├── greeter_server</span><br><span class="line">│   └── main.go</span><br><span class="line">├── helloworld</span><br><span class="line">│   ├── helloworld.pb.go</span><br><span class="line">│   └── helloworld.proto</span><br><span class="line">└── mock_helloworld</span><br><span class="line">    ├── hw_mock.go</span><br><span class="line">    └── hw_mock_test.go</span><br></pre></td></tr></table></figure></p>
-<p>首先看看<code>greeter_server/main.go</code><br><figure class="highlight golang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Copyright 2015 gRPC authors.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Licensed under the Apache License, Version 2.0 (the "License");</span></span><br><span class="line"><span class="comment"> * you may not use this file except in compliance with the License.</span></span><br><span class="line"><span class="comment"> * You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *     http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Unless required by applicable law or agreed to in writing, software</span></span><br><span class="line"><span class="comment"> * distributed under the License is distributed on an "AS IS" BASIS,</span></span><br><span class="line"><span class="comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></span><br><span class="line"><span class="comment"> * See the License for the specific language governing permissions and</span></span><br><span class="line"><span class="comment"> * limitations under the License.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//go:generate protoc -I ../helloworld --go_out=plugins=grpc:../helloworld ../helloworld/helloworld.proto</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"net"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"google.golang.org/grpc"</span></span><br><span class="line">	pb <span class="string">"google.golang.org/grpc/examples/helloworld/helloworld"</span></span><br><span class="line">	<span class="string">"google.golang.org/grpc/reflection"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	port = <span class="string">":50051"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// server is used to implement helloworld.GreeterServer.</span></span><br><span class="line"><span class="keyword">type</span> server <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// SayHello implements helloworld.GreeterServer</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *server)</span> <span class="title">SayHello</span><span class="params">(ctx context.Context, in *pb.HelloRequest)</span> <span class="params">(*pb.HelloReply, error)</span></span> &#123;</span><br><span class="line">	log.Printf(<span class="string">"Received: %v"</span>, in.Name)</span><br><span class="line">	<span class="keyword">return</span> &amp;pb.HelloReply&#123;Message: <span class="string">"Hello "</span> + in.Name&#125;, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	lis, err := net.Listen(<span class="string">"tcp"</span>, port)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"failed to listen: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	s := grpc.NewServer()</span><br><span class="line">	pb.RegisterGreeterServer(s, &amp;server&#123;&#125;)</span><br><span class="line">	<span class="comment">// Register reflection service on gRPC server.</span></span><br><span class="line">	reflection.Register(s)</span><br><span class="line">	<span class="keyword">if</span> err := s.Serve(lis); err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"failed to serve: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>在这个文件里主要做了几件事：</p>
-<ul>
-<li>声明并实现了<code>gRPC</code>的服务<code>SayHello</code></li>
-<li>监听端口的<code>TCP socket</code></li>
-<li>使用<code>grpc.NewServer()</code>开启一个<code>gRPC</code> server</li>
-<li>使用<code>pb.RegisterGreeterServer()</code>注册一个<code>protobuf</code>服务</li>
-<li>使用<code>gRPC</code>的<code>reflection.Register</code>注册一个<code>gRPC</code>服务</li>
-</ul>
-<p>我们再来看看客户端：<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Copyright 2015 gRPC authors.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Licensed under the Apache License, Version 2.0 (the "License");</span></span><br><span class="line"><span class="comment"> * you may not use this file except in compliance with the License.</span></span><br><span class="line"><span class="comment"> * You may obtain a copy of the License at</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> *     http://www.apache.org/licenses/LICENSE-2.0</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Unless required by applicable law or agreed to in writing, software</span></span><br><span class="line"><span class="comment"> * distributed under the License is distributed on an "AS IS" BASIS,</span></span><br><span class="line"><span class="comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></span><br><span class="line"><span class="comment"> * See the License for the specific language governing permissions and</span></span><br><span class="line"><span class="comment"> * limitations under the License.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"context"</span></span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line"></span><br><span class="line">	<span class="string">"google.golang.org/grpc"</span></span><br><span class="line">	pb <span class="string">"google.golang.org/grpc/examples/helloworld/helloworld"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">	address     = <span class="string">"localhost:50051"</span></span><br><span class="line">	defaultName = <span class="string">"world"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	<span class="comment">// Set up a connection to the server.</span></span><br><span class="line">	conn, err := grpc.Dial(address, grpc.WithInsecure())</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"did not connect: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> conn.Close()</span><br><span class="line">	c := pb.NewGreeterClient(conn)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Contact the server and print out its response.</span></span><br><span class="line">	name := defaultName</span><br><span class="line">	<span class="keyword">if</span> <span class="built_in">len</span>(os.Args) &gt; <span class="number">1</span> &#123;</span><br><span class="line">		name = os.Args[<span class="number">1</span>]</span><br><span class="line">	&#125;</span><br><span class="line">	ctx, cancel := context.WithTimeout(context.Background(), time.Second)</span><br><span class="line">	<span class="keyword">defer</span> cancel()</span><br><span class="line">	r, err := c.SayHello(ctx, &amp;pb.HelloRequest&#123;Name: name&#125;)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"could not greet: %v"</span>, err)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Printf(<span class="string">"Greeting: %s"</span>, r.Message)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p><code>Greeter_client</code>主要做了几件事：</p>
-<ul>
-<li>使用<code>grpc.Dial()</code>连接一个<code>gRPC</code>服务（这里使用的是<code>Insecure</code>非安全模式）</li>
-<li>使用<code>pb.NewGreeterClient()</code>创建一个<code>protobuf</code>客户端</li>
-<li>调用<code>protobuf</code>客户端的<code>SayHello</code>服务</li>
-</ul>
-<p>一个简单的gRPC应用就是这样的结构。</p>
-<h2 id="gRPC的一些特性"><a href="#gRPC的一些特性" class="headerlink" title="gRPC的一些特性"></a>gRPC的一些特性</h2><p>在RPC领域有许多成熟的框架，比如大名鼎鼎的<code>Thrift</code>，各大互联网公司均有使用。</p>
-<p>而近两年新出来的gRPC却能在这片领域中开拓出一片自己的天地，可见其必然有制胜法宝，接下来就让我们谈谈gRPC的几大特性。</p>
-<h3 id="跨语言能力"><a href="#跨语言能力" class="headerlink" title="跨语言能力"></a>跨语言能力</h3><p>大部分的RPC框架都是基于同一语言的，因为这样可以保证通信时数据结构不会混乱，不会出现不同语言之间数据结构不兼容的情况。</p>
-<p>但是现在早已不是那个<code>Java C++ Python</code>一把梭的时代了。某些公司因为业务需求和历史遗留问题仍在沿用单一技术栈（没错，我说的就是某鹅厂），但是新兴的公司基本都是多技术栈混合。在这个百花齐放的年代，各语言都有各自的优点，都有业务上的需求。</p>
-<p>拿字节跳动为例，该公司是目前国内的<code>Golang</code>大厂。从2015年开始，公司的许多业务都使用<code>Golang</code>来编写，因为<code>Golang</code>有着运行速度快，编写速度快，维护成本低，跨平台能力强，标准库发达的优点，非常适合在大型工程项目中使用。但同时，公司也有许多<code>C++</code>，<code>Python</code>的项目，再加上高度微服务化的架构，对于RPC的需求可见一斑。</p>
-<p><code>gRPC</code>就有非常强大的跨语言能力。得益于<code>protobuf</code>的跨语言序列化，<code>gRPC</code>能够在不同的语言间尽可能多的提供数据结构，而不是单一的字符串类型。这大大的提升了开发效率，以及服务的可用性。</p>
-<h3 id="流通信"><a href="#流通信" class="headerlink" title="流通信"></a>流通信</h3><p><code>gRPC</code>是通过<code>HTTP/2</code>实现的，他借助于底层的<code>HTTP/2</code>特性，实现了流通信。可以支持单向流，以及服务端、客户端双向流通信。</p>
-<p>流通信的好处有很多，最直观的就是能节约性能。</p>
-<p><code>gRPC</code>使用<code>http frame</code>的方式，对<code>http</code>请求进行切分，从而达到和<code>TCP</code>类似的效果。</p>
-<p><code>gRPC</code>的请求和响应结构为：</p>
-<ul>
-<li>Request → Request-Headers *Length-Prefixed-Message EOS</li>
-<li>Response → (Response-Headers *Length-Prefixed-Message Trailers) / Trailers-Only</li>
-</ul>
-<p>以下是<code>gRPC</code>HTTP frame的样例：</p>
-<p>Request:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">HEADERS (flags = END_HEADERS)</span><br><span class="line">:method = POST</span><br><span class="line">:scheme = http</span><br><span class="line">:path = /google.pubsub.v2.PublisherService/CreateTopic</span><br><span class="line">:authority = pubsub.googleapis.com</span><br><span class="line">grpc-timeout = 1S</span><br><span class="line">content-type = application/grpc+proto</span><br><span class="line">grpc-encoding = gzip</span><br><span class="line">authorization = Bearer y235.wef315yfh138vh31hv93hv8h3v</span><br><span class="line"></span><br><span class="line">DATA (flags = END_STREAM)</span><br><span class="line">&lt;Length-Prefixed Message&gt;</span><br></pre></td></tr></table></figure></p>
-<p>Response:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">HEADERS (flags = END_HEADERS)</span><br><span class="line">:status = 200</span><br><span class="line">grpc-encoding = gzip</span><br><span class="line">content-type = application/grpc+proto</span><br><span class="line"></span><br><span class="line">DATA</span><br><span class="line">&lt;Length-Prefixed Message&gt;</span><br><span class="line"></span><br><span class="line">HEADERS (flags = END_STREAM, END_HEADERS)</span><br><span class="line">grpc-status = 0 # OK</span><br><span class="line">trace-proto-bin = jher831yy13JHy3hc</span><br></pre></td></tr></table></figure></p>
-<h3 id="安全通信"><a href="#安全通信" class="headerlink" title="安全通信"></a>安全通信</h3><p>因为<code>gRPC</code>是基于<code>HTTP/2</code>实现的，因此可以支持多种授权机制，比如<code>SSL/TLS</code>, <code>OAuth 2.0</code>, 或者谷歌校验等方式。</p>
-<p>使用<code>SSL/TLS</code>时，客户端和服务端之间交换的所有数据均会被加密，并且为客户端提供了可选的凭证服务，比如证书之类的。</p>
-<h2 id="gRPC未来发展"><a href="#gRPC未来发展" class="headerlink" title="gRPC未来发展"></a>gRPC未来发展</h2><p><code>gRPC</code>提供了服务提供和服务调用的方式，但是没有提供服务发现机制，对于分布式部署的服务并不那么友好。因此在使用<code>gRPC</code>时，我们还需定制一些服务发现的服务，比如<code>Consul</code>。</p>
-<p>目前服务发现主要分为两种，一种是<strong>客户端发现</strong>，一种是<strong>服务端发现</strong>。</p>
-<p><img src="/images/client_discover.png" alt="client_discover"></p>
-<p><strong>客户端发现</strong>就是由调用方来从某个服务注册中心中寻找一个可用的服务，并进行接入。这样的好处在于直观，但是缺点是对于客户端来说耦合度较高，可能需要依赖大量SDK。</p>
-<p><img src="/images/server_discover.png" alt="server_discover"></p>
-<p><strong>服务端发现</strong>是现在比较推崇的一种方式。他在服务注册中心之前加了一层负载均衡器（反向代理）。客户端无需知道服务注册的查找细节，只需直接请求，由负载均衡器为其路由到最优的节点上。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>gRPC</code>的前景非常好，希望能看到其大展身手。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2141,7 +2154,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-count">23</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
