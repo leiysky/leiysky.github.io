@@ -1,7 +1,8 @@
 ---
 title: Redis的LRU缓存
 date: 2018-10-03 18:01:52
-tags: Redis
+tags: ['Redis']
+categories: ['Database']
 ---
 
 Redis作为一个内存键值对存储的产品，以其高性能、多种数据类型、可选持久化且支持网络等特性成为了许多项目中的宠儿。
