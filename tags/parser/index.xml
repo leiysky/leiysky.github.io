@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Parser on leiysky&#39;s blog</title>
+    <link>https://example.com/tags/parser/</link>
+    <description>Recent content in Parser on leiysky&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 29 Jul 2019 19:59:06 +0000</lastBuildDate>
+    
+	<atom:link href="https://example.com/tags/parser/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>使用ANTLR4编写parser</title>
+      <link>https://example.com/2019/%E4%BD%BF%E7%94%A8antlr4%E7%BC%96%E5%86%99parser/</link>
+      <pubDate>Mon, 29 Jul 2019 19:59:06 +0000</pubDate>
+      
+      <guid>https://example.com/2019/%E4%BD%BF%E7%94%A8antlr4%E7%BC%96%E5%86%99parser/</guid>
+      <description>前言 ANTLR 是一款由 Java 编写的开源语法解析工具。
+我们知道在编译的过程中，主要有词法分析(Lexical Analysis), 语法分析(Grammar Analysis), 语义分析(Semantic Analysis), 中间代码生成(Intermediate Code Generation)等过程。
+但是这是对于高级语言的编译过程，有时候我们需要设计一些 DSL 或者配置文件格式，这时候只需要词法分析和语法分析就可以解决我们的需求。
+ANTLR 可以通过 BNF 或者 EBNF 文法的语法定义文件生成默认的 Lexer 和基本的 ast，并且提供了 listener, visitor 两种可选的方式来遍历 ast。对比起 yacc 和 lex 的组合，它的好处在于能生成相对友好的代码方便你进行处理（不用在几千行的 .y 文件里面爬摸滚打了）。
+ANTLR 的最新版本是 4，在这篇文章里我将使用 Go 作为生成的 target 语言。
+ANTLR4 的安装 自己看
+简单的 EBNF 文法 EBNF, 即扩展巴恩斯范式，是一种上下文无关文法。现代编程语言基本都使用 EBNF 来进行语法定义。
+我们首先来简单定义一个四则运算表达式的语法规则:
+grammar Math; math : expr EOF; expr : op=(&#39;+&#39;|&#39;-&#39;) expr # unaryExpr | left=expr op=(&#39;*&#39;|&#39;/&#39;) right=expr # infixExpr | left=expr op=(&#39;+&#39;|&#39;-&#39;) right=expr # infixExpr | value=NUM # numberExpr ; ADD: &#39;+&#39;; SUB: &#39;-&#39;; MUL: &#39;*&#39;; DIV: &#39;/&#39;; NUM : [0-9]+ (&#39;.</description>
+    </item>
+    
+  </channel>
+</rss>

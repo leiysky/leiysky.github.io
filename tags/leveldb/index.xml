@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>LevelDB on leiysky&#39;s blog</title>
+    <link>https://example.com/tags/leveldb/</link>
+    <description>Recent content in LevelDB on leiysky&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 27 Mar 2019 00:32:35 +0000</lastBuildDate>
+    
+	<atom:link href="https://example.com/tags/leveldb/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>LevelDB源码剖析</title>
+      <link>https://example.com/2019/leveldb%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90/</link>
+      <pubDate>Wed, 27 Mar 2019 00:32:35 +0000</pubDate>
+      
+      <guid>https://example.com/2019/leveldb%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90/</guid>
+      <description>前言 LevelDB是谷歌开源的一款高性能嵌入式 kv 数据库，基于LSM-tree索引，是Bigtable的简化版实现（可以这么理解）。
+它的特点是写入速度非常快，达到了O(1)级别的时间复杂度。但是付出的代价就是读取的速度非常慢，尤其是对于数据库中不存在的 key 进行get操作会扫描所有的记录。
+对于 LevelDB 的具体设计本文就不再提及，这里主要从代码的层面分析一下 LevelDB 的结构（膜拜一下 Jeff Dean 亲手写的 C++）。
+LevelDB 的入口 db.h db.h中定义了LevelDB对外开放的接口——DB类。
+DB类的代码如下：
+class LEVELDB_EXPORT DB { public: static Status Open(const Options&amp;amp; options, const std::string&amp;amp; name, DB** dbptr); DB() = default; DB(const DB&amp;amp;) = delete; DB&amp;amp; operator=(const DB&amp;amp;) = delete; virtual ~DB(); virtual Status Put(const WriteOptions&amp;amp; options, const Slice&amp;amp; key, const Slice&amp;amp; value) = 0; virtual Status Delete(const WriteOptions&amp;amp; options, const Slice&amp;amp; key) = 0; virtual Status Write(const WriteOptions&amp;amp; options, WriteBatch* updates) = 0; virtual Status Get(const ReadOptions&amp;amp; options, const Slice&amp;amp; key, std::string* value) = 0; virtual Iterator* NewIterator(const ReadOptions&amp;amp; options) = 0; virtual const Snapshot* GetSnapshot() = 0; virtual void ReleaseSnapshot(const Snapshot* snapshot) = 0; virtual bool GetProperty(const Slice&amp;amp; property, std::string* value) = 0; virtual void GetApproximateSizes(const Range* range, int n, uint64_t* sizes) = 0; virtual void CompactRange(const Slice* begin, const Slice* end) = 0; }; 在这个类里面定义了Put, Delete, Get, Write这几个CURD的基本操作，以及LevelDB支持的feature，获取快照等。</description>
+    </item>
+    
+  </channel>
+</rss>
