@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Redis on leiysky&#39;s blog</title>
-    <link>https://example.com/tags/redis/</link>
+    <link>https://blog.leiysky.xyz/tags/redis/</link>
     <description>Recent content in Redis on leiysky&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Wed, 03 Oct 2018 18:01:52 +0000</lastBuildDate>
     
-	<atom:link href="https://example.com/tags/redis/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://blog.leiysky.xyz/tags/redis/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Redis的LRU缓存</title>
-      <link>https://example.com/2018/redis%E7%9A%84lru%E7%BC%93%E5%AD%98/</link>
+      <link>https://blog.leiysky.xyz/2018/redis%E7%9A%84lru%E7%BC%93%E5%AD%98/</link>
       <pubDate>Wed, 03 Oct 2018 18:01:52 +0000</pubDate>
       
-      <guid>https://example.com/2018/redis%E7%9A%84lru%E7%BC%93%E5%AD%98/</guid>
+      <guid>https://blog.leiysky.xyz/2018/redis%E7%9A%84lru%E7%BC%93%E5%AD%98/</guid>
       <description>Redis作为一个内存键值对存储的产品，以其高性能、多种数据类型、可选持久化且支持网络等特性成为了许多项目中的宠儿。
 一般来说，缓存在获得超快的读写速度的同时，作为代替会牺牲其存储空间。Redis使用内存作为存储介质，比起传统的使用硬盘作为载体的数据库，读写速度快了许多，但是可存储的数据量也受到了内存大小的限制。在频繁的读写操作下，必然会发生对于旧数据的驱逐(eviction)，可能是删除数据，或者是置换到外存中。
 Redis使用LRU作为唯一的驱逐算法(Redis4.0推出了LFU, Least Frequently Used算法，在本文的后面会提到)。本文将主要围绕Redis的最大内存限制和驱逐算法谈谈Redis作为缓存的一些细节。

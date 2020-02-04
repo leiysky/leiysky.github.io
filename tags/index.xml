@@ -2,57 +2,57 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on leiysky&#39;s blog</title>
-    <link>https://example.com/tags/</link>
+    <link>https://blog.leiysky.xyz/tags/</link>
     <description>Recent content in Tags on leiysky&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 29 Jul 2019 19:59:06 +0000</lastBuildDate>
     
-	<atom:link href="https://example.com/tags/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://blog.leiysky.xyz/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>ANTLR</title>
-      <link>https://example.com/tags/antlr/</link>
+      <link>https://blog.leiysky.xyz/tags/antlr/</link>
       <pubDate>Mon, 29 Jul 2019 19:59:06 +0000</pubDate>
       
-      <guid>https://example.com/tags/antlr/</guid>
+      <guid>https://blog.leiysky.xyz/tags/antlr/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Parser</title>
-      <link>https://example.com/tags/parser/</link>
+      <link>https://blog.leiysky.xyz/tags/parser/</link>
       <pubDate>Mon, 29 Jul 2019 19:59:06 +0000</pubDate>
       
-      <guid>https://example.com/tags/parser/</guid>
+      <guid>https://blog.leiysky.xyz/tags/parser/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Database</title>
-      <link>https://example.com/tags/database/</link>
+      <link>https://blog.leiysky.xyz/tags/database/</link>
       <pubDate>Wed, 27 Mar 2019 00:32:35 +0000</pubDate>
       
-      <guid>https://example.com/tags/database/</guid>
+      <guid>https://blog.leiysky.xyz/tags/database/</guid>
       <description></description>
     </item>
     
     <item>
       <title>LevelDB</title>
-      <link>https://example.com/tags/leveldb/</link>
+      <link>https://blog.leiysky.xyz/tags/leveldb/</link>
       <pubDate>Wed, 27 Mar 2019 00:32:35 +0000</pubDate>
       
-      <guid>https://example.com/tags/leveldb/</guid>
+      <guid>https://blog.leiysky.xyz/tags/leveldb/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Redis</title>
-      <link>https://example.com/tags/redis/</link>
+      <link>https://blog.leiysky.xyz/tags/redis/</link>
       <pubDate>Wed, 03 Oct 2018 18:01:52 +0000</pubDate>
       
-      <guid>https://example.com/tags/redis/</guid>
+      <guid>https://blog.leiysky.xyz/tags/redis/</guid>
       <description></description>
     </item>
     
