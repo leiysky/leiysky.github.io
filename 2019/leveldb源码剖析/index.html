@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noodp"/>
+  <meta name="author" content="leiysky">
+  
+  <meta name="keywords" content="Blog">
+  
+  <link rel="prev" href="https://blog.leiysky.xyz/2018/redis%E7%9A%84lru%E7%BC%93%E5%AD%98/" />
+  <link rel="next" href="https://blog.leiysky.xyz/2019/%E4%BD%BF%E7%94%A8antlr4%E7%BC%96%E5%86%99parser/" />
+  <link rel="canonical" href="https://blog.leiysky.xyz/2019/leveldb%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90/" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#ffffff">
+  <title>
+       
+       
+           LevelDB源码剖析 | leiysky&#39;s blog
+       
+  </title>
+  <meta name="title" content="LevelDB源码剖析 | leiysky&#39;s blog">
+    
+  
+  <link rel="stylesheet" href="/font/iconfont.css">
+  <link rel="stylesheet" href="/css/main.min.css">
+
+
+  
+  
+ 
+
+<script type="application/ld+json">
+ "@context" : "http://schema.org",
+    "@type" : "BlogPosting",
+    "mainEntityOfPage": {
+         "@type": "WebPage",
+         "@id": "https:\/\/blog.leiysky.xyz"
+    },
+    "articleSection" : "posts",
+    "name" : "LevelDB源码剖析",
+    "headline" : "LevelDB源码剖析",
+    "description" : "前言 LevelDB是谷歌开源的一款高性能嵌入式 kv 数据库，基于LSM-tree索引，是Bigtable的简化版实现（可以这么理解）。\n它的特点是写入速度非常快，达到了O(1)级别的时间复杂度。但是付出的代价就是读取的速度非常慢，尤其是对于数据库中不存在的 key 进行get操作会扫描所有的记录。\n对于 LevelDB 的具体设计本文就不再提及，这里主要从代码的层面分析一下 LevelDB 的结构（膜拜一下 Jeff Dean 亲手写的 C\x2b\x2b）。\nLevelDB 的入口 db.h db.h中定义了LevelDB对外开放的接口——DB类。\nDB类的代码如下：\nclass LEVELDB_EXPORT DB { public: static Status Open(const Options\x26amp; options, const std::string\x26amp; name, DB** dbptr); DB() = default; DB(const DB\x26amp;) = delete; DB\x26amp; operator=(const DB\x26amp;) = delete; virtual ~DB(); virtual Status Put(const WriteOptions\x26amp; options, const Slice\x26amp; key, const Slice\x26amp; value) = 0; virtual Status Delete(const WriteOptions\x26amp; options, const Slice\x26amp; key) = 0; virtual Status Write(const WriteOptions\x26amp; options, WriteBatch* updates) = 0; virtual Status Get(const ReadOptions\x26amp; options, const Slice\x26amp; key, std::string* value) = 0; virtual Iterator* NewIterator(const ReadOptions\x26amp; options) = 0; virtual const Snapshot* GetSnapshot() = 0; virtual void ReleaseSnapshot(const Snapshot* snapshot) = 0; virtual bool GetProperty(const Slice\x26amp; property, std::string* value) = 0; virtual void GetApproximateSizes(const Range* range, int n, uint64_t* sizes) = 0; virtual void CompactRange(const Slice* begin, const Slice* end) = 0; }; 在这个类里面定义了Put, Delete, Get, Write这几个CURD的基本操作，以及LevelDB支持的feature，获取快照等。",
+    "inLanguage" : "en-us",
+    "author" : "leiysky",
+    "creator" : "leiysky",
+    "publisher": "leiysky",
+    "accountablePerson" : "leiysky",
+    "copyrightHolder" : "leiysky",
+    "copyrightYear" : "2019",
+    "datePublished": "2019-03-27 00:32:35 \x2b0000 UTC",
+    "dateModified" : "2019-03-27 00:32:35 \x2b0000 UTC",
+    "url" : "https:\/\/blog.leiysky.xyz\/2019\/leveldb%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90\/",
+    "wordCount" : "1424",
+    "keywords" : [ "Database","LevelDB", "leiysky\x27s blog"]
+}
+</script>
+
+</head>
+
+  
+
+
+  <body class="">
+    <div class="wrapper">
+        <nav class="navbar">
+    <div class="container">
+        <div class="navbar-header header-logo">
+        	<a href="javascript:void(0);" class="theme-switch"><i class="iconfont icon-xihuan"></i></a>&nbsp;<a href="https://blog.leiysky.xyz">leiysky&#39;s blog</a>
+        </div>
+        <div class="menu navbar-right">
+                
+                
+                <a class="menu-item" href="/posts/" title="">Blog</a>
+                
+                <a class="menu-item" href="/categories/" title="">Categories</a>
+                
+                <a class="menu-item" href="/tags/" title="">Tags</a>
+                
+                <a class="menu-item" href="/about/" title="">About</a>
+                
+                <a class="menu-item" href="/about/" title=""></a>
+                
+        </div>
+    </div>
+</nav>
+<nav class="navbar-mobile" id="nav-mobile" style="display: none">
+     <div class="container">
+        <div class="navbar-header">
+            <div>  <a href="javascript:void(0);" class="theme-switch"><i class="iconfont icon-xihuan"></i></a>&nbsp;<a href="https://blog.leiysky.xyz">leiysky&#39;s blog</a></div>
+            <div class="menu-toggle">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+     
+          <div class="menu" id="mobile-menu">
+                
+                
+                <a class="menu-item" href="/posts/" title="">Blog</a>
+                
+                <a class="menu-item" href="/categories/" title="">Categories</a>
+                
+                <a class="menu-item" href="/tags/" title="">Tags</a>
+                
+                <a class="menu-item" href="/about/" title="">About</a>
+                
+                <a class="menu-item" href="/about/" title=""></a>
+                
+        </div>
+    </div>
+</nav>
+    	 <main class="main">
+          <div class="container">
+      		
+<article class="post-warp" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">LevelDB源码剖析</h1>
+        <div class="post-meta">
+                Written by <a itemprop="name" href="https://blog.leiysky.xyz" rel="author">leiysky</a> with ♥ 
+                <span class="post-time">
+                on <time datetime=2019-03-27 itemprop="datePublished">March 27, 2019</time>
+                </span>
+                in
+                <i class="iconfont icon-folder"></i>
+                <span class="post-category">
+                        <a href="https://blog.leiysky.xyz/categories/database/"> Database </a>
+                        
+                </span>
+        </div>
+    </header>
+    <div class="post-content">
+        
+
+        
+            
+        
+
+        
+        
+     
+          
+          
+          
+
+          
+          
+          
+
+          <h1 id="heading">前言</h1>
+<p><code>LevelDB</code>是谷歌开源的一款高性能嵌入式 kv 数据库，基于<code>LSM-tree</code>索引，是<code>Bigtable</code>的简化版实现（可以这么理解）。</p>
+<p>它的特点是写入速度非常快，达到了<code>O(1)</code>级别的时间复杂度。但是付出的代价就是读取的速度非常慢，尤其是对于数据库中不存在的 key 进行<code>get</code>操作会扫描所有的记录。</p>
+<p>对于 LevelDB 的具体设计本文就不再提及，这里主要从代码的层面分析一下 LevelDB 的结构（膜拜一下 Jeff Dean 亲手写的 C++）。</p>
+<h1 id="leveldb--dbh">LevelDB 的入口 db.h</h1>
+<p><code>db.h</code>中定义了<code>LevelDB</code>对外开放的接口——<code>DB</code>类。</p>
+<p><code>DB</code>类的代码如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">LEVELDB_EXPORT</span> DB {
+ <span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+  <span style="color:#66d9ef">static</span> Status Open(<span style="color:#66d9ef">const</span> Options<span style="color:#f92672">&amp;</span> options,
+                     <span style="color:#66d9ef">const</span> std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>string<span style="color:#f92672">&amp;</span> name,
+                     DB<span style="color:#f92672">*</span><span style="color:#f92672">*</span> dbptr);
+
+  DB() <span style="color:#f92672">=</span> <span style="color:#66d9ef">default</span>;
+
+  DB(<span style="color:#66d9ef">const</span> DB<span style="color:#f92672">&amp;</span>) <span style="color:#f92672">=</span> <span style="color:#66d9ef">delete</span>;
+  DB<span style="color:#f92672">&amp;</span> <span style="color:#66d9ef">operator</span><span style="color:#f92672">=</span>(<span style="color:#66d9ef">const</span> DB<span style="color:#f92672">&amp;</span>) <span style="color:#f92672">=</span> <span style="color:#66d9ef">delete</span>;
+
+  <span style="color:#66d9ef">virtual</span> <span style="color:#f92672">~</span>DB();
+  <span style="color:#66d9ef">virtual</span> Status <span style="color:#a6e22e">Put</span>(<span style="color:#66d9ef">const</span> WriteOptions<span style="color:#f92672">&amp;</span> options,
+                     <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> key,
+                     <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> value) <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">virtual</span> Status <span style="color:#a6e22e">Delete</span>(<span style="color:#66d9ef">const</span> WriteOptions<span style="color:#f92672">&amp;</span> options, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> key) <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">virtual</span> Status <span style="color:#a6e22e">Write</span>(<span style="color:#66d9ef">const</span> WriteOptions<span style="color:#f92672">&amp;</span> options, WriteBatch<span style="color:#f92672">*</span> updates) <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">virtual</span> Status <span style="color:#a6e22e">Get</span>(<span style="color:#66d9ef">const</span> ReadOptions<span style="color:#f92672">&amp;</span> options,
+                     <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> key, std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>string<span style="color:#f92672">*</span> value) <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">virtual</span> Iterator<span style="color:#f92672">*</span> <span style="color:#a6e22e">NewIterator</span>(<span style="color:#66d9ef">const</span> ReadOptions<span style="color:#f92672">&amp;</span> options) <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">virtual</span> <span style="color:#66d9ef">const</span> Snapshot<span style="color:#f92672">*</span> <span style="color:#a6e22e">GetSnapshot</span>() <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">virtual</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">ReleaseSnapshot</span>(<span style="color:#66d9ef">const</span> Snapshot<span style="color:#f92672">*</span> snapshot) <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">virtual</span> <span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">GetProperty</span>(<span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> property, std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>string<span style="color:#f92672">*</span> value) <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">virtual</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">GetApproximateSizes</span>(<span style="color:#66d9ef">const</span> Range<span style="color:#f92672">*</span> range, <span style="color:#66d9ef">int</span> n,
+                                   <span style="color:#66d9ef">uint64_t</span><span style="color:#f92672">*</span> sizes) <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">virtual</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">CompactRange</span>(<span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">*</span> begin, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">*</span> end) <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+};
+</code></pre></div><p>在这个类里面定义了<code>Put</code>, <code>Delete</code>, <code>Get</code>, <code>Write</code>这几个<code>CURD</code>的基本操作，以及<code>LevelDB</code>支持的<code>feature</code>，获取快照等。</p>
+<p>接下来，我将先从这几个基本操作入手，结合 LevelDB 的源码进行分析。</p>
+<h2 id="put">Put</h2>
+<p>当你调用<code>Put</code>写入一个 value 时，会发生些什么呢？</p>
+<p>LevelDB 写入数据的流程非常简单：</p>
+<ol>
+<li>追加 Log 到 Log 文件</li>
+<li>检查是否需要 compaction</li>
+</ol>
+<p>我们首先看看<code>Put</code>函数的实现。</p>
+<p><code>LevelDB</code>本身的实现在<code>db/db_impl.h</code>和<code>db/db_impl.cc</code>中。</p>
+<p><code>Put</code>的实现如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp">Status DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>Put(<span style="color:#66d9ef">const</span> WriteOptions<span style="color:#f92672">&amp;</span> o, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> key, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> val) {
+  <span style="color:#66d9ef">return</span> DB<span style="color:#f92672">:</span><span style="color:#f92672">:</span>Put(o, key, val);
+}
+</code></pre></div><p>可以看到这里 DBImpl 覆盖了 DB 的 Put 方法，并且在其中透传参数调用了父类的 Put。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp">Status DB<span style="color:#f92672">:</span><span style="color:#f92672">:</span>Put(<span style="color:#66d9ef">const</span> WriteOptions<span style="color:#f92672">&amp;</span> opt, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> key, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> value) {
+  WriteBatch batch;
+  batch.Put(key, value);
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">Write</span>(opt, <span style="color:#f92672">&amp;</span>batch);
+}
+</code></pre></div><p><code>Put</code>的本质就是一个<code>Write</code>操作带上了自己封装的<code>Batch</code>。</p>
+<p>所以我们继续来看<code>Write</code>的过程。</p>
+<p>以下是精简过的<code>Write</code>代码:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp">Status DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>Write(<span style="color:#66d9ef">const</span> WriteOptions<span style="color:#f92672">&amp;</span> options, WriteBatch<span style="color:#f92672">*</span> my_batch) {
+  Writer <span style="color:#a6e22e">w</span>(<span style="color:#f92672">&amp;</span>mutex_);
+  w.batch <span style="color:#f92672">=</span> my_batch;
+
+  MakeRoomForWrite(my_batch <span style="color:#f92672">=</span><span style="color:#f92672">=</span> NULL);
+
+  <span style="color:#66d9ef">uint64_t</span> last_sequence <span style="color:#f92672">=</span> versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>LastSequence();
+  Writer<span style="color:#f92672">*</span> last_writer <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>w;
+  WriteBatch<span style="color:#f92672">*</span> updates <span style="color:#f92672">=</span> BuildBatchGroup(<span style="color:#f92672">&amp;</span>last_writer);
+  WriteBatchInternal<span style="color:#f92672">:</span><span style="color:#f92672">:</span>SetSequence(updates, last_sequence <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>);
+  last_sequence <span style="color:#f92672">+</span><span style="color:#f92672">=</span> WriteBatchInternal<span style="color:#f92672">:</span><span style="color:#f92672">:</span>Count(updates);
+
+  log_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>AddRecord(WriteBatchInternal<span style="color:#f92672">:</span><span style="color:#f92672">:</span>Contents(updates));
+  WriteBatchInternal<span style="color:#f92672">:</span><span style="color:#f92672">:</span>InsertInto(updates, mem_);
+
+  versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>SetLastSequence(last_sequence);
+  <span style="color:#66d9ef">return</span> Status<span style="color:#f92672">:</span><span style="color:#f92672">:</span>OK();
+}
+</code></pre></div><p>这里首先面临的一个关键步骤是<code>MakeRoomForWrite</code>。</p>
+<p><code>MakeRoomForWrite</code>的作用是为<code>Write</code>制造条件，包括可用的<code>memtable</code>和 Log 的<code>writer</code>。</p>
+<p><code>MakeRoomForWirte</code>内部是一个无限的 loop，参数为一个<code>bool force</code>。顾名思义其作用为强制发起一次<code>compaction</code>，触发条件为<code>mybatch==nullptr</code>，其分支情况如下：</p>
+<ol>
+<li>检查是否需要延迟写入<code>L0</code>文件（<code>force</code>为<code>false</code>，且<code>L0</code>文件过多时会<code>delay</code>1000ms，一次<code>MakeRoomForWrite</code>的过程最多有一次<code>delay</code>）</li>
+<li>如果当前的<code>memtable</code>容量够用则跳出 loop，返回后将直接使用当前<code>memtable</code></li>
+<li>检查是否有<code>immutable table</code>，如果有则表示上一次<code>compaction</code>还未完成，继续等待</li>
+<li>检查<code>L0</code>文件数量，如果数量过多也说明<code>compaction</code>未完成，继续等待</li>
+<li>创建新的<code>memtable</code>，并且对旧的进行<code>compaction</code>（过程为创建 Log 文件，设置<code>immutable table</code>为旧的<code>memtable</code>，创建新的<code>memtable</code>，调用<code>MaybeScheduleCompaction</code>）
+这个函数：</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">void</span> DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>MaybeScheduleCompaction() {
+  mutex_.AssertHeld();
+  <span style="color:#66d9ef">if</span> (background_compaction_scheduled_) {
+    <span style="color:#75715e">// Already scheduled
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (shutting_down_.load(std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>memory_order_acquire)) {
+    <span style="color:#75715e">// DB is being deleted; no more background compactions
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (<span style="color:#f92672">!</span>bg_error_.ok()) {
+    <span style="color:#75715e">// Already got an error; no more changes
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (imm_ <span style="color:#f92672">=</span><span style="color:#f92672">=</span> <span style="color:#66d9ef">nullptr</span> <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span>
+             manual_compaction_ <span style="color:#f92672">=</span><span style="color:#f92672">=</span> <span style="color:#66d9ef">nullptr</span> <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span>
+             <span style="color:#f92672">!</span>versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>NeedsCompaction()) {
+    <span style="color:#75715e">// No work to be done
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> {
+    background_compaction_scheduled_ <span style="color:#f92672">=</span> true;
+    env_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Schedule(<span style="color:#f92672">&amp;</span>DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>BGWork, <span style="color:#66d9ef">this</span>);
+  }
+}
+</code></pre></div><p>那么我们也可以猜到，<code>MaybeScheduleCompaction</code>这个函数实际上就是<code>compaction</code>的入口。我们先来大致看一下他的内容（代码比较短，我就直接贴代码了）：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c++" data-lang="c++"><span style="color:#66d9ef">void</span> DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>MaybeScheduleCompaction() {
+  mutex_.AssertHeld();
+  <span style="color:#66d9ef">if</span> (background_compaction_scheduled_) {
+    <span style="color:#75715e">// Already scheduled
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (shutting_down_.load(std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>memory_order_acquire)) {
+    <span style="color:#75715e">// DB is being deleted; no more background compactions
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (<span style="color:#f92672">!</span>bg_error_.ok()) {
+    <span style="color:#75715e">// Already got an error; no more changes
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (imm_ <span style="color:#f92672">=</span><span style="color:#f92672">=</span> <span style="color:#66d9ef">nullptr</span> <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span>
+             manual_compaction_ <span style="color:#f92672">=</span><span style="color:#f92672">=</span> <span style="color:#66d9ef">nullptr</span> <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span>
+             <span style="color:#f92672">!</span>versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>NeedsCompaction()) {
+    <span style="color:#75715e">// No work to be done
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> {
+    background_compaction_scheduled_ <span style="color:#f92672">=</span> true;
+    env_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Schedule(<span style="color:#f92672">&amp;</span>DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>BGWork, <span style="color:#66d9ef">this</span>);
+  }
+}
+</code></pre></div><p>可以看到具体的<code>Schedule</code>是与环境相挂钩的，其执行一定会触发<code>minor compaction</code>，如果满足条件也会触发<code>major compaction</code>。LevelDB 提供了<code>Windows</code>和<code>POSIX</code>两种实现，我们之后再来看。</p>
+<p>在<code>MakeRoomForWrite</code>之后，会调用<code>_log.AddRecord()</code>来追加一条 Log，并且使用<code>WriteBatchInternal::Contents(updates)</code>来写入<code>memtable</code>。</p>
+<p>关于 Log 的内容会在之后展开讲，这里主要提一下，写<code>memtable</code>的过程实际上就是在<code>memtable</code>的<code>skiplist</code>中插入一条记录。</p>
+<p>一次<code>Put</code>的过程就是这样，非常的简洁，这也是<code>LevelDB</code>写入速度快的原因。</p>
+<h2 id="get">Get</h2>
+<p>LevelDB 极高的写性能带来的代价就是他的读性能非常的差。</p>
+<p>每次<code>Get</code>操作的读取顺序为：</p>
+<ol>
+<li><code>memtable</code></li>
+<li><code>immutable table</code></li>
+<li><code>L0</code>文件</li>
+<li>高<code>Level</code>文件</li>
+</ol>
+<p>只有在所有的文件都被读完后才能确定目标<code>key</code>是不存在的。</p>
+<p><code>Get</code>方法的脉络很清晰，因为其本质就是一个遍历查找的过程，整理后的代码如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp">Status DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>Get(<span style="color:#66d9ef">const</span> ReadOptions<span style="color:#f92672">&amp;</span> options, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> key, std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>string<span style="color:#f92672">*</span> value) {
+  LookupKey <span style="color:#a6e22e">lkey</span>(key, versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>LastSequence());
+  <span style="color:#66d9ef">if</span> (mem_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Get(lkey, value, NULL)) {
+    <span style="color:#75715e">// Done
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (imm_ <span style="color:#f92672">!</span><span style="color:#f92672">=</span> NULL <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span> imm_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Get(lkey, value, NULL)) {
+    <span style="color:#75715e">// Done
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> {
+    versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>current()<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Get(options, lkey, value, NULL);
+  }
+
+  MaybeScheduleCompaction();
+  <span style="color:#66d9ef">return</span> Status<span style="color:#f92672">:</span><span style="color:#f92672">:</span>OK();
+}
+</code></pre></div><p>我们先来看看<code>memtable</code>的<code>Get</code>。</p>
+<p>LevelDB 的<code>memtable</code>本质上是一个常规的<code>skiplist</code>，存储了有序的<code>entries</code>。所以<code>memtable</code>的<code>Get</code>操作就是使用用户提供的<code>comparator</code>去进行一个查找。</p>
+<p>这里有个小细节就是每个<code>entry</code>都存储了一个<code>ValueType</code>，用于标记该<code>key</code>的类型，是<strong>插入</strong>还是<strong>删除</strong>。</p>
+<p>我们知道 LevelDB 的删除本质上也是追加一条记录，在<code>compaction</code>的时候才会真正的删除掉<code>key</code>。</p>
+<p>LevelDB 的写入方式保证了<code>Get</code>能从最新的数据开始读，因此如果读到了一个指定<code>key</code>的删除记录，则可以确定该<code>key</code>已经不存在了。</p>
+<p><code>immutable table</code>的结构与<code>memtable</code>是相同的，不同点在于它是不可变的，相当于是一个<code>memtable</code>与<code>SSTable</code>文件之间的缓冲。</p>
+<p>接下来我们看看<code>version</code>的<code>Get</code>操作。</p>
+<p>在<code>version</code>的<code>Get</code>操作中有一个比较重要的概念——<code>FileMetaData</code>。</p>
+<p><code>FileMetaData</code>的定义如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">FileMetaData</span> {
+  <span style="color:#66d9ef">int</span> refs;
+  <span style="color:#66d9ef">int</span> allowed_seeks;          <span style="color:#75715e">// Seeks allowed until compaction
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">uint64_t</span> number;
+  <span style="color:#66d9ef">uint64_t</span> file_size;         <span style="color:#75715e">// File size in bytes
+</span><span style="color:#75715e"></span>  InternalKey smallest;       <span style="color:#75715e">// Smallest internal key served by table
+</span><span style="color:#75715e"></span>  InternalKey largest;        <span style="color:#75715e">// Largest internal key served by table
+</span><span style="color:#75715e"></span>
+  FileMetaData() <span style="color:#f92672">:</span> refs(<span style="color:#ae81ff">0</span>), allowed_seeks(<span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;</span><span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">30</span>), file_size(<span style="color:#ae81ff">0</span>) { }
+};
+</code></pre></div><p>我们可以看到其中定义了一个<code>smallest</code>和<code>largest</code>，它们描述了文件中存储的<code>key</code>的区间。我们在读取的时候可以根据这个区间确定<code>key</code>是否在该文件中，这样加快了<code>key</code>的定位速度。</p>
+<p><code>version</code>的<code>Get</code>过程也十分简单粗暴，逐层检索<code>key</code>，找到为止。</p>
+<h2 id="delete--write">Delete &amp; Write</h2>
+<p><code>Delete</code>其实就是<code>Put</code>，而<code>Put</code>的本质是<code>Write</code>，这两个操作就不再展开讲。</p>
+<h1 id="log">追加写的核心——Log</h1>
+<p>LSM 树的思想是将内存中维护的树定期 flush 到磁盘上持久化，以提高写入的性能。但是我们知道内存中的数据是 Volatile 的，这就需要 log 来保证数据的持久性。</p>
+<p>Log 相关的代码主要有<code>log_format.h</code>, <code>log_reader.h</code>, <code>log_writer.h</code>。</p>
+<h2 id="log-formath">log_format.h</h2>
+<p>这个文件中定义了<code>log</code>的格式：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">enum</span> <span style="color:#a6e22e">RecordType</span> {
+  <span style="color:#75715e">// Zero is reserved for preallocated files
+</span><span style="color:#75715e"></span>  kZeroType <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>,
+
+  kFullType <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>,
+
+  <span style="color:#75715e">// For fragments
+</span><span style="color:#75715e"></span>  kFirstType <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>,
+  kMiddleType <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>,
+  kLastType <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>
+};
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">int</span> kMaxRecordType <span style="color:#f92672">=</span> kLastType;
+
+<span style="color:#66d9ef">static</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">int</span> kBlockSize <span style="color:#f92672">=</span> <span style="color:#ae81ff">32768</span>;
+
+<span style="color:#75715e">// Header is checksum (4 bytes), length (2 bytes), type (1 byte).
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">int</span> kHeaderSize <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+</code></pre></div><p>我们知道 LevelDB 的 log 是连续存储在文件中的（为了最大化顺序读写的性能，每次将一条<code>Record</code>写入文件），每条 Log 都有一个 header 存储相关的元信息。这里的元信息为三个：<code>CRC</code>校验码，Log 内容长度，Log 位置信息。</p>
+<p>LevelDB 的日志每个块的大小是固定的（为了对齐 32K），因此 Log 的数据有可能会被切分到不同的块。这里我们可以知道有四种位置关系，分别是：</p>
+<ul>
+<li>整个 Log 在该块中</li>
+<li>Log 的开头在该块中</li>
+<li>Log 的中间部分在该块中（占据整个块）</li>
+<li>Log 的尾部在该块中</li>
+</ul>
+<p>那么这个<code>kZeroType</code>是做什么的呢？</p>
+<p>考虑这种情况，一个块在写入后只剩下不到 7 个字节的空间，不足以塞下一个 header。</p>
+<p>这时 LevelDB 会选择使用<code>\x00</code>来填充剩余的空间。</p>
+<p>当剩余 7 个字节时，则塞入一个<code>kZeroType</code>的 header。</p>
+<h2 id="log-writerh">log_writer.h</h2>
+<p><code>log_writer.h</code>中定义了一个<code>Writer</code>类，它的主要方法只有一个，就是<code>AddRecord</code>，也就是我们之前在<code>Put</code>中看到的追加 Log 的操作。</p>
+<p><code>AddRecord</code>的实现如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp">Status Writer<span style="color:#f92672">:</span><span style="color:#f92672">:</span>AddRecord(<span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> slice) {
+  <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span><span style="color:#f92672">*</span> ptr <span style="color:#f92672">=</span> slice.data();
+  size_t left <span style="color:#f92672">=</span> slice.size();
+
+  <span style="color:#75715e">// Fragment the record if necessary and emit it.  Note that if slice
+</span><span style="color:#75715e"></span>  <span style="color:#75715e">// is empty, we still want to iterate once to emit a single
+</span><span style="color:#75715e"></span>  <span style="color:#75715e">// zero-length record
+</span><span style="color:#75715e"></span>  Status s;
+  <span style="color:#66d9ef">bool</span> begin <span style="color:#f92672">=</span> true;
+  <span style="color:#66d9ef">do</span> {
+    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">int</span> leftover <span style="color:#f92672">=</span> kBlockSize <span style="color:#f92672">-</span> block_offset_;
+    assert(leftover <span style="color:#f92672">&gt;</span><span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>);
+    <span style="color:#66d9ef">if</span> (leftover <span style="color:#f92672">&lt;</span> kHeaderSize) {
+      <span style="color:#75715e">// Switch to a new block
+</span><span style="color:#75715e"></span>      <span style="color:#66d9ef">if</span> (leftover <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>) {
+        <span style="color:#75715e">// Fill the trailer (literal below relies on kHeaderSize being 7)
+</span><span style="color:#75715e"></span>        assert(kHeaderSize <span style="color:#f92672">=</span><span style="color:#f92672">=</span> <span style="color:#ae81ff">7</span>);
+        dest_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Append(Slice(<span style="color:#e6db74"></span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x00</span><span style="color:#ae81ff">\x00</span><span style="color:#ae81ff">\x00</span><span style="color:#ae81ff">\x00</span><span style="color:#ae81ff">\x00</span><span style="color:#ae81ff">\x00</span><span style="color:#e6db74">&#34;</span>, leftover));
+      }
+      block_offset_ <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+    }
+
+    <span style="color:#75715e">// Invariant: we never leave &lt; kHeaderSize bytes in a block.
+</span><span style="color:#75715e"></span>    assert(kBlockSize <span style="color:#f92672">-</span> block_offset_ <span style="color:#f92672">-</span> kHeaderSize <span style="color:#f92672">&gt;</span><span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>);
+
+    <span style="color:#66d9ef">const</span> size_t avail <span style="color:#f92672">=</span> kBlockSize <span style="color:#f92672">-</span> block_offset_ <span style="color:#f92672">-</span> kHeaderSize;
+    <span style="color:#66d9ef">const</span> size_t fragment_length <span style="color:#f92672">=</span> (left <span style="color:#f92672">&lt;</span> avail) <span style="color:#f92672">?</span> left : avail;
+
+    RecordType type;
+    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">bool</span> end <span style="color:#f92672">=</span> (left <span style="color:#f92672">=</span><span style="color:#f92672">=</span> fragment_length);
+    <span style="color:#66d9ef">if</span> (begin <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span> end) {
+      type <span style="color:#f92672">=</span> kFullType;
+    } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (begin) {
+      type <span style="color:#f92672">=</span> kFirstType;
+    } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (end) {
+      type <span style="color:#f92672">=</span> kLastType;
+    } <span style="color:#66d9ef">else</span> {
+      type <span style="color:#f92672">=</span> kMiddleType;
+    }
+
+    s <span style="color:#f92672">=</span> EmitPhysicalRecord(type, ptr, fragment_length);
+    ptr <span style="color:#f92672">+</span><span style="color:#f92672">=</span> fragment_length;
+    left <span style="color:#f92672">-</span><span style="color:#f92672">=</span> fragment_length;
+    begin <span style="color:#f92672">=</span> false;
+  } <span style="color:#66d9ef">while</span> (s.ok() <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span> left <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span>);
+  <span style="color:#66d9ef">return</span> s;
+}
+</code></pre></div><p>这里唯一要注意的就是剩余空间不足时的处理方式，前面已经提过了。</p>
+<p>在<code>EmitPhysicalRecord</code>中则会将发生的更改<code>flush</code>到磁盘上。</p>
+<h2 id="log-readerh">log_reader.h</h2>
+<p><code>log_reader.h</code>中主要定义了<code>Reader</code>，用于读取 Log。</p>
+<p>和<code>Writer</code>相对应，<code>Reader</code>的主要方法就是一个<code>ReadRecord</code>。</p>
+<p><code>ReadRecord</code>的逻辑也很简单：</p>
+<ul>
+<li>使用<code>ReadPhysicalRecord</code>读取<code>record</code>，这个过程会做<code>CRC</code>校验</li>
+<li>根据<code>Type</code>选择处理方式</li>
+</ul>
+<h1 id="leveldb--compaction">LevelDB 的 Compaction</h1>
+<p>LSM 中，数据合并的过程叫做<code>Compaction</code>，其中有三种：</p>
+<ul>
+<li><code>Minor Compaction</code>: 内存中的树与磁盘文件合并</li>
+<li><code>Major Compaction</code>: SSTable 与上层 SSTable 文件合并</li>
+<li><code>Full Compaction</code>: 全部合并</li>
+</ul>
+<p>LevelDB 实现了<code>Minor Compaction</code>和<code>Major Compaction</code>。</p>
+<p>我们在前面有提到<code>MaybeScheduleCompaction</code>这个函数：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">void</span> DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>MaybeScheduleCompaction() {
+  mutex_.AssertHeld();
+  <span style="color:#66d9ef">if</span> (background_compaction_scheduled_) {
+    <span style="color:#75715e">// Already scheduled
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (shutting_down_.load(std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>memory_order_acquire)) {
+    <span style="color:#75715e">// DB is being deleted; no more background compactions
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (<span style="color:#f92672">!</span>bg_error_.ok()) {
+    <span style="color:#75715e">// Already got an error; no more changes
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (imm_ <span style="color:#f92672">=</span><span style="color:#f92672">=</span> <span style="color:#66d9ef">nullptr</span> <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span>
+             manual_compaction_ <span style="color:#f92672">=</span><span style="color:#f92672">=</span> <span style="color:#66d9ef">nullptr</span> <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span>
+             <span style="color:#f92672">!</span>versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>NeedsCompaction()) {
+    <span style="color:#75715e">// No work to be done
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> {
+    background_compaction_scheduled_ <span style="color:#f92672">=</span> true;
+    env_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Schedule(<span style="color:#f92672">&amp;</span>DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>BGWork, <span style="color:#66d9ef">this</span>);
+  }
+}
+</code></pre></div><p><code>env_-&gt;Schedule</code>传入的参数<code>DBImpl::BGWork</code>就是实际运行<code>Compaction</code>过程的函数指针，我们来看看其实现：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">void</span> DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>BGWork(<span style="color:#66d9ef">void</span><span style="color:#f92672">*</span> db) {
+  <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>DBImpl<span style="color:#f92672">*</span><span style="color:#f92672">&gt;</span>(db)<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>BackgroundCall();
+}
+
+<span style="color:#66d9ef">void</span> DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>BackgroundCall() {
+  MutexLock <span style="color:#a6e22e">l</span>(<span style="color:#f92672">&amp;</span>mutex_);
+  assert(background_compaction_scheduled_);
+  <span style="color:#66d9ef">if</span> (shutting_down_.load(std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>memory_order_acquire)) {
+    <span style="color:#75715e">// No more background work when shutting down.
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span> (<span style="color:#f92672">!</span>bg_error_.ok()) {
+    <span style="color:#75715e">// No more background work after a background error.
+</span><span style="color:#75715e"></span>  } <span style="color:#66d9ef">else</span> {
+    BackgroundCompaction();
+  }
+
+  background_compaction_scheduled_ <span style="color:#f92672">=</span> false;
+
+  <span style="color:#75715e">// Previous compaction may have produced too many files in a level,
+</span><span style="color:#75715e"></span>  <span style="color:#75715e">// so reschedule another compaction if needed.
+</span><span style="color:#75715e"></span>  MaybeScheduleCompaction();
+  background_work_finished_signal_.SignalAll();
+}
+</code></pre></div><p><code>DBImpl::BGWork</code>中直接调用了入口函数<code>DBImpl::BackgroundCall</code>。在后者中，调用了<code>BackgroundCompaction</code>。</p>
+<p><code>DBImpl::BackgroundCompaction</code>是一个比较长的函数，简化后的代码如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">void</span> DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>BackgroundCompaction() {
+  <span style="color:#75715e">// 去掉了manual模式的相关内容
+</span><span style="color:#75715e"></span>  CompactMemtable();
+  Compaction<span style="color:#f92672">*</span> c;
+  c <span style="color:#f92672">=</span> versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>PickCompaction();
+  CompactionState<span style="color:#f92672">*</span> compact <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> CompactionState(c);
+  DoCompactionWork(compact);
+  CleanupCompaction(compact);
+  c<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>ReleaseInputs();
+  DeleteObsoleteFiles();
+  <span style="color:#66d9ef">delete</span> c;
+}
+</code></pre></div><h2 id="minor-compaction">Minor Compaction</h2>
+<p>首先来看看<code>CompactMemtable</code>这个函数(同样是简化版)：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">void</span> DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>CompactMemTable() {
+  VersionEdit edit;
+  Version<span style="color:#f92672">*</span> base <span style="color:#f92672">=</span> versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>current();
+  base<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Ref();
+  Status s <span style="color:#f92672">=</span> WriteLevel0Table(imm_, <span style="color:#f92672">&amp;</span>edit, base);
+  base<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Unref();
+  edit.SetPrevLogNumber(<span style="color:#ae81ff">0</span>);
+  edit.SetLogNumber(logfile_number_);
+  s <span style="color:#f92672">=</span> versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>LogAndApply(<span style="color:#f92672">&amp;</span>edit, <span style="color:#f92672">&amp;</span>mutex_);
+  imm_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>Unref();
+  imm_ <span style="color:#f92672">=</span> <span style="color:#66d9ef">nullptr</span>;
+  has_imm_.store(false, std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>memory_order_release);
+  DeleteObsoleteFiles();
+}
+</code></pre></div><p>我们知道<code>memtable</code>的<code>compaction</code>过程为：</p>
+<ol>
+<li>将当前的<code>memtable</code>切换为<code>immutable memtable</code></li>
+<li>将<code>immutable memtable</code>转换为 SSTable 文件</li>
+</ol>
+<p>这里为了保证写操作不被阻塞，首先会生成一个相同的<code>memtable</code>，将其作为<code>imm</code>，并尝试使用<code>WriteLevel0Table</code>进行<code>compaction</code>。</p>
+<p><code>WriteLevel0Table</code>的实现如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp">Status DBImpl<span style="color:#f92672">:</span><span style="color:#f92672">:</span>WriteLevel0Table(MemTable<span style="color:#f92672">*</span> mem, VersionEdit<span style="color:#f92672">*</span> edit,
+                                Version<span style="color:#f92672">*</span> base) {
+  FileMetaData meta;
+  meta.number <span style="color:#f92672">=</span> versions_<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>NewFileNumber();
+  pending_outputs_.insert(meta.number);
+  Iterator<span style="color:#f92672">*</span> iter <span style="color:#f92672">=</span> mem<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>NewIterator();
+  Status s;
+  s <span style="color:#f92672">=</span> BuildTable(dbname_, env_, options_, table_cache_, iter, <span style="color:#f92672">&amp;</span>meta);
+  <span style="color:#66d9ef">delete</span> iter;
+  pending_outputs_.erase(meta.number);
+  <span style="color:#66d9ef">int</span> level <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">const</span> Slice min_user_key <span style="color:#f92672">=</span> meta.smallest.user_key();
+  <span style="color:#66d9ef">const</span> Slice max_user_key <span style="color:#f92672">=</span> meta.largest.user_key();
+  level <span style="color:#f92672">=</span> base<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>PickLevelForMemTableOutput(min_user_key, max_user_key);
+  edit<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>AddFile(level, meta.number, meta.file_size,
+                  meta.smallest, meta.largest);
+  <span style="color:#66d9ef">return</span> s;
+}
+</code></pre></div><p>这里的关键步骤是<code>BuildTable</code>，这个函数将会把 memtable 的具体内容写入指定的文件。</p>
+<p>这一块的嵌套会有点深，<code>BuildTable</code>是在<code>builder.cc</code>里面实现的函数，本质上是构造了一个<code>TableBuilder</code>来创建 SSTable，所以我们直接看<code>TableBuilder</code>相关的内容。</p>
+<p><code>TableBuilder</code>相关的文件为<code>table_builder.h</code>和<code>table_builder.cc</code>。</p>
+<p><code>TableBuilder</code>的声明如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TableBuilder</span> {
+ <span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+  TableBuilder(<span style="color:#66d9ef">const</span> Options<span style="color:#f92672">&amp;</span> options, WritableFile<span style="color:#f92672">*</span> file);
+
+  TableBuilder(<span style="color:#66d9ef">const</span> TableBuilder<span style="color:#f92672">&amp;</span>) <span style="color:#f92672">=</span> <span style="color:#66d9ef">delete</span>;
+  <span style="color:#66d9ef">void</span> <span style="color:#66d9ef">operator</span><span style="color:#f92672">=</span>(<span style="color:#66d9ef">const</span> TableBuilder<span style="color:#f92672">&amp;</span>) <span style="color:#f92672">=</span> <span style="color:#66d9ef">delete</span>;
+
+  <span style="color:#f92672">~</span>TableBuilder();
+
+  Status <span style="color:#a6e22e">ChangeOptions</span>(<span style="color:#66d9ef">const</span> Options<span style="color:#f92672">&amp;</span> options);
+
+  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">Add</span>(<span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> key, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> value);
+
+  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">Flush</span>();
+
+  Status <span style="color:#a6e22e">status</span>() <span style="color:#66d9ef">const</span>;
+
+  Status <span style="color:#a6e22e">Finish</span>();
+
+  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">Abandon</span>();
+
+  <span style="color:#66d9ef">uint64_t</span> <span style="color:#a6e22e">NumEntries</span>() <span style="color:#66d9ef">const</span>;
+
+  <span style="color:#66d9ef">uint64_t</span> <span style="color:#a6e22e">FileSize</span>() <span style="color:#66d9ef">const</span>;
+
+ <span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+  <span style="color:#66d9ef">bool</span> ok() <span style="color:#66d9ef">const</span> { <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">status</span>().ok(); }
+  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">WriteBlock</span>(BlockBuilder<span style="color:#f92672">*</span> block, BlockHandle<span style="color:#f92672">*</span> handle);
+  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">WriteRawBlock</span>(<span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> data, CompressionType, BlockHandle<span style="color:#f92672">*</span> handle);
+
+  <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Rep</span>;
+  Rep<span style="color:#f92672">*</span> rep_;
+};
+</code></pre></div><p>这个类的使用方法也很简单明了，构造出实例后调用<code>Add</code>向 Table 中写入记录，之后调用<code>Finish</code>或者<code>Abandon</code>来完成 Table 的构建，再销毁实例。</p>
+<p>我们主要关注<code>Add</code>这个函数的实现(精简版本)：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">void</span> TableBuilder<span style="color:#f92672">:</span><span style="color:#f92672">:</span>Add(<span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> key, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> value) {
+  Rep<span style="color:#f92672">*</span> r <span style="color:#f92672">=</span> rep_;
+  <span style="color:#66d9ef">if</span> (r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>pending_index_entry) {
+    <span style="color:#75715e">// data block为空时才会进入该分支
+</span><span style="color:#75715e"></span>    r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>options.comparator<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>FindShortestSeparator(<span style="color:#f92672">&amp;</span>r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>last_key, key);
+    std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>string handle_encoding;
+    r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>pending_handle.EncodeTo(<span style="color:#f92672">&amp;</span>handle_encoding);
+    r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>index_block.Add(r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>last_key, Slice(handle_encoding));
+    r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>pending_index_entry <span style="color:#f92672">=</span> false;
+  }
+  r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>filter_block<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>AddKey(key);
+  r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>last_key.assign(key.data(), key.size());
+  r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>num_entries<span style="color:#f92672">+</span><span style="color:#f92672">+</span>;
+  r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>data_block.Add(key, value);
+  <span style="color:#66d9ef">const</span> size_t estimated_block_size <span style="color:#f92672">=</span> r<span style="color:#f92672">-</span><span style="color:#f92672">&gt;</span>data_block.CurrentSizeEstimate();
+  Flush();
+}
+</code></pre></div><p>这里的代码需要对照 SSTable 的结构来看，这里有一张图：
+<img src="https://leveldb-handbook.readthedocs.io/zh/latest/_images/sstable_logic.jpeg" alt=""></p>
+<p>SSTable 文件中分为数据块和 meta 块，每个数据块就是具体的 Key-VAlue，meta 块又分成：</p>
+<ul>
+<li><code>Filter Block</code>: 布隆过滤器块，用于加快 Key 的查找</li>
+<li><code>Meta Index Block</code>: 记录<code>Filter Block</code>的相关元信息，比如索引数据块偏移和过滤数据块偏移</li>
+<li><code>Index Block</code>: 记录数据块索引</li>
+<li><code>Footer</code>: 其他的 meta 信息</li>
+</ul>
+<p>根据以上的代码逻辑，我们可以知道，每次<code>Add</code>的过程为：</p>
+<ol>
+<li>编码数据</li>
+<li>插入索引数据</li>
+<li>插入过滤数据</li>
+<li>插入数据块</li>
+</ol>
+<p>我们将把重点放在 2, 3, 4 步骤上。</p>
+<p>插入索引数据和插入 KV 数据都是使用的<code>BlockBuilder</code>。</p>
+<p><code>BlockBuilder</code>与<code>TableBuilder</code>的接口基本一致，因此我们也是主要关注它的<code>Add</code>接口。</p>
+<p><code>Add</code>的实现如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-cpp" data-lang="cpp"><span style="color:#66d9ef">void</span> BlockBuilder<span style="color:#f92672">:</span><span style="color:#f92672">:</span>Add(<span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> key, <span style="color:#66d9ef">const</span> Slice<span style="color:#f92672">&amp;</span> value) {
+  Slice <span style="color:#a6e22e">last_key_piece</span>(last_key_);
+  size_t shared <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+  <span style="color:#66d9ef">const</span> size_t min_length <span style="color:#f92672">=</span> std<span style="color:#f92672">:</span><span style="color:#f92672">:</span>min(last_key_piece.size(), key.size());
+  <span style="color:#66d9ef">while</span> ((shared <span style="color:#f92672">&lt;</span> min_length) <span style="color:#f92672">&amp;</span><span style="color:#f92672">&amp;</span> (last_key_piece[shared] <span style="color:#f92672">=</span><span style="color:#f92672">=</span> key[shared])) {
+    shared<span style="color:#f92672">+</span><span style="color:#f92672">+</span>;
+  }
+  <span style="color:#66d9ef">const</span> size_t non_shared <span style="color:#f92672">=</span> key.size() <span style="color:#f92672">-</span> shared;
+  PutVarint32(<span style="color:#f92672">&amp;</span>buffer_, shared);
+  PutVarint32(<span style="color:#f92672">&amp;</span>buffer_, non_shared);
+  PutVarint32(<span style="color:#f92672">&amp;</span>buffer_, value.size());
+  buffer_.append(key.data() <span style="color:#f92672">+</span> shared, non_shared);
+  buffer_.append(value.data(), value.size());
+  last_key_.resize(shared);
+  last_key_.append(key.data() <span style="color:#f92672">+</span> shared, non_shared);
+  assert(Slice(last_key_) <span style="color:#f92672">=</span><span style="color:#f92672">=</span> key);
+  counter_<span style="color:#f92672">+</span><span style="color:#f92672">+</span>;
+}
+</code></pre></div><p><code>Index Block</code>的结构如下图：
+<img src="https://leveldb-handbook.readthedocs.io/zh/latest/_images/indexblock_format.jpeg" alt=""></p>
+<p>可以看到每一条索引记录存储的实际上是一个<code>Max Key</code>，加上偏移与长度。</p>
+<p>这里必须要提到的是，LevelDB在存储Key-Value时并不一定会存储完整的<code>Key</code>，而是会存储下<strong>与前一条记录的Key不共享的部分</strong>。</p>
+<p><code>Data Block</code>的存储方式如下图：
+<img src="https://leveldb-handbook.readthedocs.io/zh/latest/_images/entry_format.jpeg" alt=""></p>
+<p>举个例子：</p>
+<ul>
+<li><code>abc</code>, <code>acc</code>这两个连续的<code>Key</code>在存储时，<code>Unshared key</code>分别为<code>abc</code>和<code>cc</code>。</li>
+</ul>
+<p>除此之外，LevelDB还有一个<code>Restart Point</code>的设计，会每隔几条记录存储一个完整的<code>Key</code>。这个记录数的默认值为<code>16</code>。</p>
+<p>对于索引块的插入，调用方式为<code>r-&gt;index_block.Add(r-&gt;last_key, Slice(handle_encoding))</code>。</p>
+<p>这里<code>r-&gt;last_key</code>的值来源于<code>r-&gt;options.comparator-&gt;FindShortestSeparator(&amp;r-&gt;last_key, key)</code>。</p>
+<p><code>FindShortestSeparator</code>实际上是一个非常有意思的函数，它的字面意思是找出最短的分隔符。</p>
+<p>那么这里的分隔符是什么呢？答案就是<code>Index Block</code>中的<code>Max Key</code>。</p>
+<p><code>TableBuilder</code>并不会在一开始构造时就找出<code>Max Key</code>，而是等到下一个<code>Data Block</code>的第一个<code>Key</code>出现时做这件事。</p>
+<p>它会取出前一个<code>Data Block</code>的最后一个<code>Key</code>，也就是前一个<code>Data Block</code>中最大的，与后一个<code>Data Block</code>的第一个<code>Key</code>的最长公有前缀，并将其后一位的字符+1，作为<code>Max Key</code>。</p>
+<p>比如说，前一个<code>Data Block</code>的最后一个<code>Key</code>为<code>abcd</code>，后一个<code>Data Block</code>的第一个<code>Key</code>为<code>abcf</code>，那么他们的最长前缀为<code>abc</code>，取出的<code>Max Key</code>为<code>abce</code>(<code>e</code>为<code>d+1</code>)。</p>
+<p>这样以来可以保证前一个<code>Data Block</code>中的所有数据都会小于<code>Max Key</code>，也不会对后面的<code>Data Block</code>产生影响，还节约了存储空间，十分的巧妙。</p>
+<p>关于布隆过滤器这里就不再展开讲。</p>
+<h2 id="major-compaction">Major Compaction</h2>
+<p>看完了<code>memtable</code>的<code>minor compaction</code>，我们来看看<code>SSTable</code>的<code>major compaction</code>。</p>
+<p>与<code>minor compaction</code>不同，<code>major compaction</code>的过程比较复杂，它涉及到两个<code>level</code>之间有重叠<code>key</code>的<code>SSTable</code>的合并。</p>
+<p>这部分会单独开一篇博客来分析。</p>
+
+    </div>
+
+    <div class="post-copyright">
+             
+            <p class="copyright-item">
+                <span>Author:</span>
+                <span>leiysky </span>
+                </p>
+            
+           
+             
+            <p class="copyright-item">
+                    <span>Link:</span>
+                    <a href=https://blog.leiysky.xyz/2019/leveldb%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90/>https://blog.leiysky.xyz/2019/leveldb%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90/</span>
+            </p>
+            
+             
+            <p class="copyright-item lincese">
+                本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可
+            </p>
+            
+    </div>
+
+  
+    <div class="post-tags">
+        
+            <section>
+            <i class="iconfont icon-tag"></i>Tag(s): 
+            
+            <span class="tag"><a href="https://blog.leiysky.xyz/tags/database/">
+                    #Database</a></span>
+            
+            <span class="tag"><a href="https://blog.leiysky.xyz/tags/leveldb/">
+                    #LevelDB</a></span>
+            
+            </section>
+        
+        <section>
+                <a href="javascript:window.history.back();">back</a></span> · 
+                <span><a href="https://blog.leiysky.xyz">home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav">
+        
+        <a href="https://blog.leiysky.xyz/2018/redis%E7%9A%84lru%E7%BC%93%E5%AD%98/" class="prev" rel="prev" title="Redis的LRU缓存"><i class="iconfont icon-left"></i>&nbsp;Redis的LRU缓存</a>
+         
+        
+        <a href="https://blog.leiysky.xyz/2019/%E4%BD%BF%E7%94%A8antlr4%E7%BC%96%E5%86%99parser/" class="next" rel="next" title="使用ANTLR4编写parser">使用ANTLR4编写parser&nbsp;<i class="iconfont icon-right"></i></a>
+        
+    </div>
+
+    <div class="post-comment">
+          
+                 
+          
+    </div>
+</article>
+          </div>
+		   </main>
+      <footer class="footer">
+    <div class="copyright">
+        &copy;
+        
+        <span itemprop="copyrightYear">2017 - 2020</span>
+        
+        <span class="with-love">
+    	 <i class="iconfont icon-love"></i> 
+         </span>
+         
+            <span class="author" itemprop="copyrightHolder"><a href="https://blog.leiysky.xyz">leiysky</a> | </span> 
+         
+
+         
+		  <span>Powered by <a href="https://gohugo.io/" target="_blank" rel="external nofollow">Hugo</a> & <a href="https://github.com/liuzc/leaveit" target="_blank" rel="external nofollow">LeaveIt</a></span> 
+    </div>
+</footer>
+
+
+
+
+
+
+
+
+
+
+
+
+    
+     <link href="//lib.baomitu.com/lightgallery/1.6.11/css/lightgallery.min.css" rel="stylesheet">  
+      
+     <script src="/js/vendor_gallery.min.js" async="" ></script>
+    
+  
+
+
+
+     </div>
+  </body>
+</html>
