@@ -2,6 +2,36 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
     <url>
+      <loc>https://blog.leiysky.xyz/</loc>
+      
+      <lastmod>2020-02-11T14:07:49+08:00</lastmod>
+      
+      
+      
+      
+    </url>
+  
+    <url>
+      <loc>https://blog.leiysky.xyz/posts/</loc>
+      
+      <lastmod>2020-02-11T14:07:49+08:00</lastmod>
+      
+      
+      
+      
+    </url>
+  
+    <url>
+      <loc>https://blog.leiysky.xyz/2020/%E7%88%B1%E4%B8%8E%E6%81%A8%E7%9A%84%E7%A2%B0%E6%92%9Esbt%E7%9A%84%E4%BD%BF%E7%94%A8/</loc>
+      
+      <lastmod>2020-02-11T14:07:49+08:00</lastmod>
+      
+      
+      
+      
+    </url>
+  
+    <url>
       <loc>https://blog.leiysky.xyz/tags/antlr/</loc>
       
       <lastmod>2019-07-29T19:59:06+00:00</lastmod>
@@ -22,26 +52,6 @@
     </url>
   
     <url>
-      <loc>https://blog.leiysky.xyz/</loc>
-      
-      <lastmod>2019-07-29T19:59:06+00:00</lastmod>
-      
-      
-      
-      
-    </url>
-  
-    <url>
-      <loc>https://blog.leiysky.xyz/categories/parser/</loc>
-      
-      <lastmod>2019-07-29T19:59:06+00:00</lastmod>
-      
-      
-      
-      
-    </url>
-  
-    <url>
       <loc>https://blog.leiysky.xyz/tags/parser/</loc>
       
       <lastmod>2019-07-29T19:59:06+00:00</lastmod>
@@ -52,7 +62,7 @@
     </url>
   
     <url>
-      <loc>https://blog.leiysky.xyz/posts/</loc>
+      <loc>https://blog.leiysky.xyz/categories/parser/</loc>
       
       <lastmod>2019-07-29T19:59:06+00:00</lastmod>
       

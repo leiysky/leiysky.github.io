@@ -6,10 +6,33 @@
     <description>Recent content in Posts on leiysky&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 29 Jul 2019 19:59:06 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 11 Feb 2020 14:07:49 +0800</lastBuildDate>
     
 	<atom:link href="https://blog.leiysky.xyz/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>爱与恨的碰撞——sbt的使用</title>
+      <link>https://blog.leiysky.xyz/2020/%E7%88%B1%E4%B8%8E%E6%81%A8%E7%9A%84%E7%A2%B0%E6%92%9Esbt%E7%9A%84%E4%BD%BF%E7%94%A8/</link>
+      <pubDate>Tue, 11 Feb 2020 14:07:49 +0800</pubDate>
+      
+      <guid>https://blog.leiysky.xyz/2020/%E7%88%B1%E4%B8%8E%E6%81%A8%E7%9A%84%E7%A2%B0%E6%92%9Esbt%E7%9A%84%E4%BD%BF%E7%94%A8/</guid>
+      <description>前言 sbt 是 Scala 官方推荐的 build 工具，也是 Scala 用户中极为推崇的工具。
+但是我就奇了怪了，这玩意真的像你们说的那样好用吗？官方文档写的像论文一样晦涩难懂，配置项多如繁星，甚至有各种官方文档没有明确写出来的“隐藏功能”……
+但是有一说一，sbt 的自由度确实很高，毕竟直接使用 Scala 作为配置语言，这点我还是很爱的。
+自由度高加上垃圾的文档带来的问题就是每次使用都要查半天资料，所以在此进行记录，以节约我宝贵的生命。
+安装 直接上官网下载即可。
+macOS 下可以使用 brew 进行安装：
+$ brew install sbt 目前的最新版本为 1.3.8。
+包管理 sbt 使用 Apache Ivy 作为包管理器，而 Ivy 一般可以使用 Maven 的仓库来拉取依赖。
+我们都知道 Maven 的中央仓库下载速度已经慢到一定地步了，不换源基本没法用，因此这部分主要讲一下怎么换源。
+国内比较知名的 Maven 源很少，主要就是几大云厂商提供的，比如阿里云。阿里云的 Maven 源速度很快，但缺点是包有残缺。我目前使用的是华为云的源，目前来看还算比较好用，使用的时候优先级略低于阿里云。
+sbt 的换源不像其他包管理器那样方便，按照官方文档的说法它必须在多个地方进行配置，设计的十分恶心。
+这里提供一种相对比较人性化的方式。
+首先我们要修改 sbt 的仓库配置 ~/.sbt/repositories ，默认情况下应该是没有这个文件的，我们需要创建一个。
+之后在文件中填入如下内容：
+[repositories] local alicloud: https://maven.aliyun.com/repository/public huaweicloud-maven: https://repo.huaweicloud.com/repository/maven/ maven-central: https://repo1.maven.org/maven2/ huaweicloud-ivy: https://repo.huaweicloud.com/repository/ivy/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext] local 表示的就是 Maven 和 Ivy 的本地仓库，优先级最高。其他的看着配就行。</description>
+    </item>
     
     <item>
       <title>使用ANTLR4编写parser</title>
