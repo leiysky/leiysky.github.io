@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="前言ANTLR 是一款由 Java 编写的开源语法解析工具。 我们知道在编译的过程中，主要有词法分析(Lexical Analysis), 语法分析(Grammar Analysis), 语义分析(Semantic Analysis), 中间代码生成(Intermediate Code Generation)等过程。 但是这是对于高级语言的编译过程，有时候我们需要设计一些 DSL 或者配置文件格式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用ANTLR4编写parser">
+<meta property="og:url" content="http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/index.html">
+<meta property="og:site_name" content="leiysky&#39;s blog">
+<meta property="og:description" content="前言ANTLR 是一款由 Java 编写的开源语法解析工具。 我们知道在编译的过程中，主要有词法分析(Lexical Analysis), 语法分析(Grammar Analysis), 语义分析(Semantic Analysis), 中间代码生成(Intermediate Code Generation)等过程。 但是这是对于高级语言的编译过程，有时候我们需要设计一些 DSL 或者配置文件格式">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-07-29T11:59:06.000Z">
+<meta property="article:modified_time" content="2022-05-27T03:32:12.324Z">
+<meta property="article:author" content="leiysky">
+<meta property="article:tag" content="Parser">
+<meta property="article:tag" content="ANTLR">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>使用ANTLR4编写parser</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+		<script type="text/x-mathjax-config">
+		  MathJax.Hub.Config({
+			tex2jax: {
+			  skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+			  inlineMath: [['$','$']]
+			}
+		  });
+		</script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+	
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fas fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fas fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/leiysky">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2019/03/27/LevelDB%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90/"><i class="fas fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fas fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&text=使用ANTLR4编写parser"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&is_video=false&description=使用ANTLR4编写parser"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=使用ANTLR4编写parser&body=Check out this article: http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/"><i class="fas fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&name=使用ANTLR4编写parser&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&t=使用ANTLR4编写parser"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ANTLR4-%E7%9A%84%E5%AE%89%E8%A3%85"><span class="toc-number">2.</span> <span class="toc-text">ANTLR4 的安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E7%9A%84-EBNF-%E6%96%87%E6%B3%95"><span class="toc-number">3.</span> <span class="toc-text">简单的 EBNF 文法</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+    
+    <div class="content index py4">
+        
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        使用ANTLR4编写parser
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">leiysky</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2019-07-29T11:59:06.000Z" itemprop="datePublished">2019-07-29</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fas fa-archive"></i>
+        <a class="category-link" href="/categories/Parser/">Parser</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fas fa-tag"></i>
+        <a class="tag-link-link" href="/tags/ANTLR/" rel="tag">ANTLR</a>, <a class="tag-link-link" href="/tags/Parser/" rel="tag">Parser</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>ANTLR 是一款由 Java 编写的开源语法解析工具。</p>
+<p>我们知道在编译的过程中，主要有词法分析(Lexical Analysis), 语法分析(Grammar Analysis), 语义分析(Semantic Analysis), 中间代码生成(Intermediate Code Generation)等过程。</p>
+<p>但是这是对于高级语言的编译过程，有时候我们需要设计一些 DSL 或者配置文件格式，这时候只需要词法分析和语法分析就可以解决我们的需求。</p>
+<p>ANTLR 可以通过 BNF 或者 EBNF 文法的语法定义文件生成默认的 Lexer 和基本的 ast，并且提供了 listener, visitor 两种可选的方式来遍历 ast。对比起 yacc 和 lex 的组合，它的好处在于能生成相对友好的代码方便你进行处理（不用在几千行的 <code>.y</code> 文件里面爬摸滚打了）。</p>
+<p>ANTLR 的最新版本是 4，在这篇文章里我将使用 Go 作为生成的 target 语言。</p>
+<h2 id="ANTLR4-的安装"><a href="#ANTLR4-的安装" class="headerlink" title="ANTLR4 的安装"></a>ANTLR4 的安装</h2><p><a target="_blank" rel="noopener" href="https://github.com/antlr/antlr4/blob/master/doc/getting-started.md">自己看</a></p>
+<h2 id="简单的-EBNF-文法"><a href="#简单的-EBNF-文法" class="headerlink" title="简单的 EBNF 文法"></a>简单的 EBNF 文法</h2><p>EBNF, 即扩展巴恩斯范式，是一种上下文无关文法。现代编程语言基本都使用 EBNF 来进行语法定义。</p>
+<p>我们首先来简单定义一个四则运算表达式的语法规则:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">grammar Math;</span><br><span class="line"></span><br><span class="line">math : expr EOF;</span><br><span class="line"></span><br><span class="line">expr :    op=(&#x27;+&#x27;|&#x27;-&#x27;) expr                    # unaryExpr</span><br><span class="line">      |   left=expr op=(&#x27;*&#x27;|&#x27;/&#x27;) right=expr    # infixExpr</span><br><span class="line">      |   left=expr op=(&#x27;+&#x27;|&#x27;-&#x27;) right=expr    # infixExpr</span><br><span class="line">      |   value=NUM                            # numberExpr</span><br><span class="line">      ;</span><br><span class="line"></span><br><span class="line">ADD: &#x27;+&#x27;;</span><br><span class="line">SUB: &#x27;-&#x27;;</span><br><span class="line">MUL: &#x27;*&#x27;;</span><br><span class="line">DIV: &#x27;/&#x27;;</span><br><span class="line"></span><br><span class="line">NUM :   [0-9]+ (&#x27;.&#x27; [0-9]+)? ([eE] [+-]? [0-9]+)?;</span><br><span class="line">WS  :   [ \t\r\n] -&gt; channel(HIDDEN);</span><br></pre></td></tr></table></figure>
+
+<p>将其保存为 <code>Math.g4</code>(注意，文件名必须与 grammar 一致)。</p>
+<p>使用如下指令生成代码：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ antlr -Dlanguage=Go -visitor -o . Math.g4</span><br></pre></td></tr></table></figure>
+
+<p>我们可以看到当前目录下生成了几个文件：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── Math.g4</span><br><span class="line">├── Math.tokens</span><br><span class="line">├── MathLexer.tokens</span><br><span class="line">├── math_base_listener.go</span><br><span class="line">├── math_base_visitor.go</span><br><span class="line">├── math_lexer.go</span><br><span class="line">├── math_listener.go</span><br><span class="line">├── math_parser.go</span><br><span class="line">└── math_visitor.go</span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>math_parser.go</code> 包括了生成的基本 ast 的定义，<code>math_listener.go</code> 和 <code>math_visitor.go</code> 分别包含了 <code>listener</code> 和 <code>visitor</code> 的接口定义。</p>
+<p><code>listener</code> 和 <code>visitor</code> 的区别在于，<code>listener</code> 的遍历路线 ANTLR 已经帮你选好了，你只需要写对于不同节点的处理方式即可。而 <code>visitor</code> 则意味着你需要自己编写遍历的逻辑。</p>
+<p>接下来我们自己定义一个可以进行 Evaluate 的 ast：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> NodeType <span class="type">int</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">  NodeExpr NodeType = <span class="literal">iota</span></span><br><span class="line">  NodeValue</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> OpType <span class="type">int</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">  OpAdd OpType = <span class="literal">iota</span></span><br><span class="line">  OpSub</span><br><span class="line">  OpMul</span><br><span class="line">  OpDiv</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Node <span class="keyword">struct</span> &#123;</span><br><span class="line">  Type      NodeType</span><br><span class="line">  Left      *Node</span><br><span class="line">  Right     *Node</span><br><span class="line">  Op        OpType</span><br><span class="line">  Val       <span class="type">float64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(n *Node)</span></span> Evaluate() <span class="type">float64</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> n.Type == NodeExpr &#123;</span><br><span class="line">    <span class="keyword">switch</span> n.Op &#123;</span><br><span class="line">    <span class="keyword">case</span> OpAdd:</span><br><span class="line">      <span class="keyword">return</span> n.Left.Evaluate() + n.Right.Evaluate()</span><br><span class="line">    <span class="keyword">case</span> OpSub:</span><br><span class="line">      <span class="keyword">return</span> n.Left.Evaluate() - n.Right.Evaluate()</span><br><span class="line">    <span class="keyword">case</span> OpMul:</span><br><span class="line">      <span class="keyword">return</span> n.Left.Evaluate() * n.Right.Evaluate()</span><br><span class="line">    <span class="keyword">case</span> OpDiv:</span><br><span class="line">      <span class="keyword">return</span> n.Left.Evaluate() / n.Right.Evaluate()</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> n.Evaluate()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么该如何转换出这样的结构呢？</p>
+<p>我们可以使用 <code>visitor</code> 来重构整个 ast：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> convertVisitor <span class="keyword">struct</span> &#123;</span><br><span class="line">	BaseMathVisitor</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v *convertVisitor)</span></span> Visit(tree antlr.ParseTree) <span class="keyword">interface</span>&#123;&#125; &#123;</span><br><span class="line">	<span class="keyword">return</span> tree.Accept(v)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v *convertVisitor)</span></span> VisitMath(ctx *MathContext) <span class="keyword">interface</span>&#123;&#125; &#123;</span><br><span class="line">	<span class="keyword">return</span> ctx.Expr().Accept(v)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(v *convertVisitor)</span></span> VisitExpr(ctx *ExprContext) <span class="keyword">interface</span>&#123;&#125; &#123;</span><br><span class="line">	node := &amp;Node&#123;&#125;</span><br><span class="line">	<span class="keyword">if</span> ctx.value != <span class="literal">nil</span> &#123;</span><br><span class="line">		node.Type = NodeValue</span><br><span class="line">		node.Val, _ = strconv.ParseFloat(ctx.value.GetText(), <span class="number">64</span>)</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> <span class="built_in">len</span>(ctx.AllExpr()) == <span class="number">1</span> &#123;</span><br><span class="line">		node.Left = &amp;Node&#123;</span><br><span class="line">			Type: NodeValue,</span><br><span class="line">			Val:  <span class="number">0</span>,</span><br><span class="line">		&#125;</span><br><span class="line">		node.Right = ctx.Expr(<span class="number">0</span>).Accept(v).(*Node)</span><br><span class="line">		<span class="keyword">switch</span> ctx.op.GetTokenType() &#123;</span><br><span class="line">		<span class="keyword">case</span> MathLexerADD:</span><br><span class="line">			node.Op = OpAdd</span><br><span class="line">		<span class="keyword">case</span> MathLexerSUB:</span><br><span class="line">			node.Op = OpSub</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> <span class="built_in">len</span>(ctx.AllExpr()) &gt; <span class="number">1</span> &#123;</span><br><span class="line">		node.Left = ctx.Expr(<span class="number">0</span>).Accept(v).(*Node)</span><br><span class="line">		node.Right = ctx.Expr(<span class="number">1</span>).Accept(v).(*Node)</span><br><span class="line">		<span class="keyword">switch</span> ctx.op.GetTokenType() &#123;</span><br><span class="line">		<span class="keyword">case</span> MathLexerADD:</span><br><span class="line">			node.Op = OpAdd</span><br><span class="line">		<span class="keyword">case</span> MathLexerSUB:</span><br><span class="line">			node.Op = OpSub</span><br><span class="line">		<span class="keyword">case</span> MathLexerMUL:</span><br><span class="line">			node.Op = OpMul</span><br><span class="line">		<span class="keyword">case</span> MathLexerDIV:</span><br><span class="line">			node.Op = OpDiv</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> node</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Parse</span><span class="params">(expr <span class="type">string</span>)</span></span> *Node &#123;</span><br><span class="line">	input := antlr.NewInputStream(expr)</span><br><span class="line">	lexer := NewMathLexer(input)</span><br><span class="line">	tokenStream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)</span><br><span class="line">	parser := NewMathParser(tokenStream)</span><br><span class="line">	tree := parser.Math()</span><br><span class="line">	v := &amp;convertVisitor&#123;&#125;</span><br><span class="line">	<span class="keyword">return</span> v.Visit(tree).(*Node)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>调用 <code>Parse</code> 既可以将表达式的字符串转换为我们的 <code>Node</code>。</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a target="_blank" rel="noopener" href="http://github.com/leiysky">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ANTLR4-%E7%9A%84%E5%AE%89%E8%A3%85"><span class="toc-number">2.</span> <span class="toc-text">ANTLR4 的安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E7%9A%84-EBNF-%E6%96%87%E6%B3%95"><span class="toc-number">3.</span> <span class="toc-text">简单的 EBNF 文法</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&text=使用ANTLR4编写parser"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&is_video=false&description=使用ANTLR4编写parser"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=使用ANTLR4编写parser&body=Check out this article: http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/"><i class="fas fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&title=使用ANTLR4编写parser"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&name=使用ANTLR4编写parser&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://example.com/2019/07/29/%E4%BD%BF%E7%94%A8ANTLR4%E7%BC%96%E5%86%99parser/&t=使用ANTLR4编写parser"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fas fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fas fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fas fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fas fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2022
+    leiysky
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/leiysky">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+ 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script> 
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script> 
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="far fa-clone"></i>';
+    btn += '</span>'; 
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Google Analytics -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Umami Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
